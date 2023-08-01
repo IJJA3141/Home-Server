@@ -7,6 +7,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define PUBLIC_IP "92.105.182.255"
+
 int main(int argc, char *argv[]) {
   std::cout << "Creating server socket ..." << std::endl;
 
@@ -19,7 +21,7 @@ int main(int argc, char *argv[]) {
   struct sockaddr_in hint;
   hint.sin_family = AF_INET;
   hint.sin_port = htons(54000);
-  inet_pton(AF_INET, "0.0.0.0", &hint.sin_addr);
+  inet_pton(AF_INET, PUBLIC_IP, &hint.sin_addr);
 
   std::cout << "Biding socket to sockaddr..." << std::endl;
   if (bind(socRes, (struct sockaddr *)&hint.sin_addr, sizeof(hint)) == -1) {
@@ -36,7 +38,7 @@ int main(int argc, char *argv[]) {
   sockaddr_in client;
   socklen_t clientSize = sizeof(client);
 
-  std::cout << "Accept client call..." << std::endl;
+  std::cout << "Accept client call on PORT: " << hint.sin_port << "..." << std::endl;
   int clientSocket = accept(socRes, (struct sockaddr *)&client, &clientSize);
 
   std::cout << "Received call..." << std::endl;
