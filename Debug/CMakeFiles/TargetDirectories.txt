@@ -1,0 +1,3 @@
+/mnt/e/Prog/Project/Home-Server/Debug/CMakeFiles/server.dir
+/mnt/e/Prog/Project/Home-Server/Debug/CMakeFiles/edit_cache.dir
+/mnt/e/Prog/Project/Home-Server/Debug/CMakeFiles/rebuild_cache.dir

@@ -1,5 +1,5 @@
 #ifndef TCPSERVER
-#define TCPSERVER:
+#define TCPSERVER
 
 #include <arpa/inet.h>
 #include <iostream>
@@ -11,7 +11,9 @@
 
 namespace http {
 class TcpServer {
-public:  // Public members
+public: // Public members
+  static const std::string test;
+
 private: // Private members
   // Singleton
   static TcpServer *pTcpServer_;
@@ -41,5 +43,7 @@ public: // Public operator
 private: // Private operator
 };
 } // Namespace http
+
+const std::string http::TcpServer::test = "test";
 
 #endif // !TCPSERVER
