@@ -2,6 +2,7 @@
 #define TCPSERVER
 
 #include <arpa/inet.h>
+#include <cstring>
 #include <iostream>
 #include <netdb.h>
 #include <string>
@@ -12,7 +13,7 @@
 namespace http {
 class TcpServer {
 public: // Public members
-  static const std::string test;
+  static std::string test;
 
 private: // Private members
   // Singleton
@@ -43,7 +44,5 @@ public: // Public operator
 private: // Private operator
 };
 } // Namespace http
-
-const std::string http::TcpServer::test = "test";
 
 #endif // !TCPSERVER

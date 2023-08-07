@@ -22,7 +22,7 @@ CMAKE_AR:FILEPATH=/usr/bin/ar
 
 //Choose the type of build, options are: None Debug Release RelWithDebInfo
 // MinSizeRel ...
-CMAKE_BUILD_TYPE:STRING=
+CMAKE_BUILD_TYPE:STRING=Debug
 
 //Enable/Disable color output during build.
 CMAKE_COLOR_MAKEFILE:BOOL=ON
@@ -220,15 +220,6 @@ Home-Server_IS_TOP_LEVEL:STATIC=ON
 
 //Value Computed by CMake
 Home-Server_SOURCE_DIR:STATIC=/mnt/e/Prog/Project/Home-Server
-
-//Value Computed by CMake
-Project_BINARY_DIR:STATIC=/mnt/e/Prog/Project/Home-Server/Debug
-
-//Value Computed by CMake
-Project_IS_TOP_LEVEL:STATIC=ON
-
-//Value Computed by CMake
-Project_SOURCE_DIR:STATIC=/mnt/e/Prog/Project/Home-Server
 
 
 ########################

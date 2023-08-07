@@ -1,8 +1,4 @@
 #include "./tcp-server.h"
-#include <cstring>
-#include <sys/socket.h>
-
-const std::string http::TcpServer::test = "test";
 
 // Singleton stuff
 http::TcpServer *http::TcpServer::pTcpServer_ = nullptr;

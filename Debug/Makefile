@@ -153,6 +153,30 @@ src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
+src/tcp-server/tcp-server.o: src/tcp-server/tcp-server.cpp.o
+.PHONY : src/tcp-server/tcp-server.o
+
+# target to build an object file
+src/tcp-server/tcp-server.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/src/tcp-server/tcp-server.cpp.o
+.PHONY : src/tcp-server/tcp-server.cpp.o
+
+src/tcp-server/tcp-server.i: src/tcp-server/tcp-server.cpp.i
+.PHONY : src/tcp-server/tcp-server.i
+
+# target to preprocess a source file
+src/tcp-server/tcp-server.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/src/tcp-server/tcp-server.cpp.i
+.PHONY : src/tcp-server/tcp-server.cpp.i
+
+src/tcp-server/tcp-server.s: src/tcp-server/tcp-server.cpp.s
+.PHONY : src/tcp-server/tcp-server.s
+
+# target to generate assembly for a file
+src/tcp-server/tcp-server.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/src/tcp-server/tcp-server.cpp.s
+.PHONY : src/tcp-server/tcp-server.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -165,6 +189,9 @@ help:
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... src/tcp-server/tcp-server.o"
+	@echo "... src/tcp-server/tcp-server.i"
+	@echo "... src/tcp-server/tcp-server.s"
 .PHONY : help
 
 
