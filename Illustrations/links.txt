@@ -1,0 +1,6 @@
+browser request: [
+  https://medium.com/@reemshakes/http-request-response-flow-for-dummies-a0f52af83af3
+  https://launchschool.com/books/http/read/making_requests
+]
+
+curl request: curl -X GET "URL" -m 30 -v

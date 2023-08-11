@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <vector>
 
 namespace http {
 class TcpServer {
@@ -18,6 +19,7 @@ public: // Public members
 private: // Private members
   // Singleton
   static TcpServer *pTcpServer_;
+  std::vector<std::string> registeredchannels_;
 
   // Server
   int socket_;
