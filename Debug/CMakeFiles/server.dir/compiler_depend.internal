@@ -206,6 +206,9 @@ CMakeFiles/server.dir/src/main.cpp.o
  /usr/include/asm-generic/sockios.h
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h
  /usr/include/x86_64-linux-gnu/bits/in.h
+ /usr/include/c++/12/cstring
+ /usr/include/string.h
+ /usr/include/strings.h
  /usr/include/netdb.h
  /usr/include/rpc/netdb.h
  /usr/include/x86_64-linux-gnu/bits/types/sigevent_t.h
@@ -280,11 +283,17 @@ CMakeFiles/server.dir/src/tcp-server/tcp-server.cpp.o
  /usr/include/asm-generic/sockios.h
  /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h
  /usr/include/x86_64-linux-gnu/bits/in.h
- /usr/include/c++/12/iostream
+ /usr/include/c++/12/cstring
  /usr/include/x86_64-linux-gnu/c++/12/bits/c++config.h
  /usr/include/x86_64-linux-gnu/c++/12/bits/os_defines.h
  /usr/include/x86_64-linux-gnu/c++/12/bits/cpu_defines.h
  /usr/include/c++/12/pstl/pstl_config.h
+ /usr/include/string.h
+ /usr/include/x86_64-linux-gnu/bits/libc-header-start.h
+ /usr/include/x86_64-linux-gnu/bits/types/locale_t.h
+ /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h
+ /usr/include/strings.h
+ /usr/include/c++/12/iostream
  /usr/include/c++/12/ostream
  /usr/include/c++/12/ios
  /usr/include/c++/12/iosfwd
@@ -293,7 +302,6 @@ CMakeFiles/server.dir/src/tcp-server/tcp-server.cpp.o
  /usr/include/c++/12/bits/postypes.h
  /usr/include/c++/12/cwchar
  /usr/include/wchar.h
- /usr/include/x86_64-linux-gnu/bits/libc-header-start.h
  /usr/include/x86_64-linux-gnu/bits/floatn.h
  /usr/include/x86_64-linux-gnu/bits/floatn-common.h
  /usr/lib/gcc/x86_64-linux-gnu/12/include/stdarg.h
@@ -303,8 +311,6 @@ CMakeFiles/server.dir/src/tcp-server/tcp-server.cpp.o
  /usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h
  /usr/include/x86_64-linux-gnu/bits/types/__FILE.h
  /usr/include/x86_64-linux-gnu/bits/types/FILE.h
- /usr/include/x86_64-linux-gnu/bits/types/locale_t.h
- /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h
  /usr/include/c++/12/exception
  /usr/include/c++/12/bits/exception.h
  /usr/include/c++/12/bits/exception_ptr.h
@@ -438,7 +444,4 @@ CMakeFiles/server.dir/src/tcp-server/tcp-server.cpp.o
  /usr/include/x86_64-linux-gnu/bits/getopt_core.h
  /usr/include/x86_64-linux-gnu/bits/unistd_ext.h
  /usr/include/linux/close_range.h
- /usr/include/c++/12/cstring
- /usr/include/string.h
- /usr/include/strings.h
 

@@ -1,4 +1,4 @@
-#ifndef TCPSERVER
+ifndef TCPSERVER
 #define TCPSERVER
 
 #include <arpa/inet.h>

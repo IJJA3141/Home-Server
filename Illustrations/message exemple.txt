@@ -1,0 +1,22 @@
+# browser exemple
+
+GET / HTTP/1.1
+Host: 0.0.0.0:37121
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+
+
+# body exemple
+
+POST / HTTP/1.1
+Host: 192.168.1.123:35271
+User-Agent: curl/8.0.1
+Accept: */*
+Content-Type: application/json
+Content-Length: 15
+
+{"fatya":"333"}

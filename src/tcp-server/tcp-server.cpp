@@ -67,6 +67,7 @@ int http::TcpServer::listen() {
             << "; PORT: " << this->client_.sin_port << ";" << std::endl;
 
   close(this->socket_);
+  int it = 0;
 
   while (true) {
     // clear buffer
@@ -81,7 +82,7 @@ int http::TcpServer::listen() {
       break;
     }
 
-    std::cout << "Received: " << std::string(this->clientBuffer, 0, bytesRecv);
+    std::cout << "Received:\nit: " << it << "   " << std::string(this->clientBuffer, 0, bytesRecv);
 
     send(this->clientSocket_, this->clientBuffer, bytesRecv + 1, 0);
   }
