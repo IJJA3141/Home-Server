@@ -153,6 +153,54 @@ src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
+src/parser/parser.o: src/parser/parser.cpp.o
+.PHONY : src/parser/parser.o
+
+# target to build an object file
+src/parser/parser.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/src/parser/parser.cpp.o
+.PHONY : src/parser/parser.cpp.o
+
+src/parser/parser.i: src/parser/parser.cpp.i
+.PHONY : src/parser/parser.i
+
+# target to preprocess a source file
+src/parser/parser.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/src/parser/parser.cpp.i
+.PHONY : src/parser/parser.cpp.i
+
+src/parser/parser.s: src/parser/parser.cpp.s
+.PHONY : src/parser/parser.s
+
+# target to generate assembly for a file
+src/parser/parser.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/src/parser/parser.cpp.s
+.PHONY : src/parser/parser.cpp.s
+
+src/request/request.o: src/request/request.cpp.o
+.PHONY : src/request/request.o
+
+# target to build an object file
+src/request/request.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/src/request/request.cpp.o
+.PHONY : src/request/request.cpp.o
+
+src/request/request.i: src/request/request.cpp.i
+.PHONY : src/request/request.i
+
+# target to preprocess a source file
+src/request/request.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/src/request/request.cpp.i
+.PHONY : src/request/request.cpp.i
+
+src/request/request.s: src/request/request.cpp.s
+.PHONY : src/request/request.s
+
+# target to generate assembly for a file
+src/request/request.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/src/request/request.cpp.s
+.PHONY : src/request/request.cpp.s
+
 src/tcp-server/tcp-server.o: src/tcp-server/tcp-server.cpp.o
 .PHONY : src/tcp-server/tcp-server.o
 
@@ -189,6 +237,12 @@ help:
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... src/parser/parser.o"
+	@echo "... src/parser/parser.i"
+	@echo "... src/parser/parser.s"
+	@echo "... src/request/request.o"
+	@echo "... src/request/request.i"
+	@echo "... src/request/request.s"
 	@echo "... src/tcp-server/tcp-server.o"
 	@echo "... src/tcp-server/tcp-server.i"
 	@echo "... src/tcp-server/tcp-server.s"

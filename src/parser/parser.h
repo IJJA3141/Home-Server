@@ -6,7 +6,7 @@
 #include <cstddef>
 namespace http {
 
-http::Request parse(const char *_buffer, size_t _size);
+http::Request parse(char *_pBuffer, size_t _size);
 
 }
 

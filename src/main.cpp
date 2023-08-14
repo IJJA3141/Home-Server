@@ -1,13 +1,11 @@
 #include <iostream>
 
-#include "./tcp-server/tcp-server.h"
+#include "./parser/parser.h"
+#include "./request/request.h"
 
 int main(int argc, char *argv[]) {
-  http::TcpServer *pServer = http::TcpServer::get();
 
-  int initValue = pServer->init("0.0.0.0", 50000);
-  if (initValue != 0)
-    return initValue;
+  http::parse("GET /test/id=4324hkj24h32hkldshjklfdsalhl&q=jfds+jkds HTTP/1.1\nHost: 192.168.1.123:53509\n", 0);
 
-  return pServer->listen();
-
+  return 0;
+}

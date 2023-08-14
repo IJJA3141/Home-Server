@@ -9,6 +9,8 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/mnt/e/Prog/Project/Home-Server/src/main.cpp" "CMakeFiles/server.dir/src/main.cpp.o" "gcc" "CMakeFiles/server.dir/src/main.cpp.o.d"
+  "/mnt/e/Prog/Project/Home-Server/src/parser/parser.cpp" "CMakeFiles/server.dir/src/parser/parser.cpp.o" "gcc" "CMakeFiles/server.dir/src/parser/parser.cpp.o.d"
+  "/mnt/e/Prog/Project/Home-Server/src/request/request.cpp" "CMakeFiles/server.dir/src/request/request.cpp.o" "gcc" "CMakeFiles/server.dir/src/request/request.cpp.o.d"
   "/mnt/e/Prog/Project/Home-Server/src/tcp-server/tcp-server.cpp" "CMakeFiles/server.dir/src/tcp-server/tcp-server.cpp.o" "gcc" "CMakeFiles/server.dir/src/tcp-server/tcp-server.cpp.o.d"
   )
 

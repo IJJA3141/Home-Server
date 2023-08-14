@@ -4,6 +4,8 @@ project(Home-Server)
 set(SOURCE_FILES
     ./src/main.cpp
     ./src/tcp-server/tcp-server.cpp
+    ./src/parser/parser.cpp
+    ./src/request/request.cpp
     )
 
   add_executable(server ${SOURCE_FILES})
