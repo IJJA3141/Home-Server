@@ -1,4 +1,2 @@
 # Ignore output
-./HomeServer
-*.o
-./Debug
+Debug/

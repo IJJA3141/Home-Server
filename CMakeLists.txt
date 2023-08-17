@@ -4,8 +4,13 @@ project(Home-Server)
 set(SOURCE_FILES
     ./src/main.cpp
     ./src/tcp-server/tcp-server.cpp
-    ./src/parser/parser.cpp
-    ./src/request/request.cpp
+    ./src/tls-server/tls-server.cpp
     )
 
-  add_executable(server ${SOURCE_FILES})
+set(INC_DIR /usr/local/include)
+set(LINK_DIR /usr/local/lib)
+
+include_directories(${INC_DIR})
+link_directories(${LINK_DIR})
+ADD_EXECUTABLE(server.out ${SOURCE_FILES})
+TARGET_LINK_LIBRARIES(server.out -lpthread -lssl -lcrypto)

@@ -1,11 +1,13 @@
-#include <iostream>
+#include "./tls-server/tls-server.hpp"
 
-#include "./parser/parser.h"
-#include "./request/request.h"
+#include <iostream>
 
 int main(int argc, char *argv[]) {
 
-  http::parse("GET /test/id=4324hkj24h32hkldshjklfdsalhl&q=jfds+jkds HTTP/1.1\nHost: 192.168.1.123:53509\n", 0);
+  http::TlsServer server = http::TlsServer("", "");
+  server.listen("127.0.0.0", 5018);
+
+  std::cout << server.state << std::endl;
 
   return 0;
 }
