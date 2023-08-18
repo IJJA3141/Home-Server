@@ -2,15 +2,18 @@
 #define TCP_SERVER
 
 #include <arpa/inet.h>
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <netinet/in.h>
 #include <string>
 #include <sys/socket.h>
+#include <unistd.h>
 
 namespace http {
 
 struct Client {
-  Client(int* _pSocket);
+  Client(const int* _pSocket);
 
   sockaddr_in client;
   socklen_t size;

@@ -31,7 +31,7 @@ void http::TlsServer::LoadCertificates_(const char *_pCertFile,
     abort();
   }
 
-  if (SSL_CTX_use_PrivateKey_file(this->pCTX_, _pCertFile, SSL_FILETYPE_PEM) <=
+  if (SSL_CTX_use_PrivateKey_file(this->pCTX_, _pKeyFile, SSL_FILETYPE_PEM) <=
       0) {
     ERR_print_errors_fp(stderr);
     abort();
@@ -51,6 +51,7 @@ void http::TlsServer::ShowCerts() {
   char *line;
 
   cert = SSL_get_peer_certificate(this->pSSL);
+  std::cout << "2" << std::endl;
   /*
     if(cert != NULL){
       std::cout << "Server certificate:\n" << X509_NAME_oneline(const X509_NAME
@@ -59,11 +60,12 @@ void http::TlsServer::ShowCerts() {
   */
 }
 
-void http::TlsServer::ConnectionHandler() {
+void http::TlsServer::ConnectionHandler_() {
   while (true) {
     Client client = Client(&this->socket_);
     this->pSSL = SSL_new(this->pCTX_);
     SSL_set_fd(pSSL, client.socket);
+    std::cout << "0" << std::endl;
 
     int bytes;
 
@@ -74,12 +76,16 @@ void http::TlsServer::ConnectionHandler() {
     const char *cpValidMessage =
         "<Body><UserName>aticle<UserName><Password>123<Password><\Body>";
 
+    const char *er = "<Body><p>Hello World</p></Body>";
+
     if (SSL_accept(pSSL) == -1) {
       ERR_print_errors_fp(stderr);
+      std::cout << "1" << std::endl;
     } else {
       this->ShowCerts();
       bytes = SSL_read(this->pSSL, client.buffer, sizeof(client.buffer));
       client.buffer[bytes] = '\0';
+      std::cout << "3" << std::endl;
 
       std::cout << "Client message: " << client.buffer << std::endl;
 
@@ -87,10 +93,13 @@ void http::TlsServer::ConnectionHandler() {
         if (strcmp(cpValidMessage, client.buffer) == 0) {
           SSL_write(this->pSSL, ServerResponse, strlen(ServerResponse));
         } else {
-          SSL_write(this->pSSL, "Invalid message", strlen("Invalid message"));
+          SSL_write(this->pSSL, "HTTP/1.1 400 Bad Request",
+                    strlen("HTTP/1.1 400 Bad Request"));
+          SSL_write(this->pSSL, er, strlen(er));
         }
       } else {
         ERR_print_errors_fp(stderr);
+        std::cout << "4" << std::endl;
       }
     }
   }

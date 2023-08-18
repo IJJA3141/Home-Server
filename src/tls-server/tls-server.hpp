@@ -27,8 +27,7 @@ namespace http {
 
 class TlsServer : public TcpServer {
 public:
-  TlsServer(const char *_pCertFile,
-            const char *_pKeyFile);
+  TlsServer(const char *_pCertFile, const char *_pKeyFile);
 
 private:
   SSL_CTX *pCTX_;
@@ -36,7 +35,7 @@ private:
 
   void InitServerCTX_();
   void LoadCertificates_(const char *_pCertFile, const char *_pKeyFile);
-  void ConnectionHandler();
+  void ConnectionHandler_() override;
   void ShowCerts();
 };
 

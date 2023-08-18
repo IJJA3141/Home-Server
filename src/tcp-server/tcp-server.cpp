@@ -1,16 +1,16 @@
 #include "./tcp-server.hpp"
-#include <cstring>
-#include <unistd.h>
+#include <cerrno>
 
-http::Client::Client(int *_pSocket) {
+http::Client::Client(const int *_pSocket) {
   this->size = sizeof(this->client);
 
   this->socket =
       accept(*_pSocket, (struct sockaddr *)&this->client, &this->size);
 
   if (this->socket == -1) {
-    std::cerr << "Connection with the client failed.";
-    return;
+    std::cerr << "Connection with the client failed.\n" << errno << std::endl;
+    strerror(errno);
+    abort();
   }
 
   return;
@@ -28,13 +28,13 @@ http::TcpServer::TcpServer() {
     return;
   };
 
+  std::cout << "socket: " << this->socket_ << std::endl;
+
   this->state = State::initialized;
   return;
 }
 
 void http::TcpServer::ConnectionHandler_() {
-  int it = 0;
-
   Client client = Client(&this->socket_);
 
   while (true) {
@@ -50,8 +50,7 @@ void http::TcpServer::ConnectionHandler_() {
       break;
     }
 
-    std::cout << "Received:\nit: " << it << "   "
-              << std::string(client.buffer, 0, bytesRecv);
+    std::cout << "Received:\nit: " << std::string(client.buffer, 0, bytesRecv);
 
     send(client.socket, client.buffer, bytesRecv + 1, 0);
   }
@@ -66,7 +65,7 @@ void http::TcpServer::listen(std::string _address, int _port) {
   this->state = State::binding;
 
   this->hint_.sin_family = AF_INET;
-  this->hint_.sin_port = htonl(_port);
+  this->hint_.sin_port = htons(_port);
   inet_pton(AF_INET, _address.c_str(), &this->hint_.sin_addr);
 
   if (bind(this->socket_, (struct sockaddr *)&this->hint_.sin_addr,
@@ -90,7 +89,7 @@ void http::TcpServer::listen(std::string _address, int _port) {
             << std::endl;
 
   std::cout << "Received call..." << std::endl;
-  close(this->socket_);
 
-  this->ConnectionHandler_(); 
+  this->ConnectionHandler_();
+  close(this->socket_);
 }
