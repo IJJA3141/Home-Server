@@ -36,7 +36,6 @@ private:
   void InitServerCTX_();
   void LoadCertificates_(const char *_pCertFile, const char *_pKeyFile);
   void ConnectionHandler_() override;
-  void ShowCerts();
 };
 
 } // namespace http

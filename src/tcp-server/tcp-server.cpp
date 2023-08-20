@@ -1,5 +1,12 @@
 #include "./tcp-server.hpp"
+#include <arpa/inet.h>
+#include <asm-generic/socket.h>
 #include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <netinet/in.h>
+#include <ostream>
 
 http::Client::Client(const int *_pSocket) {
   this->size = sizeof(this->client);
@@ -31,6 +38,16 @@ http::TcpServer::TcpServer() {
   std::cout << "socket: " << this->socket_ << std::endl;
 
   this->state = State::initialized;
+
+  std::cout << "Setting server options..." << std::endl;
+
+  int opt = 1;
+  if (setsockopt(this->socket_, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt,
+                 sizeof(opt))) {
+    std::cout << "Setting options failed." << std::endl;
+    abort();
+  }
+
   return;
 }
 
@@ -61,16 +78,26 @@ void http::TcpServer::ConnectionHandler_() {
 }
 
 void http::TcpServer::listen(std::string _address, int _port) {
-  std::cout << "Biding socket to sockaddr..." << std::endl;
+  std::cout << "Biding socket to sockaddr...\nAddress: " << _address
+            << "\nPort: " << _port << std::endl;
   this->state = State::binding;
 
   this->hint_.sin_family = AF_INET;
+  this->hint_.sin_addr.s_addr = inet_addr(_address.c_str());
   this->hint_.sin_port = htons(_port);
-  inet_pton(AF_INET, _address.c_str(), &this->hint_.sin_addr);
+  //inet_pton(AF_INET, _address.c_str(), &this->hint_.sin_addr);
+
+  /*
+  if (inet_pton(AF_INET, _address.c_str(), &this->hint_.sin_addr) != 1) {
+    std::cerr << "inet pton failed.";
+    this->state = State::brocken;
+    return;
+  };
+  */
 
   if (bind(this->socket_, (struct sockaddr *)&this->hint_.sin_addr,
            sizeof(this->hint_)) == -1) {
-    std::cerr << "IP/PORT binding failed.";
+    std::cerr << "IP/PORT binding failed.\n" << strerror(errno);
     this->state = State::brocken;
     return;
   }
