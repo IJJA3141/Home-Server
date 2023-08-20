@@ -1,25 +1,21 @@
 #include "./tls-server.hpp"
-#include <cstdio>
-#include <cstring>
-#include <openssl/ssl.h>
-#include <sys/socket.h>
 
 http::TlsServer::TlsServer(const char *_pCertFile, const char *_pKeyFile)
     : http::TcpServer() {
-  SSL_library_init();
-
   this->InitServerCTX_();
   this->LoadCertificates_(_pCertFile, _pKeyFile);
 }
 
 void http::TlsServer::InitServerCTX_() {
+  std::cout << "Loading OpenSSL library..." << std::endl;
+  SSL_library_init();
   OpenSSL_add_all_algorithms();
   SSL_load_error_strings();
 
   this->pCTX_ = SSL_CTX_new(TLS_method()); // TLSv1_2_server_method());
 
   if (this->pCTX_ == NULL) {
-    ERR_print_errors_fp(stderr);
+    std::cerr << "Loading SSL method failed.\n" << stderr << std::endl;
     abort();
   }
 
@@ -28,14 +24,16 @@ void http::TlsServer::InitServerCTX_() {
 
 void http::TlsServer::LoadCertificates_(const char *_pCertFile,
                                         const char *_pKeyFile) {
+  std::cout << "Loading certificate..." << std::endl;
   if (SSL_CTX_use_certificate_file(this->pCTX_, _pCertFile, SSL_FILETYPE_PEM) <=
       0) {
-    ERR_print_errors_fp(stderr);
+    std::cerr << "Loading certificate file failed.\n" << stderr << std::endl;
     abort();
   }
 
   if (SSL_CTX_use_PrivateKey_file(this->pCTX_, _pKeyFile, SSL_FILETYPE_PEM) <=
       0) {
+    std::cerr << "Loading certificate key failed.\n" << stderr << std::endl;
     ERR_print_errors_fp(stderr);
     abort();
   }
