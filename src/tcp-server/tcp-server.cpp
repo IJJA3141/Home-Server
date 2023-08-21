@@ -1,19 +1,6 @@
 #include "./tcp-server.hpp"
-
-http::Client::Client(const int *_pSocket) {
-  this->size = sizeof(this->client);
-
-  this->socket =
-      accept(*_pSocket, (struct sockaddr *)&this->client, &this->size);
-
-  if (this->socket == -1) {
-    std::cerr << "Connection with the client failed.\n"
-              << strerror(errno) << std::endl;
-    abort();
-  }
-
-  return;
-}
+#include "../macro.hpp"
+#include <cstring>
 
 http::TcpServer::TcpServer() {
   std::cout << "Creating server socket..." << std::endl;
@@ -57,20 +44,38 @@ void http::TcpServer::listen() {
   }
 
   std::cout << "Received call..." << std::endl;
-  this->ConnectionHandler_();
-  close(this->socket_);
+
+  while (true)
+    this->vThread.push_back(new std::thread(http::TcpServer::Connect,
+                                            this->GetClient_(&this->socket_)));
+
+  return;
 }
 
-void http::TcpServer::ConnectionHandler_() {
-  Client client = Client(&this->socket_);
-  int bytesRecv = recv(client.socket, client.buffer, 4096, 0);
+void http::TcpServer::Connect(http::Client _client) {
+  std::cout << "New client connected." << std::endl;
 
-  send(client.socket, "HTTP/1.1 301 Moved Permanently",
-       strlen("HTTP/1.1 301 Moved Permanently"), 0);
-  send(client.socket, "Location: https://ijja.dev",
-       strlen("Location: https://ijja.dev"), 0);
+  size_t bytes = _client.Read();
+  if (bytes < 0) {
+    std::cerr << "Faild to read client message.\n"
+              << strerror(errno) << std::endl;
+    _client.Send(HTTP SERVERR END);
+  } else {
+    _client.buffer[bytes] = '\0';
 
-  close(client.socket);
+    std::cout << "Client message:\n" << _client.buffer << std::endl;
+
+    // parse message
+    // call adequate function
+    // send response
+    //
+    // paser(_client.buffer);
+    // message = lamdafunction[ request ];
+    // _client.send(message);
+    //
+  }
+
+  close(_client.socket);
 
   return;
 }

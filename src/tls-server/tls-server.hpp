@@ -14,11 +14,12 @@ public:
 
 private:
   SSL_CTX *pCTX_;
-  SSL *pSSL;
 
   void InitServerCTX_();
   void LoadCertificates_(const char *_pCertFile, const char *_pKeyFile);
-  void ConnectionHandler_() override;
+  inline Client GetClient_(const int *_pSocket) override {
+    return http::SSLClient(this->pCTX_, _pSocket);
+  };
 };
 
 } // namespace http
