@@ -7,6 +7,7 @@ set(SOURCE_FILES
     ./src/tls-server/tls-server.cpp
     ./src/client/client.cpp
     ./src/client/ssl-client.cpp
+    ./src/parser/parser.cpp
     )
 
 set(INC_DIR /usr/local/include)
