@@ -6,20 +6,10 @@
 #include <string>
 #include <thread>
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-char *pathCert = (char *)"./ssl/cert.pem";
-char *pathKey = (char *)"./ssl/key.pem";
+char *pathCert = (char *)"/etc/letsencrypt/live/ijja.dev/cert.pem";
+char *pathKey = (char *)"./etc/letsencrypt/live/ijja.dev/privkey.pem";
 char *httpPort = (char *)"80";
 char *httpsPort = (char *)"443";
-=======
-=======
->>>>>>> 2da9a24446a5b0fd3263415bfc9966b7863ca15f
-char *pathCert = "/etc/letsencrypt/live/ijja.dev/cert.pem";
-char *pathKey = "./etc/letsencrypt/live/ijja.dev/privkey.pem";
-char *httpPort = "80";
-char *httpsPort = "443";
->>>>>>> 2da9a24446a5b0fd3263415bfc9966b7863ca15f
 
 void parse(int _argc, char *_argv[]) {
   if (_argc == 2)
@@ -122,7 +112,8 @@ int main(int _argc, char *_argv[]) {
   // http::Request req3 = http::Request(m3);
   // http::Request req4 = http::Request(m4);
 
-  std::cout << "\n\n" << req1.body << "\n"
+  std::cout << "\n\n"
+            << req1.body << "\n"
             << req1.path << "\n"
             << req1.upgrade << "\n"
             << req1.contentSize << "\n"
