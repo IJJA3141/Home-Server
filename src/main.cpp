@@ -7,11 +7,14 @@
 #include <thread>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 char *pathCert = (char *)"./ssl/cert.pem";
 char *pathKey = (char *)"./ssl/key.pem";
 char *httpPort = (char *)"80";
 char *httpsPort = (char *)"443";
 =======
+=======
+>>>>>>> 2da9a24446a5b0fd3263415bfc9966b7863ca15f
 char *pathCert = "/etc/letsencrypt/live/ijja.dev/cert.pem";
 char *pathKey = "./etc/letsencrypt/live/ijja.dev/privkey.pem";
 char *httpPort = "80";
