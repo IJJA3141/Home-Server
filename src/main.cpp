@@ -3,8 +3,8 @@
 
 #include <thread>
 
-char *pathCert = "./ssl/cert.pem";
-char *pathKey = "./ssl/key.pem";
+char *pathCert = "/etc/letsencrypt/live/ijja.dev/cert.pem";
+char *pathKey = "./etc/letsencrypt/live/ijja.dev/privkey.pem";
 char *httpPort = "80";
 char *httpsPort = "443";
 
