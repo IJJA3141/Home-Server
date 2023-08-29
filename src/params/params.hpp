@@ -5,15 +5,21 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 class Parser {
 public:
-  Parser(int _argc, char _argv[]);
-  bool find(std::string _str);
+  std::unordered_map<char, std::vector<char>> map;
+  
+  Parser(const char *_err, std::vector<const char *> _vStr);
+  void parse(int _argc, char* _argv[]);
+  bool find(const char *_pChar);
 
+  std::vector<const char *> vStr_;
 private:
-  std::map<std::string, std::vector<std::string>> map_;
+  const char *err_;
 };
 
 #endif // !PARAMS
