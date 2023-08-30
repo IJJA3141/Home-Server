@@ -1,25 +1,19 @@
 #ifndef PARAMS
 #define PARAMS
 
+#include <algorithm>
 #include <cstring>
-#include <iostream>
+#include <functional>
 #include <map>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 
 class Parser {
 public:
-  std::unordered_map<char, std::vector<char>> map;
-  
-  Parser(const char *_err, std::vector<const char *> _vStr);
-  void parse(int _argc, char* _argv[]);
-  bool find(const char *_pChar);
+  Parser();
+  void add(const char *_pChar, std::function<void(char *_char)> _fn);
+  void parse(int _argc, char *_argv[]);
 
-  std::vector<const char *> vStr_;
 private:
-  const char *err_;
+  std::map<const char, std::function<void(char *_char)>> map_;
 };
 
 #endif // !PARAMS

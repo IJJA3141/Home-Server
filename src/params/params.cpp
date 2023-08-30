@@ -1,40 +1,25 @@
 #include "./params.hpp"
-#include <algorithm>
-#include <cstdlib>
-#include <cstring>
 
-Parser::Parser(const char *_err, std::vector<const char *> _vStr) {
-  this->err_ = _err;
-  this->vStr_ = _vStr;
+Parser::Parser() {
+  this->map_ = {};
+
   return;
 }
 
-bool Parser::find(const char *_pChar) {
-  auto l = [=](const char *__pChar) {
-    return strcmp(__pChar, _pChar) == 0;
-  };
+void Parser::add(const char *_pChar, std::function<void(char *_char)> _fn) {
+  this->map_[*_pChar] = _fn;
 
-  return (std::find_if(this->vStr_.begin(), this->vStr_.end(), l) !=
-          this->vStr_.end());
+  return;
 }
 
 void Parser::parse(int _argc, char *_argv[]) {
-  int last = -1;
+  char *str;
 
   for (int i = 1; i < _argc; i++) {
-    if (this->find(_argv[i])) {
-      std::cout << "New key: " << _argv[i] << "\n";
-      last = i;
-      this->map.insert({*_argv[i], {}});
-    } else {
-      if (last == -1) {
-        std::cout << this->err_ << std::endl;
-        abort();
-      }
-
-      std::cout << "New value: " << _argv[i] << "\n";
-      this->map[*_argv[last]].push_back(*_argv[i]);
-    }
+    if (this->map_.find(*_argv[i]) != this->map_.end()) {
+      this->map_[*_argv[i]](str);
+    } else
+      str = _argv[i];
   }
 
   return;
