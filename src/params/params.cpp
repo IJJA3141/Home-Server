@@ -11,7 +11,6 @@ Parser::Parser(const char *_err, std::vector<const char *> _vStr) {
 
 bool Parser::find(const char *_pChar) {
   auto l = [=](const char *__pChar) {
-    std::cout << "\n" << *__pChar << " : " << _pChar << std::endl;
     return strcmp(__pChar, _pChar) == 0;
   };
 
