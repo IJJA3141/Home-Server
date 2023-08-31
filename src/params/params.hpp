@@ -1,19 +1,12 @@
 #ifndef PARAMS
 #define PARAMS
 
-#include <algorithm>
-#include <cstring>
-#include <functional>
-#include <map>
+#include <iostream>
+#include <stdlib.h>
+#include <string.h>
 
-class Parser {
-public:
-  Parser();
-  void add(const char *_pChar, std::function<void(char *_char)> _fn);
-  void parse(int _argc, char *_argv[]);
-
-private:
-  std::map<const char, std::function<void(char *_char)>> map_;
-};
+void parse(int _argc, char *_argv[], const char *&_pHttpPort,
+           const char *&_pHttpsPort, const char *&_pKeyPaht,
+           const char *&_pCertPath, bool &_save, bool &_reset);
 
 #endif // !PARAMS
