@@ -1,31 +1,21 @@
 #include "./params/params.hpp"
-#include "./settings/settings.hpp"
+#include "./tcp-server/tcp-server.hpp"
+#include "./tls-server/tls-server.hpp"
+
+#include <thread>
 
 int main(int _argc, char *_argv[]) {
-  const char *pHttpPort;
-  const char *pHttpsPort;
-  const char *pKeyPath;
-  const char *pCertPath;
-  const char *pSettingsPath = "./data/settings.txt";
-  bool saveState = true;
-  bool reset = false;
+  Params params = Params(_argc, _argv);
 
-  char buffer[sizeof(_argv[0]) + strlen(pSettingsPath)];
-  strcpy(buffer, _argv[0]);
-  strcpy(buffer + sizeof(_argv[0]), pSettingsPath);
+  http::TcpServer httpServer = http::TcpServer();
+  http::TlsServer httpsServer =
+      http::TlsServer(params.cert.c_str(), params.key.c_str());
 
-  load(pHttpPort, pHttpsPort, pKeyPath, pCertPath, pSettingsPath);
-  parse(_argc, _argv, pHttpPort, pHttpsPort, pKeyPath, pCertPath, saveState,
-        reset, pSettingsPath);
+  httpServer.bind(params.http.c_str());
+  httpsServer.bind(params.https.c_str());
 
-  if (reset) {
-    pHttpPort = "80";
-    pHttpsPort = "443";
-    pKeyPath = "./cert/key.pem";
-    pCertPath = "./cert/cert.pem";
-  }
-
-  save(pHttpPort, pHttpsPort, pKeyPath, pCertPath, pSettingsPath);
+  std::thread http(&http::TcpServer::listen, &httpServer);
+  std::thread https(&http::TlsServer::listen, &httpsServer);
 
   return 0;
 }

@@ -1,54 +1,47 @@
 #include "./params.hpp"
-#include <cstring>
 
-void parse(int _argc, char *_argv[], const char *&_pHttpPort,
-           const char *&_pHttpsPort, const char *&_pKeyPath,
-           const char *&_pCertPath, bool &_save, bool &_reset,
-           const char *&_pSettingsPath) {
+Params::Params(int _argc, char *_argv[]) {
+  bool save = true;
+  bool reset = false;
+
+  this->load_();
+
+  std::cout << "Parsing..." << std::endl;
+
   for (int i = 1; i < _argc; i++) {
     if (strcmp("-?", _argv[i]) == 0 || strcmp("--help", _argv[i]) == 0) {
 
-      std::cout
-          << "usage: server  [<options>] [<arguments]\r\n"
-             "The following options are available:\r\n"
-             "-?, --help                                          Shows "
-             "available options\r\n"
-             "-n, --no-save                                       Disable "
-             "options saving\r\n"
-             "-r, --reset                                         Reset to "
-             "default options, can be used with -n\r\n"
-             "-i, --import <path to txt file of new settings>     Import "
-             "settings from txt file at specified path\r\n"
-             "                                                    /!\\ "
-             "Important the txt file should folow this format:\r\n"
-             "                                                    Http server "
-             "port\r\n"
-             "                                                    Https server "
-             "port\r\n"
-             "                                                    Certificate "
-             "key path\r\n"
-             "                                                    Certificate "
-             "path\r\n"
-             "-h, --http-port <port>                              Change port "
-             "on witch http server will listen\r\n"
-             "-s, --https-port <port>                             Change port "
-             "on witch https server will listen\r\n"
-             "-c, --cert-path <path to certificate>               Change "
-             "certificate path\r\n"
-             "-k, --key-path <path to certificate key>            Change "
-             "certificate key path\r\n"
-          << std::endl;
+      std::cout << "usage: server  [<options>] [<arguments]\r\n"
+                   "The following options are available:\r\n"
+                   "-?, --help                                  Shows "
+                   "available options\r\n"
+                   "-n, --no-save                               Disable "
+                   "options saving\r\n"
+                   "-r, --reset                                 Reset to "
+                   "default options, can be used with -n\r\n"
+                   "                                            Http server "
+                   "port\r\n"
+                   "                                            Https server "
+                   "port\r\n"
+                   "                                            Certificate "
+                   "key path\r\n"
+                   "                                            Certificate "
+                   "path\r\n"
+                   "-h, --http-port <port>                      Change port "
+                   "on witch http server will listen\r\n"
+                   "-s, --https-port <port>                     Change port "
+                   "on witch https server will listen\r\n"
+                   "-c, --cert-path <path to certificate>       Change "
+                   "certificate path\r\n"
+                   "-k, --key-path <path to certificate key>    Change "
+                   "certificate key path\r\n"
+                << std::endl;
       abort();
 
     } else if (strcmp("-c", _argv[i]) == 0 ||
                strcmp("--cert-path", _argv[i]) == 0) {
       if (++i < _argc) {
-        _pCertPath = _argv[i];
-
-        // debug only
-        //
-        std::cout << "Path to certificate: " << _pCertPath << std::endl;
-
+        this->cert = _argv[i];
       } else {
         std::cout << "Too many arguments\r\n" << std::endl;
         abort();
@@ -56,12 +49,7 @@ void parse(int _argc, char *_argv[], const char *&_pHttpPort,
     } else if (strcmp("-k", _argv[i]) == 0 ||
                strcmp("--key-path", _argv[i]) == 0) {
       if (++i < _argc) {
-        _pKeyPath = _argv[i];
-
-        // debug only
-        //
-        std::cout << "Path to certificate key: " << _pKeyPath << std::endl;
-
+        this->key = _argv[i];
       } else {
         std::cout << "Too many arguments\r\n" << std::endl;
         abort();
@@ -69,12 +57,7 @@ void parse(int _argc, char *_argv[], const char *&_pHttpPort,
     } else if (strcmp("-h", _argv[i]) == 0 ||
                strcmp("--http-port", _argv[i]) == 0) {
       if (++i < _argc) {
-        _pHttpPort = _argv[i];
-
-        // debug only
-        //
-        std::cout << "Http port: " << _pHttpPort << std::endl;
-
+        this->http = _argv[i];
       } else {
         std::cout << "Too many arguments\r\n" << std::endl;
         abort();
@@ -82,58 +65,17 @@ void parse(int _argc, char *_argv[], const char *&_pHttpPort,
     } else if (strcmp("-s", _argv[i]) == 0 ||
                strcmp("--https-port", _argv[i]) == 0) {
       if (++i < _argc) {
-        _pHttpsPort = _argv[i];
-
-        // debug only
-        //
-        std::cout << "Https port: " << _pHttpsPort << std::endl;
-
+        this->https = _argv[i];
       } else {
         std::cout << "Too many arguments\r\n" << std::endl;
         abort();
       }
     } else if (strcmp("-n", _argv[i]) == 0 ||
                strcmp("--no-save", _argv[i]) == 0) {
-      _save = false;
-
-      // debug only
-      //
-      std::cout << "No save" << std::endl;
-
+      save = false;
     } else if (strcmp("-r", _argv[i]) == 0 ||
                strcmp("--reset", _argv[i]) == 0) {
-      _reset = true;
-
-      // debug only
-      //
-      std::cout << "Reset" << std::endl;
-
-    } else if (strcmp("-i", _argv[i]) == 0 ||
-               strcmp("--import", _argv[i]) == 0) {
-      if (++i < _argc) {
-        _pSettingsPath = _argv[i];
-
-        // debug only
-        //
-        std::cout << "Settings path:" << _pSettingsPath << std::endl;
-        char buffer[sizeof(_argv[0]) + sizeof(_pSettingsPath)];
-  strcpy(buffer, _argv[0]);
-  strcpy(buffer + sizeof(_argv[0]), _pSettingsPath);
-  // debug only
-  //
-  std::cout << "New path: " << buffer << std::endl;
-
-  _pSettingsPath = buffer;
-
-  // debug only
-  //
-  std::cout << "New new path: " << _pSettingsPath << std::endl;
-
-
-      } else {
-        std::cout << "Too many arguments\r\n" << std::endl;
-        abort();
-      }
+      reset = true;
     } else {
       std::cout << _argv[i]
                 << " is not a valid option\r\nUse -h for more informations"
@@ -142,4 +84,61 @@ void parse(int _argc, char *_argv[], const char *&_pHttpPort,
     }
   }
 
+  if (reset) {
+    std::cout << "Reseting..." << std::endl;
+    this->http = "80";
+    this->https = "443";
+    this->key = "./data/cert/key.pem";
+    this->cert = "./date/cert/cert.pem";
+  } else {
   }
+
+  if (save)
+    this->save_();
+
+  return;
+}
+
+void Params::load_() {
+  std::cout << "Loading..." << std::endl;
+
+  std::fstream stream;
+  stream.open("./data/settings.txt", std::ios::in);
+
+  if (stream.is_open()) {
+    std::getline(stream, this->http);
+    std::getline(stream, this->https);
+    std::getline(stream, this->key);
+    std::getline(stream, this->cert);
+
+    stream.close();
+  } else {
+    std::cout << "Falied to load settings at " << this->path_ << std::endl;
+    abort();
+  }
+
+  return;
+}
+
+void Params::save_() {
+  std::cout << "Saving..." << std::endl;
+
+  std::fstream stream;
+  stream.open("./data/settings.txt", std::ios::out);
+
+  if (stream.is_open()) {
+    stream.clear();
+
+    stream << this->http << "\n"
+           << this->https << "\n"
+           << this->key << "\n"
+           << this->cert << std::endl;
+
+    stream.close();
+  } else {
+    std::cout << "Failed to save settings" << std::endl;
+    abort();
+  }
+
+  return;
+}

@@ -1,4 +1,4 @@
 80
 443
-./cert/key.pem
-./cert/cert.pem
+./data/cert/key.pem
+./date/cert/cert.pem

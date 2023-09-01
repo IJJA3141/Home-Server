@@ -18,7 +18,7 @@ public:
   std::vector<std::thread *> vThread;
 
   TcpServer();
-  void bind(char *_port);
+  void bind(const char *_port);
   void listen();
   static void Connect(http::Client _client);
 

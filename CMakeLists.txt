@@ -8,7 +8,6 @@ set(SOURCE_FILES
     ./src/client/client.cpp
     ./src/client/ssl-client.cpp
     ./src/parser/parser.cpp
-    ./src/settings/settings.cpp
     ./src/params/params.cpp
     )
 

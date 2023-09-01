@@ -21,7 +21,7 @@ http::TcpServer::TcpServer() {
   return;
 }
 
-void http::TcpServer::bind(char *_port) {
+void http::TcpServer::bind(const char *_port) {
   std::cout << "Biding socket to sockaddr on port: " << _port << "..."
             << std::endl;
   this->hint_.sin_family = AF_INET;
