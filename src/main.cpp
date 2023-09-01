@@ -13,19 +13,10 @@ int main(int _argc, char *_argv[]) {
   char buffer[sizeof(_argv[0]) + strlen(pSettingsPath)];
   strcpy(buffer, _argv[0]);
   strcpy(buffer + sizeof(_argv[0]), pSettingsPath);
-  // debug only
-  //
-  std::cout << "New path: " << buffer << std::endl;
 
-  pSettingsPath = buffer;
-
-  // debug only
-  //
-  std::cout << "New new path: " << pSettingsPath << std::endl;
-
+  load(pHttpPort, pHttpsPort, pKeyPath, pCertPath, pSettingsPath);
   parse(_argc, _argv, pHttpPort, pHttpsPort, pKeyPath, pCertPath, saveState,
         reset, pSettingsPath);
-  load(pHttpPort, pHttpsPort, pKeyPath, pCertPath, pSettingsPath);
 
   if (reset) {
     pHttpPort = "80";

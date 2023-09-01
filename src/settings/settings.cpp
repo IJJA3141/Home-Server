@@ -1,24 +1,26 @@
 #include "./settings.hpp"
 #include <cstring>
 
+std::string httpPort;
+std::string httpsPort;
+std::string keyPath;
+std::string certPath;
+
 void load(const char *&_pHttpPort, const char *&_pHttpsPort,
           const char *&_pKeyPath, const char *&_pCertPath,
           const char *_pSettingsPath) {
   std::fstream stream;
   stream.open(_pSettingsPath, std::ios::in);
 
-  if (stream.is_open()) {
-    std::string str;
- 
-    std::getline(stream, str);
-    strcpy
-
-    std::getline(stream, str1);
-    _pHttpsPort = str1.c_str();
-    std::getline(stream, str2);
-    _pKeyPath = str2.c_str();
-    std::getline(stream, str3);
-    _pCertPath = str3.c_str();
+  if (stream.is_open()) { 
+    std::getline(stream, httpPort);
+    _pHttpPort = httpPort.c_str();
+    std::getline(stream, httpsPort);
+    _pHttpsPort = httpsPort.c_str();
+    std::getline(stream, keyPath);
+    _pKeyPath = keyPath.c_str();
+    std::getline(stream, certPath);
+    _pCertPath = certPath.c_str();
 
     // debug only
     //
