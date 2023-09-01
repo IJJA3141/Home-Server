@@ -2,11 +2,14 @@
 #define PARSER
 
 #include <cstddef>
+#include <istream>
+#include <streambuf>
 #include <string>
 
 namespace http {
 
 enum Method {
+  NONE,
   GET,
   HEAD,
   POST,
@@ -16,20 +19,46 @@ enum Method {
   OPTIONS,
   TRACE,
   PATCH,
-  NONE
+};
+
+enum Connection {
+  ALL,
+  KEEPALIVE,
+  CLOSE,
+};
+
+struct Header {
+  std::string host;
+  std::string agent;
+  std::string accept;
+  std::string lang;
+  std::string encoding;
+  http::Connection connection;
+  bool upgrade;
+  std::string type;
+  int length;
 };
 
 struct Request {
-  Method method;
-  const char *path;
-  bool upgrade;
-  size_t contentSize;
-  const char *body;
-
-  Request(char *_message);
+  http::Method method;
+  std::string uri;
+  std::string file;
+  std::string version;
+  http::Header header;
+  std::string body;
 };
 
-class Parser {};
+struct membuf : std::streambuf {
+  inline membuf(int _size, char _char[]) {
+    this->setg(_char, _char, _char + _size);
+  }
+};
+
+class Parser {
+  Parser(std::istream)
+
+};
+
 } // namespace http
 
 #endif // !PARSER
