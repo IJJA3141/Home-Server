@@ -1,8 +1,18 @@
 #include "./tcp-server.hpp"
 #include "../macro.hpp"
 #include <cstring>
+#include <string>
 
-http::TcpServer::TcpServer() {
+int http::TcpServer::serverCount = 0;
+
+http::TcpServer::TcpServer(const char *_name) {
+  std::cout << "Server initialization..." << std::endl;
+  if (_name == nullptr) {
+    this->name = "Server " + std::to_string(http::TcpServer::serverCount);
+  } else {
+    this->name = _name;
+  }
+
   std::cout << "Creating server socket..." << std::endl;
   this->socket_ = socket(AF_INET, SOCK_STREAM, 0);
   if (this->socket_ == -1) {
@@ -47,12 +57,13 @@ void http::TcpServer::listen() {
 
   while (true)
     this->vThread.push_back(new std::thread(http::TcpServer::Connect,
-                                            this->GetClient_(&this->socket_)));
+                                            this->GetClient_(&this->socket_),
+                                            this->name.c_str()));
 
   return;
 }
 
-void http::TcpServer::Connect(http::Client _client) {
+void http::TcpServer::Connect(http::Client _client, const char *_name) {
   std::cout << "New client connected." << std::endl;
 
   size_t bytes = _client.Read();
@@ -63,7 +74,7 @@ void http::TcpServer::Connect(http::Client _client) {
   } else {
     _client.buffer[bytes] = '\0';
 
-    std::cout << "Client message:\n" << _client.buffer << std::endl;
+    std::cout << _name << ":\nClient message:\n" << _client.buffer << std::endl;
 
     // parse message
     // call adequate function

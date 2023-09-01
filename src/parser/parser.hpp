@@ -6,7 +6,18 @@
 
 namespace http {
 
-enum Method { GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE, PATCH, NONE };
+enum Method {
+  GET,
+  HEAD,
+  POST,
+  PUT,
+  DELETE,
+  CONNECT,
+  OPTIONS,
+  TRACE,
+  PATCH,
+  NONE
+};
 
 struct Request {
   Method method;
@@ -17,6 +28,8 @@ struct Request {
 
   Request(char *_message);
 };
+
+class Parser {};
 } // namespace http
 
 #endif // !PARSER

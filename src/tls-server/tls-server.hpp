@@ -10,7 +10,8 @@ namespace http {
 
 class TlsServer : public TcpServer {
 public:
-  TlsServer(const char *_pCertFile, const char *_pKeyFile);
+  TlsServer(const char *_pCertFile, const char *_pKeyFile,
+            const char *_name = nullptr);
 
 private:
   SSL_CTX *pCTX_;

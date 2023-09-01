@@ -1,7 +1,8 @@
 #include "./tls-server.hpp"
 
-http::TlsServer::TlsServer(const char *_pCertFile, const char *_pKeyFile)
-    : http::TcpServer() {
+http::TlsServer::TlsServer(const char *_pCertFile, const char *_pKeyFile,
+                           const char *_name)
+    : http::TcpServer(_name) {
   this->InitServerCTX_();
   this->LoadCertificates_(_pCertFile, _pKeyFile);
 }

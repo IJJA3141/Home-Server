@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
+#include <string>
 #include <sys/socket.h>
 #include <thread>
 #include <unistd.h>
@@ -16,13 +17,16 @@ namespace http {
 class TcpServer {
 public:
   std::vector<std::thread *> vThread;
+  std::string name;
 
-  TcpServer();
+  TcpServer(const char *_name = nullptr);
   void bind(const char *_port);
   void listen();
-  static void Connect(http::Client _client);
+  static void Connect(http::Client _client, const char *_name);
 
 protected:
+  static int serverCount;
+
   int socket_;
   struct sockaddr_in hint_;
   int port_;

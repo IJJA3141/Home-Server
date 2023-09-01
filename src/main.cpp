@@ -7,9 +7,9 @@
 int main(int _argc, char *_argv[]) {
   Params params = Params(_argc, _argv);
 
-  http::TcpServer httpServer = http::TcpServer();
+  http::TcpServer httpServer = http::TcpServer("Http server");
   http::TlsServer httpsServer =
-      http::TlsServer(params.cert.c_str(), params.key.c_str());
+      http::TlsServer(params.cert.c_str(), params.key.c_str(), "Https server");
 
   httpServer.bind(params.http.c_str());
   httpsServer.bind(params.https.c_str());
