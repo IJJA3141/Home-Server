@@ -1,7 +1,10 @@
 #ifndef PARSER
 #define PARSER
 
+#include <algorithm>
+#include <cctype>
 #include <cstddef>
+#include <iostream>
 #include <istream>
 #include <streambuf>
 #include <string>
@@ -28,36 +31,41 @@ enum Connection {
 };
 
 struct Header {
-  std::string host;
-  std::string agent;
-  std::string accept;
-  std::string lang;
-  std::string encoding;
-  http::Connection connection;
-  bool upgrade;
-  std::string type;
-  int length;
+  std::string host = "NULL";
+  std::string agent = "NULL";
+  std::string accept = "NULL";
+  std::string lang = "NULL";
+  std::string encoding = "NULL";
+  http::Connection connection = http::Connection::ALL;
+  bool upgrade = false;
+  std::string type = "NULL";
+  int length = -1;
 };
 
 struct Request {
   http::Method method;
   std::string uri;
   std::string file;
+  std::string arg;
   std::string version;
   http::Header header;
   std::string body;
 };
 
-struct membuf : std::streambuf {
-  inline membuf(int _size, char _char[]) {
-    this->setg(_char, _char, _char + _size);
-  }
+class Buffer {
+public:
+  bool next;
+
+  Buffer(std::string _str);
+  std::string getLine(int _skip = 0);
+
+private:
+  std::string str_;
+  size_t pin_;
+  size_t end_;
 };
 
-class Parser {
-  Parser(std::istream)
-
-};
+Request parse(http::Buffer _buffer);
 
 } // namespace http
 
