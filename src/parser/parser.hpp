@@ -12,7 +12,6 @@
 namespace http {
 
 enum Method {
-  NONE,
   GET,
   HEAD,
   POST,

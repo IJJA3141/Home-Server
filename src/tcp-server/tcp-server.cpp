@@ -1,6 +1,9 @@
 #include "./tcp-server.hpp"
 #include "../macro.hpp"
+#include "../parser/parser.hpp"
+
 #include <cstring>
+#include <functional>
 #include <string>
 
 int http::TcpServer::serverCount = 0;
@@ -68,25 +71,36 @@ void http::TcpServer::Connect(http::Client _client, const char *_name) {
 
   size_t bytes = _client.Read();
   if (bytes < 0) {
-    std::cerr << "Faild to read client message.\n"
+    std::cerr << "Faild to read client message sended to" << _name << "\n"
               << strerror(errno) << std::endl;
     _client.Send(HTTP SERVERR END);
   } else {
     _client.buffer[bytes] = '\0';
+    http::Request req = http::parse(std::string(_client.buffer));
 
-    std::cout << _name << ":\nClient message:\n" << _client.buffer << std::endl;
-
-    // parse message
-    // call adequate function
-    // send response
-    //
-    // paser(_client.buffer);
-    // message = lamdafunction[ request ];
-    // _client.send(message);
-    //
+    std::cout << "Request from " << _name << std::endl;
+    std::cout << "Method: " << req.method << "\nUri: " << req.uri
+              << "\nFile: " << req.file << "\nArg: " << req.arg
+              << "\nVersion: " << req.version
+              << "\n\nHeader______\nHost: " << req.header.host
+              << "\nagent: " << req.header.agent
+              << "\naccept: " << req.header.accept
+              << "\nlang: " << req.header.lang
+              << "\nencoding: " << req.header.encoding
+              << "\nconnection: " << req.header.connection
+              << "\nupgrade: " << req.header.upgrade
+              << "\ntype: " << req.header.type
+              << "\nlength: " << req.header.length << "\n\n\n"
+              << std::endl;
   }
 
   close(_client.socket);
 
+  return;
+}
+
+inline void http::TcpServer::add(http::Method _method, const char *_path,
+                                 std::function<void(void *_pVoid)> _λ) {
+  this->_vMap[_method][_path] = _λ;
   return;
 }

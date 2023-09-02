@@ -2,10 +2,14 @@
 #define TCP_SERVER
 
 #include "../client/client.hpp"
+#include "../parser/parser.hpp"
 
 #include <arpa/inet.h>
+#include <array>
 #include <cstring>
+#include <functional>
 #include <iostream>
+#include <map>
 #include <string>
 #include <sys/socket.h>
 #include <thread>
@@ -23,8 +27,11 @@ public:
   void bind(const char *_port);
   void listen();
   static void Connect(http::Client _client, const char *_name);
+  void add(http::Method _method, const char *_path,
+           std::function<void(void *_pVoid)> _λ);
 
 protected:
+  std::array<std::map<std::string, std::function<void(void *_pVoid)>>, 9> _vMap;
   static int serverCount;
 
   int socket_;
