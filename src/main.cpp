@@ -3,7 +3,12 @@
 #include "./tcp-server/tcp-server.hpp"
 #include "./tls-server/tls-server.hpp"
 
+#include <iostream>
+
 int main(int _argc, char *_argv[]) {
+  for (int i = 0; i < _argc; i++)
+    std::cout << _argv[i] << std::endl;
+
   Params params = Params(_argc, _argv);
 
   http::TcpServer httpServer = http::TcpServer("Http server");
