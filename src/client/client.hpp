@@ -11,6 +11,7 @@ struct Client {
 public:
   char buffer[4096];
   int socket;
+  const char *type;
 
   Client(const int *_pSocket);
   inline virtual size_t Read() {
@@ -26,7 +27,7 @@ protected:
   size_t bufferSize_;
 };
 
-struct SSLClient : public Client {
+class SSLClient : public Client {
 public:
   SSLClient(SSL_CTX *_pCTX, const int *_pSocket);
   inline size_t Read() override {

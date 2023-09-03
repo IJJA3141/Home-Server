@@ -23,5 +23,8 @@ int main(int _argc, char *_argv[]) {
   std::thread http(&http::TcpServer::listen, &httpServer);
   std::thread https(&http::TlsServer::listen, &httpsServer);
 
+  http.join();
+  https.join();
+
   return 0;
 }

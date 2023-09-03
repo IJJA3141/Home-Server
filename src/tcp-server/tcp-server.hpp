@@ -2,6 +2,7 @@
 #define TCP_SERVER
 
 #include "../client/client.hpp"
+#include "../macro.hpp"
 #include "../parser/parser.hpp"
 
 #include <arpa/inet.h>

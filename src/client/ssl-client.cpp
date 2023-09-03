@@ -15,5 +15,7 @@ http::SSLClient::SSLClient(SSL_CTX *_pCTX, const int *_pSocket)
     // abort();
   };
 
+  this->type = "ssl client";
+
   return;
 }

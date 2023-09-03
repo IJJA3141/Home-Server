@@ -89,7 +89,7 @@ Params::Params(int _argc, char *_argv[]) {
     this->http = "80";
     this->https = "443";
     this->key = "./data/cert/key.pem";
-    this->cert = "./date/cert/cert.pem";
+    this->cert = "./data/cert/cert.pem";
   } else {
   }
 

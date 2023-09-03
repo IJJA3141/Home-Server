@@ -3,6 +3,8 @@
 #include <sys/socket.h>
 
 http::Client::Client(const int *_pSocket) {
+  this->type = "non ssl client";
+
   this->size = sizeof(this->client);
   this->bufferSize_ = sizeof(this->buffer);
 

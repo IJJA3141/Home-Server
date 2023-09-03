@@ -1,10 +1,5 @@
 #include "./tcp-server.hpp"
-#include "../macro.hpp"
-#include "../parser/parser.hpp"
-
-#include <cstring>
-#include <functional>
-#include <string>
+#include <netinet/in.h>
 
 int http::TcpServer::serverCount = 0;
 
@@ -38,9 +33,9 @@ void http::TcpServer::bind(const char *_port) {
   std::cout << "Biding socket to sockaddr on port: " << _port << "..."
             << std::endl;
   this->hint_.sin_family = AF_INET;
-  this->hint_.sin_addr.s_addr = inet_addr(_port);
-  this->hint_.sin_port = htons(0);
-  if (::bind(this->socket_, (struct sockaddr *)&this->hint_.sin_addr,
+  this->hint_.sin_addr.s_addr = htonl(INADDR_ANY);
+  this->hint_.sin_port = htons(std::atoi(_port));
+  if (::bind(this->socket_, (struct sockaddr *)&this->hint_,
              sizeof(this->hint_)) == -1) {
     std::cerr << "IP/PORT binding failed.\n" << strerror(errno) << std::endl;
     abort();
@@ -62,22 +57,36 @@ void http::TcpServer::listen() {
     this->vThread.push_back(new std::thread(&http::TcpServer::Connect, this,
                                             this->GetClient_(&this->socket_)));
 
+  std::cout << "?" << std::endl;
+
   return;
 }
 
 void http::TcpServer::Connect(http::Client _client) {
   std::cout << "New client connected." << std::endl;
-
   size_t bytes = _client.Read();
   if (bytes < 0) {
-    std::cerr << "Faild to read client message sended to" << this->name << "\n"
+    std::cerr << "Faild to read client message.\n"
               << strerror(errno) << std::endl;
     _client.Send(HTTP SERVERR END);
   } else {
     _client.buffer[bytes] = '\0';
-    http::Request req = http::parse(std::string(_client.buffer));
+    std::cout << "Client message:\n" << _client.buffer << std::endl;
+  }
 
-    std::cout << "Request from " << this->name << std::endl;
+  close(_client.socket);
+
+  return;
+}
+
+void http::TcpServer::add(http::Method _method, const char *_path,
+                          std::function<void(void *_pVoid)> _λ) {
+  this->_vMap[_method][_path] = _λ;
+  return;
+}
+
+/*
+std::cout << "Request from " << this->name << std::endl;
     std::cout << "Method: " << req.method << "\nUri: " << req.uri
               << "\nFile: " << req.file << "\nArg: " << req.arg
               << "\nVersion: " << req.version
@@ -91,17 +100,4 @@ void http::TcpServer::Connect(http::Client _client) {
               << "\ntype: " << req.header.type
               << "\nlength: " << req.header.length << "\n\n\n"
               << std::endl;
-
-    _client.Send(HTTP OK END);
-  }
-
-  close(_client.socket);
-
-  return;
-}
-
-void http::TcpServer::add(http::Method _method, const char *_path,
-                                 std::function<void(void *_pVoid)> _λ) {
-  this->_vMap[_method][_path] = _λ;
-  return;
-}
+*/
