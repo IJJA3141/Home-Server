@@ -26,7 +26,7 @@ public:
   TcpServer(const char *_name = nullptr);
   void bind(const char *_port);
   void listen();
-  static void Connect(http::Client _client, const char *_name);
+  void Connect(http::Client _client);
   void add(http::Method _method, const char *_path,
            std::function<void(void *_pVoid)> _λ);
 

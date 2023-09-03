@@ -57,7 +57,7 @@ http::Request http::parse(http::Buffer _buffer) {
   } else if (buffer == "PATCH") {
     response.method = http::Method::PATCH;
   } else {
-    response.method = http::Method::NONE;
+    std::cout << "Parsing error" << std::endl;
   }
 
   pin = pos;

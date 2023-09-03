@@ -59,26 +59,25 @@ void http::TcpServer::listen() {
   std::cout << "Received call..." << std::endl;
 
   while (true)
-    this->vThread.push_back(new std::thread(http::TcpServer::Connect,
-                                            this->GetClient_(&this->socket_),
-                                            this->name.c_str()));
+    this->vThread.push_back(new std::thread(&http::TcpServer::Connect, this,
+                                            this->GetClient_(&this->socket_)));
 
   return;
 }
 
-void http::TcpServer::Connect(http::Client _client, const char *_name) {
+void http::TcpServer::Connect(http::Client _client) {
   std::cout << "New client connected." << std::endl;
 
   size_t bytes = _client.Read();
   if (bytes < 0) {
-    std::cerr << "Faild to read client message sended to" << _name << "\n"
+    std::cerr << "Faild to read client message sended to" << this->name << "\n"
               << strerror(errno) << std::endl;
     _client.Send(HTTP SERVERR END);
   } else {
     _client.buffer[bytes] = '\0';
     http::Request req = http::parse(std::string(_client.buffer));
 
-    std::cout << "Request from " << _name << std::endl;
+    std::cout << "Request from " << this->name << std::endl;
     std::cout << "Method: " << req.method << "\nUri: " << req.uri
               << "\nFile: " << req.file << "\nArg: " << req.arg
               << "\nVersion: " << req.version
@@ -92,6 +91,8 @@ void http::TcpServer::Connect(http::Client _client, const char *_name) {
               << "\ntype: " << req.header.type
               << "\nlength: " << req.header.length << "\n\n\n"
               << std::endl;
+
+    _client.Send(HTTP OK END);
   }
 
   close(_client.socket);
@@ -99,7 +100,7 @@ void http::TcpServer::Connect(http::Client _client, const char *_name) {
   return;
 }
 
-inline void http::TcpServer::add(http::Method _method, const char *_path,
+void http::TcpServer::add(http::Method _method, const char *_path,
                                  std::function<void(void *_pVoid)> _λ) {
   this->_vMap[_method][_path] = _λ;
   return;
