@@ -2,6 +2,7 @@
 #define TCP_SERVER
 
 #include "../parser/parser.hpp"
+#include "../client/client.hpp"
 
 #include <arpa/inet.h>
 #include <cstring>
@@ -10,15 +11,6 @@
 #include <unistd.h>
 
 namespace http {
-
-struct Client {
-  Client(const int *_pSocket);
-
-  sockaddr_in client;
-  socklen_t size;
-  int socket;
-  char buffer[4096];
-};
 
 class TcpServer {
 public:
@@ -32,6 +24,9 @@ protected:
   int port_;
 
   virtual void ConnectionHandler_();
+  inline virtual Client GetClient_(const int *_pSocket) {
+    return http::Client(_pSocket);
+  }
 };
 } // namespace http
 

@@ -21,6 +21,10 @@ private:
   void InitServerCTX_();
   void LoadCertificates_(const char *_pCertFile, const char *_pKeyFile);
   void ConnectionHandler_() override;
+
+  inline http::Client GetClient_(const int *_pSocket) override {
+    return http::SSLClient(this->pCTX_, _pSocket);
+  };
 };
 
 } // namespace http

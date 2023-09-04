@@ -49,9 +49,8 @@ void http::TlsServer::LoadCertificates_(const char *_pCertFile,
 
 void http::TlsServer::ConnectionHandler_() {
   while (true) {
-    Client client = Client(&this->socket_);
-    this->pSSL = SSL_new(this->pCTX_);
-    SSL_set_fd(pSSL, client.socket);
+
+    http::Client client = this->GetClient_(&this->socket_);
 
     int bytes;
 
@@ -64,47 +63,41 @@ void http::TlsServer::ConnectionHandler_() {
     char clbuf[32];
     sprintf(clbuf, "Content-length: %ld\r\n", (long)resSize);
 
-    if (SSL_accept(pSSL) == -1) {
-      send(client.socket, ok, strlen(ok), 0);
-      send(client.socket, location, strlen(location), 0);
-      ERR_print_errors_fp(stderr);
+    //   this->ShowCerts();
+    bytes = client.Read();
+    client.buffer[bytes] = '\0';
+
+    std::cout << "Client message: " << client.buffer << std::endl;
+
+    http::Request req = http::parse(std::string(client.buffer));
+
+    std::cout << "Method: " << req.method << "\nUri: " << req.uri
+              << "\nFile: " << req.file << "\nArg: " << req.arg
+              << "\nVersion: " << req.version
+              << "\n\nHeader______\nHost: " << req.header.host
+              << "\nagent: " << req.header.agent
+              << "\naccept: " << req.header.accept
+              << "\nlang: " << req.header.lang
+              << "\nencoding: " << req.header.encoding
+              << "\nconnection: " << req.header.connection
+              << "\nupgrade: " << req.header.upgrade
+              << "\ntype: " << req.header.type
+              << "\nlength: " << req.header.length << "\n\n\n"
+              << std::endl;
+
+    if (bytes > 0) {
+      // if (strcmp(cpValidMessage, client.buffer) == 0) {
+      // SSL_write(this->pSSL, "HTTP/1.1 400 Bad Request",strlen("HTTP/1.1 400
+      // Bad Request"));
+
+      client.Send(ok);
+      client.Send(clbuf);
+      client.Send("Content-Type: text/html\r\n");
+      client.Send("\r\n");
+      client.Send(res);
+
     } else {
-      //   this->ShowCerts();
-      bytes = SSL_read(this->pSSL, client.buffer, sizeof(client.buffer));
-      client.buffer[bytes] = '\0';
-
-      std::cout << "Client message: " << client.buffer << std::endl;
-
-      http::Request req = http::parse(std::string(client.buffer));
-
-      std::cout << "Method: " << req.method << "\nUri: " << req.uri
-                << "\nFile: " << req.file << "\nArg: " << req.arg
-                << "\nVersion: " << req.version
-                << "\n\nHeader______\nHost: " << req.header.host
-                << "\nagent: " << req.header.agent
-                << "\naccept: " << req.header.accept
-                << "\nlang: " << req.header.lang
-                << "\nencoding: " << req.header.encoding
-                << "\nconnection: " << req.header.connection
-                << "\nupgrade: " << req.header.upgrade
-                << "\ntype: " << req.header.type
-                << "\nlength: " << req.header.length << "\n\n\n"
-                << std::endl;
-
-      if (bytes > 0) {
-        // if (strcmp(cpValidMessage, client.buffer) == 0) {
-        // SSL_write(this->pSSL, "HTTP/1.1 400 Bad Request",strlen("HTTP/1.1 400
-        // Bad Request"));
-
-        SSL_write(this->pSSL, ok, strlen(ok));
-        SSL_write(this->pSSL, clbuf, strlen(clbuf));
-        SSL_write(this->pSSL, "Content-Type: text/html\r\n",
-                  strlen("Content-Type: text/html\r\n"));
-        SSL_write(this->pSSL, "\r\n", strlen("\r\n"));
-        SSL_write(this->pSSL, res, resSize);
-      } else {
-        ERR_print_errors_fp(stderr);
-      }
+      ERR_print_errors_fp(stderr);
     }
   }
 

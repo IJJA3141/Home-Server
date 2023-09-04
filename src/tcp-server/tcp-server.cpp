@@ -1,20 +1,5 @@
 #include "./tcp-server.hpp"
 
-http::Client::Client(const int *_pSocket) {
-  this->size = sizeof(this->client);
-
-  this->socket =
-      accept(*_pSocket, (struct sockaddr *)&this->client, &this->size);
-
-  if (this->socket == -1) {
-    std::cerr << "Connection with the client failed.\n"
-              << strerror(errno) << std::endl;
-    abort();
-  }
-
-  return;
-}
-
 http::TcpServer::TcpServer() {
   std::cout << "Creating server socket..." << std::endl;
   this->socket_ = socket(AF_INET, SOCK_STREAM, 0);
