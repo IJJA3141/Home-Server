@@ -65,6 +65,22 @@ void http::TcpServer::ConnectionHandler_() {
   Client client = Client(&this->socket_);
   int bytesRecv = recv(client.socket, client.buffer, 4096, 0);
 
+  http::Request req = http::parse(std::string(client.buffer));
+
+  std::cout << "Method: " << req.method << "\nUri: " << req.uri
+            << "\nFile: " << req.file << "\nArg: " << req.arg
+            << "\nVersion: " << req.version
+            << "\n\nHeader______\nHost: " << req.header.host
+            << "\nagent: " << req.header.agent
+            << "\naccept: " << req.header.accept
+            << "\nlang: " << req.header.lang
+            << "\nencoding: " << req.header.encoding
+            << "\nconnection: " << req.header.connection
+            << "\nupgrade: " << req.header.upgrade
+            << "\ntype: " << req.header.type
+            << "\nlength: " << req.header.length << "\n\n\n"
+            << std::endl;
+
   send(client.socket, "HTTP/1.1 301 Moved Permanently",
        strlen("HTTP/1.1 301 Moved Permanently"), 0);
   send(client.socket, "Location: https://ijja.dev",

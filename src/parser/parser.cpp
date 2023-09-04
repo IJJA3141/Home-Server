@@ -1,90 +1,135 @@
-#include "../parser/parser.h"
-#include "../request/request.h"
-#include <cctype>
-#include <cstddef>
-#include <cstring>
-#include <ctype.h>
-#include <iostream>
-#include <stdio.h>
+#include "./parser.hpp"
 
-int split(char *_p) {
-  int i = 0;
+http::Buffer::Buffer(std::string _str) {
+  this->str_ = _str;
+  this->pin_ = -1;
+  this->end_ = -1;
+  this->next = true;
 
-  while (memcmp(_p, "\n", 1) != 0 && memcmp(_p, " ", 1) != 0) {
-    i++;
-    _p++;
-  }
-
-  return i;
+  return;
 }
 
-int jump(char *_p) {
-  int i = 0;
+std::string http::Buffer::getLine(int _skip) {
 
-  while (memcmp(_p, "\n", 1) != 0) {
-    i++;
-    _p++;
+  for (int i = 0; i <= _skip; i++) {
+    this->pin_ = this->end_ + 1;
+    this->end_ = this->str_.find("\n", this->pin_);
   }
 
-  return i;
+  if (this->str_.find("\n", this->end_ + 1) == std::string::npos)
+    this->next = false;
+
+  return this->str_.substr(this->pin_, this->end_ - this->pin_);
 }
 
-http::Request http::parse(char *_pBuffer, size_t _size) {
-  char *pNext = _pBuffer;
-  int i = split(pNext);
+http::Request http::parse(http::Buffer _buffer) {
+  http::Request response;
+  std::string str;
+  std::string buffer;
+  size_t pin;
+  size_t pos;
+  size_t end;
 
-  char methodChar[i];
-  memcpy(&methodChar, pNext, i);
-  methodChar[i] = '\0';
+  str = _buffer.getLine();
 
-  for (int _i = 0; _i < i; _i++)
-    methodChar[_i] = toupper(methodChar[_i]);
+  pos = str.find(" ");
+  buffer = str.substr(0, pos);
 
-  if (strcmp(methodChar, "GET") == 0)
-    http::Request::Method method = http::Request::Method::GET;
-  else if (strcmp(methodChar, "HEAD") == 0)
-    http::Request::Method method = http::Request::Method::HEAD;
-  else if (strcmp(methodChar, "POST") == 0)
-    http::Request::Method method = http::Request::Method::POST;
-  else if (strcmp(methodChar, "PUT") == 0)
-    http::Request::Method method = http::Request::Method::PUT;
-  else if (strcmp(methodChar, "DELETE") == 0)
-    http::Request::Method method = http::Request::Method::DELETE;
-  else if (strcmp(methodChar, "CONNECT") == 0)
-    http::Request::Method method = http::Request::Method::CONNECT;
-  else if (strcmp(methodChar, "OPTIONS") == 0)
-    http::Request::Method method = http::Request::Method::OPTIONS;
-  else if (strcmp(methodChar, "TRACE") == 0)
-    http::Request::Method method = http::Request::Method::TRACE;
-  else if (strcmp(methodChar, "PATCH") == 0)
-    http::Request::Method method = http::Request::Method::PATCH;
-  else
-    return http::Request(http::Request::State::ERROR_METHOD,
-                         http::Request::Method::PATCH,
-                         http::Request::Connection::close, 0.0, "", "");
+  std::transform(buffer.begin(), buffer.end(), buffer.begin(), toupper);
+  if (buffer == "GET") {
+    response.method = http::Method::GET;
+  } else if (buffer == "HEAD") {
+    response.method = http::Method::HEAD;
+  } else if (buffer == "POST") {
+    response.method = http::Method::POST;
+  } else if (buffer == "PUT") {
+    response.method = http::Method::PUT;
+  } else if (buffer == "DELETE") {
+    response.method = http::Method::DELETE;
+  } else if (buffer == "CONNECT") {
+    response.method = http::Method::CONNECT;
+  } else if (buffer == "OPTIONS") {
+    response.method = http::Method::OPTIONS;
+  } else if (buffer == "TRACE") {
+    response.method = http::Method::TRACE;
+  } else if (buffer == "PATCH") {
+    response.method = http::Method::PATCH;
+  } else {
+    std::cout << "Parsing error" << std::endl;
+  }
 
-  pNext += 1 + sizeof(methodChar);
-  i = split(pNext);
+  pin = pos;
+  pos = str.find_last_of(" ");
+  end = pos - 3;
+  buffer = str.substr(++pin, end);
 
-  char pathChar[i];
-  memcpy(&pathChar, pNext, i);
-  pathChar[i] = '\0';
+  pin = buffer.find_last_of("/");
+  pos = buffer.find(".", pin);
 
-  // 1 + 5 for http/
-  pNext += 6 + sizeof(pathChar);
-  i = split(pNext);
+  if (pos == std::string::npos) {
+    response.uri = buffer;
+    response.file = "NULL";
+    pos = buffer.find("?");
 
-  char versionChar[i];
-  memcpy(&versionChar, pNext, i);
-  double version = atof(versionChar);
+    if (pos == std::string::npos) {
+      response.arg = "NULL";
+    } else {
+      response.uri = buffer.substr(0, pin);
+      response.file = buffer.substr(++pin, end);
+    }
+  } else {
+    response.uri = buffer.substr(0, pin);
+    response.file = buffer.substr(++pin, end);
 
-  pNext += 1 + sizeof(versionChar);
-  i = jump(pNext);
-  pNext += 1 + i;
+    response.arg = "NULL";
+  }
 
-  // need to jump line
+  pin = str.find_last_of(" ");
+  response.version = str.substr(++pin);
 
-  return http::Request(http::Request::State::ERROR_METHOD,
-                       http::Request::Method::PATCH,
-                       http::Request::Connection::close, 0.0, "", "");
+  // header
+  //
+
+  // host
+  str = _buffer.getLine();
+  pin = str.find(" ") + 1;
+  response.header.host = str.substr(pin);
+
+  // agent
+  str = _buffer.getLine();
+  pin = str.find(" ") + 1;
+  response.header.agent = str.substr(pin);
+
+  // accept
+  str = _buffer.getLine();
+  pin = str.find(" ") + 1;
+  response.header.accept = str.substr(pin);
+
+  while (_buffer.next) {
+    str = _buffer.getLine();
+    if (str.substr(0, str.find(":")) == "Accept-Language") {
+      response.header.lang = str.substr(str.find(" ") + 1);
+    } else if (str.substr(0, str.find(":")) == "Accept-Encoding") {
+      response.header.encoding = str.substr(str.find(" ") + 1);
+    } else if (str.substr(0, str.find(":")) == "Connection") {
+      buffer = str.substr(str.find(" ") + 1);
+      if (buffer == "close") {
+        response.header.connection = http::Connection::CLOSE;
+      } else if (buffer == "keep-alive") {
+        response.header.connection = http::Connection::KEEPALIVE;
+      } else
+        response.header.connection = http::Connection::ALL;
+    } else if (str.substr(0, str.find(":")) == "Upgrade-Insecure-Requests") {
+      response.header.upgrade = true;
+    } else if (str.substr(0, str.find(":")) == "Content-Type") {
+      response.header.type = str.substr(str.find(" ") + 1);
+      str = _buffer.getLine();
+      response.header.length =
+          std::atoi((str.substr(str.find(" ") + 1)).c_str());
+      response.body = _buffer.getLine(1);
+    } else
+      std::cout << "Parsing error" << std::endl;
+  }
+
+  return response;
 }

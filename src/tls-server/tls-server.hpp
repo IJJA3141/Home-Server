@@ -2,9 +2,11 @@
 #define TLS_SERVER
 
 #include "../tcp-server/tcp-server.hpp"
+#include "../parser/parser.hpp"
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include <string>
 
 namespace http {
 

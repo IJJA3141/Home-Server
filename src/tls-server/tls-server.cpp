@@ -75,10 +75,27 @@ void http::TlsServer::ConnectionHandler_() {
 
       std::cout << "Client message: " << client.buffer << std::endl;
 
+      http::Request req = http::parse(std::string(client.buffer));
+
+      std::cout << "Method: " << req.method << "\nUri: " << req.uri
+                << "\nFile: " << req.file << "\nArg: " << req.arg
+                << "\nVersion: " << req.version
+                << "\n\nHeader______\nHost: " << req.header.host
+                << "\nagent: " << req.header.agent
+                << "\naccept: " << req.header.accept
+                << "\nlang: " << req.header.lang
+                << "\nencoding: " << req.header.encoding
+                << "\nconnection: " << req.header.connection
+                << "\nupgrade: " << req.header.upgrade
+                << "\ntype: " << req.header.type
+                << "\nlength: " << req.header.length << "\n\n\n"
+                << std::endl;
+
       if (bytes > 0) {
         // if (strcmp(cpValidMessage, client.buffer) == 0) {
         // SSL_write(this->pSSL, "HTTP/1.1 400 Bad Request",strlen("HTTP/1.1 400
         // Bad Request"));
+
         SSL_write(this->pSSL, ok, strlen(ok));
         SSL_write(this->pSSL, clbuf, strlen(clbuf));
         SSL_write(this->pSSL, "Content-Type: text/html\r\n",

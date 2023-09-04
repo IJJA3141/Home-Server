@@ -1,6 +1,8 @@
 #ifndef TCP_SERVER
 #define TCP_SERVER
 
+#include "../parser/parser.hpp"
+
 #include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
