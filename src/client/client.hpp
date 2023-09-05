@@ -1,6 +1,7 @@
 #ifndef CLIENT
 #define CLIENT
 
+#include <iostream>
 #include <netinet/in.h>
 #include <openssl/ssl.h>
 #include <unistd.h>
@@ -14,12 +15,8 @@ public:
   const char *type;
 
   Client(const int *_pSocket);
-  inline virtual size_t Read() {
-    return ::read(this->socket, this->buffer, this->bufferSize_);
-  };
-  inline virtual int Send(const char *_pBuffer) {
-    return ::write(this->socket, _pBuffer, strlen(_pBuffer));
-  };
+  virtual size_t Read();
+  virtual int Send(const char *_pBuffer);
 
 protected:
   sockaddr_in client;
@@ -30,12 +27,8 @@ protected:
 class SSLClient : public Client {
 public:
   SSLClient(SSL_CTX *_pCTX, const int *_pSocket);
-  inline size_t Read() override {
-    return SSL_read(this->pSSL_, this->buffer, this->bufferSize_);
-  };
-  int Send(const char *_pBuffer) override {
-    return SSL_write(this->pSSL_, _pBuffer, strlen(_pBuffer));
-  };
+  size_t Read() override;
+  int Send(const char *_pBuffer) override;
 
 private:
   SSL *pSSL_;

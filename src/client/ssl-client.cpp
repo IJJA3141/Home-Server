@@ -1,6 +1,7 @@
 #include "./client.hpp"
 #include <cstdio>
 #include <iostream>
+#include <iterator>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
@@ -18,4 +19,13 @@ http::SSLClient::SSLClient(SSL_CTX *_pCTX, const int *_pSocket)
   this->type = "ssl client";
 
   return;
+}
+
+size_t http::SSLClient::Read() {
+  std::cout << "reading from ssl client" << std::endl;
+  return SSL_read(this->pSSL_, this->buffer, this->bufferSize_);
+};
+
+int http::SSLClient::Send(const char *_pBuffer) {
+  return SSL_write(this->pSSL_, _pBuffer, strlen(_pBuffer));
 }

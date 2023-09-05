@@ -62,31 +62,20 @@ void http::TcpServer::listen() {
   return;
 }
 
-void http::TcpServer::Connect(http::Client _client) {
-  std::cout << "New client connected." << std::endl;
-  size_t bytes = _client.Read();
+void http::TcpServer::Connect(http::Client *_client) {
+  std::cout << "New client connected.\nClient type: " << _client->type
+            << std::endl;
+  size_t bytes = _client->Read();
   if (bytes < 0) {
     std::cerr << "Faild to read client message.\n"
               << strerror(errno) << std::endl;
-    _client.Send(HTTP SERVERR END);
+    _client->Send(HTTP SERVERR END);
   } else {
-    _client.buffer[bytes] = '\0';
-    std::cout << "Client message:\n" << _client.buffer << std::endl;
-  }
+    _client->buffer[bytes] = '\0';
 
-  close(_client.socket);
+    http::Request req = http::parse(std::string(_client->buffer));
 
-  return;
-}
-
-void http::TcpServer::add(http::Method _method, const char *_path,
-                          std::function<void(void *_pVoid)> _λ) {
-  this->_vMap[_method][_path] = _λ;
-  return;
-}
-
-/*
-std::cout << "Request from " << this->name << std::endl;
+    std::cout << "Request from " << this->name << std::endl;
     std::cout << "Method: " << req.method << "\nUri: " << req.uri
               << "\nFile: " << req.file << "\nArg: " << req.arg
               << "\nVersion: " << req.version
@@ -100,4 +89,20 @@ std::cout << "Request from " << this->name << std::endl;
               << "\ntype: " << req.header.type
               << "\nlength: " << req.header.length << "\n\n\n"
               << std::endl;
-*/
+  }
+
+  _client->Send(HTTP OK END);
+
+  close(_client->socket);
+
+  return;
+}
+
+void http::TcpServer::add(http::Method _method, const char *_path,
+                          std::function<void(void *_pVoid)> _λ) {
+  this->_vMap[_method][_path] = _λ;
+  return;
+}
+
+/*
+ */

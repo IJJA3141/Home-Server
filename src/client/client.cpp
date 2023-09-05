@@ -19,3 +19,12 @@ http::Client::Client(const int *_pSocket) {
 
   return;
 }
+
+size_t http::Client::Read() {
+  std::cout << "\n\n\n FUCK \n\n\n" << std::endl;
+  return ::read(this->socket, this->buffer, this->bufferSize_);
+};
+
+int http::Client::Send(const char *_pBuffer) {
+  return ::write(this->socket, _pBuffer, strlen(_pBuffer));
+};

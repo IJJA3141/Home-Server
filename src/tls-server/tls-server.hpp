@@ -18,8 +18,8 @@ private:
 
   void InitServerCTX_();
   void LoadCertificates_(const char *_pCertFile, const char *_pKeyFile);
-  inline Client GetClient_(const int *_pSocket) override {
-    return http::SSLClient(this->pCTX_, _pSocket);
+  Client *GetClient_(const int *_pSocket) override {
+    return new http::SSLClient(this->pCTX_, _pSocket);
   };
 };
 

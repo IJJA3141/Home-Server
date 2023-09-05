@@ -27,7 +27,7 @@ public:
   TcpServer(const char *_name = nullptr);
   void bind(const char *_port);
   void listen();
-  void Connect(http::Client _client);
+  void Connect(http::Client *_client);
   void add(http::Method _method, const char *_path,
            std::function<void(void *_pVoid)> _λ);
 
@@ -39,8 +39,8 @@ protected:
   struct sockaddr_in hint_;
   int port_;
 
-  inline virtual Client GetClient_(const int *_pSocket) {
-    return http::Client(_pSocket);
+  virtual Client *GetClient_(const int *_pSocket) {
+    return new http::Client(_pSocket);
   }
 };
 } // namespace http
