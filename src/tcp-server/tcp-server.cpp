@@ -63,8 +63,6 @@ void http::TcpServer::listen() {
 }
 
 void http::TcpServer::Connect(http::Client *_client) {
-  std::cout << "New client connected.\nClient type: " << _client->type
-            << std::endl;
   size_t bytes = _client->Read();
   if (bytes < 0) {
     std::cerr << "Faild to read client message.\n"

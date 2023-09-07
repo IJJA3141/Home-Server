@@ -16,5 +16,6 @@ set(LINK_DIR /usr/local/lib)
 
 include_directories(${INC_DIR})
 link_directories(${LINK_DIR})
+add_compile_definitions("DEBUG=$<CONFIG:Debug>")
 ADD_EXECUTABLE(server.out ${SOURCE_FILES})
 TARGET_LINK_LIBRARIES(server.out -lpthread -lssl -lcrypto)

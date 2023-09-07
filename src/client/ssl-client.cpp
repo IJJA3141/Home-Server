@@ -1,9 +1,4 @@
 #include "./client.hpp"
-#include <cstdio>
-#include <iostream>
-#include <iterator>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
 
 http::SSLClient::SSLClient(SSL_CTX *_pCTX, const int *_pSocket)
     : http::Client(_pSocket) {
@@ -16,7 +11,6 @@ http::SSLClient::SSLClient(SSL_CTX *_pCTX, const int *_pSocket)
     // abort();
   };
 
-  this->type = "ssl client";
 
   return;
 }

@@ -1,18 +1,22 @@
 #ifndef CLIENT
 #define CLIENT
 
+#include <cstdio>
 #include <iostream>
+#include <iterator>
 #include <netinet/in.h>
+#include <openssl/err.h>
 #include <openssl/ssl.h>
+#include <sys/socket.h>
 #include <unistd.h>
+#include <string>
 
 namespace http {
 
-struct Client {
+class Client {
 public:
   char buffer[4096];
   int socket;
-  const char *type;
 
   Client(const int *_pSocket);
   virtual size_t Read();
@@ -35,4 +39,4 @@ private:
 };
 
 } // namespace http
-#endif // !CLIENT
+#endif // !CLIENT::::::
