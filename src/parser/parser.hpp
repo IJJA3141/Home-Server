@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
+#include <cstdlib>
 #include <iostream>
 #include <istream>
 #include <streambuf>
@@ -56,7 +57,7 @@ public:
   bool next;
 
   Buffer(std::string _str);
-  std::string getLine(int _skip = 0);
+  std::string GetLine(int _skip = 0);
 
 private:
   std::string str_;
@@ -64,7 +65,7 @@ private:
   size_t end_;
 };
 
-Request parse(http::Buffer _buffer);
+Request Parse(http::Buffer _buffer);
 
 } // namespace http
 

@@ -17,10 +17,10 @@ public:
   Params(int _argc, char *_argv[]);
 
 private:
-  std::string path_;
+  bool reset_;
 
-  void load_();
-  void save_();
+  void Load_();
+  void Save_();
 };
 
 #endif // !PARAMS

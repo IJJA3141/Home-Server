@@ -1,0 +1,19 @@
+ok: 0
+
+error:
+  Params:
+    loading: uses default parametters instead
+    help: 110
+    bad arg: 111
+
+  server:
+    socket creation: 120
+    setting options: 121
+    port biding: 122
+    port listening: 123
+
+  ssl:
+    ctx: 130
+    cert: 131
+    key: 132
+    check 133

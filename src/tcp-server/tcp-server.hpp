@@ -11,6 +11,7 @@
 #include <functional>
 #include <iostream>
 #include <map>
+#include <netinet/in.h>
 #include <string>
 #include <sys/socket.h>
 #include <thread>
@@ -21,19 +22,20 @@ namespace http {
 
 class TcpServer {
 public:
-  std::vector<std::thread *> vThread;
   std::string name;
+  std::vector<std::thread *> vThread;
 
-  TcpServer(const char *_name = nullptr);
-  void bind(const char *_port);
-  void listen();
-  void Connect(http::Client *_client);
-  void add(http::Method _method, const char *_path,
+  TcpServer(const char *_pName = nullptr);
+  void Bind(const char *_pPort);
+  void Listen();
+  void Connect(http::Client *_pClient);
+  void Add(http::Method _method, const char *_pPath,
            std::function<void(void *_pVoid)> _λ);
+  ~TcpServer();
 
 protected:
   std::array<std::map<std::string, std::function<void(void *_pVoid)>>, 9> _vMap;
-  static int serverCount;
+  static int serverCount_;
 
   int socket_;
   struct sockaddr_in hint_;
