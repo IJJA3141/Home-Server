@@ -51,14 +51,27 @@ SSL error:
 - 133 The certificate key provided didn't match the certificate       
 
 ## 📁 File structure
+### 🛠️ Server struct
 ```tree
+server/     
+    ├───backend/        
+    │   ├───data/       
+    │   │   ├───cert/       
+    │   │   │   ├───cert.pem        
+    │   │   │   └───key.pem     
+    │   │   └───settings.txt        
+    │   └───server.out      
+    └───frontend/       
+```
+### 🌐 Resources struct
+```
 server/
-    ├───backend/
-    │   ├───data/
-    │   │   ├───cert/
-    │   │   │   ├───cert.pem
-    │   │   │   └───key.pem
-    │   │   └───settings.txt
-    │   └───server.out
     └───frontend/
+        ├───pages/
+        │   └───.html
+        └───static/
+            ├───css/
+            │   └───.css
+            └───js/
+                └───.js
 ```

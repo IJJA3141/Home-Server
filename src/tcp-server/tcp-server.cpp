@@ -1,4 +1,6 @@
 #include "./tcp-server.hpp"
+#include <charconv>
+#include <unistd.h>
 
 int http::TcpServer::serverCount_ = 0;
 
@@ -74,7 +76,22 @@ void http::TcpServer::Connect(http::Client *_pClient) {
     http::Request req = http::Parse(std::string(_pClient->buffer));
   }
 
-  _pClient->Send(HTTP OK END);
+  const char *location = "Location https://www.google.com\r\n"; // site
+  const char *ok = "HTTP/1.1 200 OK\r\n";
+  const char *res =
+      "<html><head><link rel='stylesheet' type='text/css' "
+      "href=https://ijja.dev/static/style.css'></head><body><p>Hellow "
+      "World!\nFrom Debian Server.</p></body></html>";
+  int resSize = strlen(res);
+
+  char clbuf[32];
+  sprintf(clbuf, "Content-length: %ld\r\n", (long)resSize);
+
+  _pClient->Send(ok);
+  _pClient->Send(clbuf);
+  _pClient->Send("Content-Type: text/html\r\n");
+  _pClient->Send("\r\n");
+  _pClient->Send(res);
 
   delete _pClient;
 
