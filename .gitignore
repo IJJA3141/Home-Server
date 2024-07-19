@@ -1,3 +1,5 @@
 # Ignore output
-Debug/
 challenge/
+.cache/
+out/
+compile_commands.json

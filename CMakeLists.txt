@@ -3,12 +3,6 @@ project(Home-Server)
 
 set(SOURCE_FILES
     ./src/main.cpp
-    ./src/tcp-server/tcp-server.cpp
-    ./src/tls-server/tls-server.cpp
-    ./src/params/params.cpp
-    ./src/parser/parser.cpp
-    ./src/client/client.cpp
-    ./src/client/ssl-client.cpp
     )
 
 set(INC_DIR /usr/local/include)
