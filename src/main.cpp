@@ -1,58 +1,66 @@
-#include <iostream>
+#include <functional>
 #include <string>
+#include <vector>
 
-#include "config/config.hpp"
-
-int main(int _argc, char *_argv[])
+class AbstractFunction
 {
-  Config config;
-  // pas ouf
-  Parser parser(_argc, _argv,
-                {"--help", "-h", "--verbose", "-v", "--config", "-p", "--defautl-config", "-d",
-                 "--http-port", "--https-port", "--key", "-k", "--cert", "-c", "--save", "-s",
-                 "--reset-config", "-r"});
+  enum Type { VOID, STRING, INT };
+  Type type_;
 
-  parser.parse({"--help", "-h"}, []() {
-    std::cout << "help" << std::endl;
-    exit(1);
-  });
-  parser.parse({"--verbose", "-v"}, [&]() {
-    std::cout << "verbose" << std::endl;
-    config.verbose = true;
-  });
+  std::function<void(std::string)> fString_;
+  std::function<void(void)> fVoid_;
+  std::function<void(int)> fInt_;
 
-  parser.parse({"--config", "-p"}, [&](std::string _configPath) {
-    if (config.verbose) std::cout << "" << std::endl;
-    config.configPath = _configPath;
-  });
+  AbstractFunction(std::function<void(std::string)> _func);
+  AbstractFunction(std::function<void(void)> _func);
+  AbstractFunction(std::function<void(int)> _func);
 
-  config.load();
+  void operator()();
+};
 
-  parser.parse({"--defautl-config", "-d"}, [&]() {
-    bool verbose = config.verbose;
-    if (config.verbose) std::cout << "" << std::endl;
-    config = Config();
-    config.verbose = verbose;
-  });
+AbstractFunction::AbstractFunction(std::function<void(std::string)> _func)
+{
+  this->type_ = AbstractFunction::STRING;
+  this->fString_ = _func;
 
-  parser.parse({"--http-port", ""}, [&](int _port) {
-    if (config.verbose) std::cout << "" << std::endl;
-    config.httpPort = _port;
-  });
-  parser.parse({"--https-port", ""}, [&](int _port) {
-    if (config.verbose) std::cout << "" << std::endl;
-    config.httpPort = _port;
-  });
-  parser.parse({"--key", "-k"}, [&](std::string _path) {
-    if (config.verbose) std::cout << "" << std::endl;
-    config.key = _path;
-  });
-  parser.parse({"--cert", "-c"}, [&](std::string _path) {
-    if (config.verbose) std::cout << "" << std::endl;
-    config.cert = _path;
-  });
-  parser.parse({"--save", "-s"}, [&]() { config.save(); });
-  parser.parse({"--restore-config", "-r"}, []() { Config().save(); });
+  return;
+};
 
+AbstractFunction::AbstractFunction(std::function<void(void)> _func)
+{
+  this->type_ = AbstractFunction::VOID;
+  this->fVoid_ = _func;
+
+  return;
+};
+
+AbstractFunction::AbstractFunction(std::function<void(int)> _func)
+{
+  this->type_ = AbstractFunction::INT;
+  this->fInt_ = _func;
+
+  return;
+};
+
+void AbstractFunction::operator()()
+{
+  switch (this->type_) {
+  case AbstractFunction::VOID:
+    this->fVoid_();
+  case AbstractFunction::STRING:
+    this->fString_("");
+  case AbstractFunction::INT:
+    this->fInt_(2);
+  default:
+    exit(-1);
+  }
+
+  return;
+}
+
+int main(int argc, char *argv[])
+{
+  std::vector<AbstractFunction> vec;
+  
   return 0;
 }
