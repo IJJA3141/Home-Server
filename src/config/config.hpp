@@ -14,4 +14,17 @@ struct Handler {
   Handler(std::string _key, std::function<void(int)> _lambda);
 };
 
-void parse(int _argc, char *_argv[], const std::vector<Handler> _handlers);
+struct Arg {
+  std::string key;
+  std::string *arg;
+
+  ~Arg() { delete this->arg; };
+};
+
+void parse(const std::vector<Arg> &_args, const std::vector<Handler> _handlers);
+
+struct Config {
+  bool verbose = false;
+
+  void load(std::string _path);
+};
