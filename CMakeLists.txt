@@ -3,10 +3,13 @@ project(Home-Server)
 
 set(SOURCE_FILES
     ./src/main.cpp
+    ./src/config.cpp
     )
 
 set(INC_DIR /usr/local/include)
 set(LINK_DIR /usr/local/lib)
+
+#add_compile_definitions(DEBUG)
 
 include_directories(${INC_DIR})
 link_directories(${LINK_DIR})
