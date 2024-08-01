@@ -3,7 +3,8 @@ project(Home-Server)
 
 set(SOURCE_FILES
     ./src/main.cpp
-    ./src/config/config.cpp
+    ./src/option/option.cpp
+    ./src/test/test.cpp
     )
 
 set(INC_DIR /usr/local/include)
