@@ -4,7 +4,7 @@ project(Home-Server)
 set(SOURCE_FILES
     ./src/main.cpp
     ./src/option/option.cpp
-    ./src/test/test.cpp
+    ./src/test/option.cpp
     )
 
 set(INC_DIR /usr/local/include)

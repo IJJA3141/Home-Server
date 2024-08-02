@@ -1,8 +1,6 @@
 #include "option.hpp"
-
-#ifdef DEBUG
-#include <iostream>
-#endif
+#include "../log.hpp"
+#include <iterator>
 
 Option::Option(int _shortName, std::string _longName, std::function<void(std::string)> _func)
     : func(_func), longName(_longName), shortName(_shortName), hasArg(true){};
@@ -20,6 +18,7 @@ Option::Option(int _shortName, std::string _longName, std::function<void(int)> _
 }
 
 Parser::Parser(int _argc, char *_argv[], std::vector<std::string> _scmds, std::vector<Option> _opts)
+    : opts_(_opts)
 {
   // i start at one to skip path
   size_t i = 1;
@@ -39,24 +38,26 @@ end:
   for (; i < _argc; i++)
     this->post_.push_back(_argv[i]);
 
-#ifdef DEBUG
-  std::cout << "\n[DEBUG]pre scmd:\n";
-  for (const auto &a : this->pre_) {
-    std::cout << "[DEBUG]" << a << "\n";
-  }
-  std::cout << "\n[DEBUG]scmd:\n";
-  std::cout << "[DEBUG]" << this->scmd << "\n\n[DEBUG]post scmd:\n";
-  for (const auto &a : this->post_) {
-    std::cout << "[DEBUG]" << a << "\n";
-  }
-  std::cout << std::endl;
-#endif // DEBUG
+  PRINT("pre scmd");
+  PRINTV(this->pre_);
+  PRINT("scmd");
+  PRINT(this->scmd);
+  PRINT("post scmd");
+  PRINTV(this->post_);
 
   std::reverse(this->pre_.begin(), this->pre_.end());
+  std::reverse(this->post_.begin(), this->post_.end());
 
+  this->parse(this->pre_, _opts);
+
+  return;
+};
+
+void Parser::parse(std::vector<std::string> &_argv, const std::vector<Option> &_opts)
+{
   std::string arg;
-  while (!this->pre_.empty()) {
-    arg = this->pre_.back();
+  while (!_argv.empty()) {
+    arg = _argv.back();
 
     if (arg.size() > 1 && arg[0] == '-') {
       if (arg.size() > 2 && arg[1] == '-') {
@@ -67,12 +68,14 @@ end:
           // a value is assigned
 
           for (const auto &opt : _opts) {
-            if (arg.compare(2, pos, opt.longName) == 0) {
+            if (arg.compare(2, pos - 2, opt.longName) == 0) {
+              PRINT(arg << " has been parsed.");
               opt.func(arg.substr(pos + 1));
               goto skip;
             }
           }
 
+          ERR(arg << " is not an option.");
           exit(4); // not a long name
         } else {
           // no assigned value
@@ -80,11 +83,13 @@ end:
           for (const auto &opt : _opts) {
             if (arg.compare(2, arg.size() - 2, opt.longName) == 0) {
               if (opt.hasArg) {
-                this->pre_.pop_back();
-                if (this->pre_.empty()) exit(6); // need arg
+                _argv.pop_back();
+                if (_argv.empty()) exit(6); // need arg
 
-                opt.func(this->pre_.back());
+                PRINT(arg << " has been parsed.");
+                opt.func(_argv.back());
               } else {
+                PRINT(arg << " has been parsed.");
                 opt.func("");
               }
 
@@ -92,6 +97,7 @@ end:
             }
           }
 
+          ERR(arg << " is not an option.");
           exit(5); // not a long name
         }
       } else {
@@ -103,35 +109,44 @@ end:
             if (arg[i] == opt.shortName) {
               if (opt.hasArg) {
                 if (++i >= arg.size()) {
-                  this->pre_.pop_back();
-                  if (this->pre_.empty()) exit(2); // need arg
+                  _argv.pop_back();
+                  if (_argv.empty()) exit(2); // need arg
 
-                  opt.func(this->pre_.back());
+                  PRINT(arg << " has been parsed.");
+                  opt.func(_argv.back());
                 } else {
+                  PRINT(arg << " has been parsed.");
                   opt.func(arg.substr(i));
                 }
                 goto skip;
               } else {
+                PRINT(arg << " has been parsed.");
                 opt.func("");
                 goto next;
               }
             }
           }
 
+          ERR(arg << " is not an option.");
           exit(1); // not a short name
         next:;
         }
       }
     } else {
-      std::cout << arg << " is not an option." << std::endl;
+
+      ERR(arg << " is not an option.");
       exit(3); // the fuck is this
     };
 
   skip:
-    this->pre_.pop_back();
+    _argv.pop_back();
   }
+}
+
+void Parser::parse(std::vector<Option> _opts)
+{
+  std::move(this->opts_.begin(), this->opts_.end(), std::back_inserter(_opts));
+  this->parse(this->post_, _opts);
 
   return;
-};
-
-void Parser::parse(std::vector<Option> _opts) {}
+}

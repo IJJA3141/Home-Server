@@ -20,6 +20,7 @@ class Parser
 private:
   std::vector<std::string> pre_;
   std::vector<std::string> post_;
+  std::vector<Option> opts_;
 
 public:
   std::string scmd;
@@ -28,4 +29,9 @@ public:
   Parser(int _argc, char *_argv[], std::vector<std::string> _scmds, std::vector<Option> _opts);
 
   void parse(std::vector<Option> _opts);
+
+private:
+  void parse(std::vector<std::string> &_argv, const std::vector<Option> &_opts);
+  void longArg(std::string &_arg, std::vector<Option> &_opts);
+  void shortArg(std::string &_arg, std::vector<Option> &_opts);
 };

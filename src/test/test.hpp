@@ -1,3 +1,7 @@
 #pragma once
 
-bool testOptions();
+namespace Test
+{
+bool options();
+bool subcommand();
+}
