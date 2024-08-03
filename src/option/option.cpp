@@ -18,7 +18,7 @@ Option::Option(int _shortName, std::string _longName, std::function<void(int)> _
 }
 
 Parser::Parser(int _argc, char *_argv[], std::vector<std::string> _scmds, std::vector<Option> _opts)
-    : opts_(_opts)
+    : optv_(_opts)
 {
   // i start at one to skip path
   size_t i = 1;
@@ -145,7 +145,7 @@ void Parser::parse(std::vector<std::string> &_argv, const std::vector<Option> &_
 
 void Parser::parse(std::vector<Option> _opts)
 {
-  std::move(this->opts_.begin(), this->opts_.end(), std::back_inserter(_opts));
+  std::move(this->optv_.begin(), this->optv_.end(), std::back_inserter(_opts));
   this->parse(this->post_, _opts);
 
   return;

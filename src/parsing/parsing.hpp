@@ -18,20 +18,24 @@ struct Option {
 class Parser
 {
 private:
-  std::vector<std::string> pre_;
-  std::vector<std::string> post_;
+  std::vector<std::string> argv_;
+  std::vector<std::string> subArgv_;
   std::vector<Option> optv_;
+  std::string arg_;
 
 public:
   std::string scmd;
 
 public:
-  Parser(int _argc, char *_argv[], std::vector<std::string> _scmds, std::vector<Option> _opts);
+  Parser(int _argc, char *_argv[], std::vector<std::string> _scmdv);
 
-  void parse(std::vector<Option> _opts);
+  void add(std::vector<Option> _optv);
+  void parse();
+  void subParse();
 
 private:
-  void parse(std::vector<std::string> &_argv, const std::vector<Option> &_opts);
-  void longArg(std::string &_arg, std::vector<Option> &_opts);
-  void shortArg(std::string &_arg, std::vector<Option> &_opts);
+  void parse(std::vector<std::string> &_argv);
+
+  void shortArg();
+  void longArg(std::vector<std::string>& _argv);
 };
