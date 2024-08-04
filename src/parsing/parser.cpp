@@ -1,10 +1,11 @@
 #include <cassert>
+#include <iterator>
 #include <utility>
 
 #include "../log.hpp"
 #include "parsing.hpp"
 
-Parser::Parser(int _argc, char *_argv[], std::vector<std::string> _scmds)
+Parser::Parser(int _argc, char *_argv[], std::vector<std::string> _scmds) : scmd("")
 {
   // i start at one to skip path
   size_t i = 1;
@@ -37,9 +38,9 @@ end:
   return;
 }
 
-void Parser::add(std::vector<Option> _opts)
+void Parser::add(std::vector<Option> _optv)
 {
-  std::move(this->optv_.begin(), this->optv_.end(), std::back_inserter(_opts));
+  std::move(_optv.begin(), _optv.end(), std::back_inserter(this->optv_));
   return;
 }
 
@@ -66,7 +67,7 @@ void Parser::parse(std::vector<std::string> &_argv)
       if (this->arg_.size() > 2 && this->arg_[1] == '-')
         this->longArg(_argv);
       else
-        this->shortArg();
+        this->shortArg(_argv);
 
     } else {
       ERR(this->arg_ << " is not an option.");
@@ -120,5 +121,38 @@ void Parser::longArg(std::vector<std::string> &_argv)
     exit(5); // not a long name
   }
 
-  assert(false);
+  assert(false); // unreachable
 };
+
+void Parser::shortArg(std::vector<std::string> &_argv)
+{
+  // start at one to skip -
+  for (size_t i = 1; i < this->arg_.size(); i++) {
+    for (const auto &opt : optv_) {
+      if (this->arg_[i] == opt.shortName) {
+        if (opt.hasArg) {
+          if (++i >= this->arg_.size()) {
+            _argv.pop_back();
+            if (_argv.empty()) exit(2); // need arg
+
+            PRINT(this->arg_ << " has been parsed.");
+            opt.func(_argv.back());
+          } else {
+            PRINT(this->arg_ << " has been parsed.");
+            opt.func(this->arg_.substr(i));
+          }
+          return;
+        } else {
+          PRINT(this->arg_ << " has been parsed.");
+          opt.func("");
+          goto next;
+        }
+      }
+    }
+
+    ERR(this->arg_ << " is not an option.");
+    exit(1); // not a short name
+
+  next:;
+  }
+}

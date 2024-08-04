@@ -5,10 +5,10 @@
 #include <vector>
 
 struct Option {
-  std::function<void(std::string)> func;
-  std::string longName;
-  int shortName;
-  bool hasArg;
+  const std::function<void(std::string)> func;
+  const std::string longName;
+  const int shortName;
+  const bool hasArg;
 
   Option(int _shortName, std::string _longName, std::function<void(std::string)> _func);
   Option(int _shortName, std::string _longName, std::function<void(void)> _func);
@@ -36,6 +36,6 @@ public:
 private:
   void parse(std::vector<std::string> &_argv);
 
-  void shortArg();
+  void shortArg(std::vector<std::string>& _argv);
   void longArg(std::vector<std::string>& _argv);
 };

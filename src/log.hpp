@@ -7,7 +7,7 @@
 #define ERR(STR) std::cout << "\x1b[31m[error] " << STR << "\x1b[0m" << std::endl;
 
 #ifdef DEBUG
-#define PRINT(STR) std::cout << "[debug] " << STR << std::endl;
+#define PRINT(STR) std::cout << "\x1b[36m[debug] " << STR << "\x1b[0m" << std::endl;
 #else
 #define PRINT(STR)
 #endif // DEBUG
@@ -43,13 +43,14 @@
 
 #ifdef DEBUG
 #define PRINTV(V)                                                                                  \
-  std::cout << "[debug]";                                                                          \
+  std::cout << "\x1b[36m[debug]";                                                                  \
   if (V.size() != 0) {                                                                             \
     for (const auto &arg : V)                                                                      \
       std::cout << "\t" << arg << "\n";                                                            \
   } else {                                                                                         \
     std::cout << "\t{}" << std::endl;                                                              \
-  }
+  }                                                                                                \
+  std::cout << "\x1b[0m";
 #else
 #define PRINTV(V)
 #endif // DEBUG

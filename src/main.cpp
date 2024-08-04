@@ -1,9 +1,10 @@
-#include "option/option.hpp"
 #include "test/test.hpp"
 
 int main(int _argc, char *_argv[])
 {
-  if (!Test::options() || !Test::subcommand()) return 1;
+  Test::options();
+  Test::subcommand();
+  Test::suboptions();
 
   return 0;
 }
