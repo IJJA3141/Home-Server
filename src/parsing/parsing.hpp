@@ -36,6 +36,17 @@ public:
 private:
   void parse(std::vector<std::string> &_argv);
 
-  void shortArg(std::vector<std::string>& _argv);
-  void longArg(std::vector<std::string>& _argv);
+  void shortArg(std::vector<std::string> &_argv);
+  void longArg(std::vector<std::string> &_argv);
+};
+
+struct Config {
+  bool noSave = true;
+  std::string http = "80";
+  std::string https = "443";
+  std::string key = "./key";
+  std::string cert = "./cert";
+
+  void load();
+  void save();
 };

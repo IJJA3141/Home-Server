@@ -32,9 +32,6 @@ end:
   PRINT("post scmd");
   PRINTV(this->subArgv_);
 
-  std::reverse(this->argv_.begin(), this->argv_.end());
-  std::reverse(this->subArgv_.begin(), this->subArgv_.end());
-
   return;
 }
 
