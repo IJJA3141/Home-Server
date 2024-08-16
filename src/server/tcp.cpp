@@ -1,7 +1,9 @@
 #include "../log.hpp"
 #include "server.hpp"
 
-http::TcpServer::TcpServer()
+#include <unistd.h>
+
+TcpServer::TcpServer()
 {
   LOG("server initialization...");
   LOG("socket initialization...");
@@ -22,7 +24,7 @@ http::TcpServer::TcpServer()
   return;
 }
 
-void http::TcpServer::bind(const int _port)
+void TcpServer::bind(const int _port)
 {
   LOG("binding socket to sockaddr on port " << _port << "...");
 
@@ -37,7 +39,7 @@ void http::TcpServer::bind(const int _port)
   return;
 }
 
-void http::TcpServer::listen()
+void TcpServer::listen()
 {
   LOG("mark socket for listening...");
   if (::listen(this->socket_, SOMAXCONN) == -1) {
@@ -47,21 +49,38 @@ void http::TcpServer::listen()
 
   LOG("received call...");
 
-  this->threads.push_back(
-      new std::thread(&http::TcpServer::connect, this, this->getClient_(&this->socket_)));
+  while (true) {
+    this->threads.push_back(new std::thread(&TcpServer::connect, this, this->newClient_()));
+  };
 
   return;
 }
 
-void http::TcpServer::connect(http::Client *_client)
+void TcpServer::connect(Client *_client)
 {
-  size_t bytes = _client->read();
+  while (true) {
+    // wait for client new message
+    size_t bytes = _client->read();
 
-  if (bytes < 0) {
-    VERBERR("failed to read client's message.");
-    // should respond
-    return;
-  } 
+    if (bytes < 0) {
+      VERBERR("failed to read client's message.");
+      // should respond
+      break;
+    }
 
+    // should read client responce
+    // and then respond accordingly
+  }
+
+  delete _client;
+
+  return;
+}
+
+Client *TcpServer::newClient_() { return new Client(this->socket_); }
+
+TcpServer::~TcpServer()
+{
+  ::close(this->socket_);
   return;
 }

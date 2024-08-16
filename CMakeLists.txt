@@ -3,9 +3,9 @@ project(Home-Server)
 
 set(SOURCE_FILES
     ./src/main.cpp
-    ./src/parsing/option.cpp
-    ./src/parsing/parser.cpp
-    ./src/test/option.cpp
+    ./src/server/tcp.cpp
+    ./src/server/tls.cpp
+    ./src/server/clients.cpp
     )
 
 set(INC_DIR /usr/local/include)
