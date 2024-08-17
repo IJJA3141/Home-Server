@@ -68,8 +68,13 @@ void TcpServer::connect(Client *_client)
       break;
     }
 
+    LOG("reading client message.");
     // should read client responce
     // and then respond accordingly
+    // http use \r\n for new line
+    _client->buffer[bytes] = '\0';
+
+    _client->send("500\n");
   }
 
   delete _client;
