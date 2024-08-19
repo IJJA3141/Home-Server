@@ -3,7 +3,7 @@
 #include "../log.hpp"
 #include "server.hpp"
 
-TlsServer::TlsServer(const char *_certFile, const char *_keyFile)
+Tls::Tls(const Router *_parser, const char *_certFile, const char *_keyFile) : Tcp(_parser)
 {
   LOG("ssl initialization...");
 
@@ -43,9 +43,9 @@ TlsServer::TlsServer(const char *_certFile, const char *_keyFile)
   return;
 }
 
-Client *TlsServer::newClient_() { return new SSLClient(this->socket_, this->CTX_); }
+Client *Tls::newClient_() { return new SSLClient(this->socket_, this->CTX_); }
 
-TlsServer::~TlsServer()
+Tls::~Tls()
 {
   OPENSSL_cleanup();
   return;

@@ -6,10 +6,14 @@
 #include <thread>
 #include <vector>
 
+class Router;
+
 // http
 class Client
 {
 public:
+  enum Type { NONSSL = 0, SSL = 2 };
+  const Type type = NONSSL;
   char buffer[4096];
 
   Client(const int &_socket);
@@ -23,18 +27,15 @@ protected:
   sockaddr_in client_;
   socklen_t size_;
   size_t bufferSize_;
-
-  enum Type { NONSSL, SSL };
-  const Type type = NONSSL;
 };
 
-class TcpServer
+class Tcp
 {
 public:
   std::vector<std::thread *> threads;
 
-  TcpServer();
-  ~TcpServer();
+  Tcp(const Router *_parser);
+  ~Tcp();
 
   void connect(Client *_client);
   void bind(const int _port);
@@ -44,6 +45,7 @@ protected:
   int socket_;
   struct sockaddr_in hint_;
   int port_;
+  const Router *parser_;
 
   virtual Client *newClient_();
 };
@@ -52,6 +54,8 @@ protected:
 class SSLClient : public Client
 {
 public:
+  const Type type = SSL;
+
   SSLClient(const int &_socket, SSL_CTX *_CTX);
   ~SSLClient();
 
@@ -60,16 +64,15 @@ public:
 
 private:
   ::SSL *ssl_;
-  const Type type = SSL;
 };
 
 static bool SSLLIBINIT = false;
 
-class TlsServer : private TcpServer
+class Tls : private Tcp
 {
 public:
-  TlsServer(const char *_certFile, const char *_keyFile);
-  ~TlsServer();
+  Tls(const Router *_parser, const char *_certFile, const char *_keyFile);
+  ~Tls();
 
 private:
   SSL_CTX *CTX_;

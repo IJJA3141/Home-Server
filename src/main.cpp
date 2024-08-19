@@ -1,10 +1,14 @@
 #include "server/server.hpp"
 
-int main (int _argc, char *_argv[]) {
+int main(int _argc, char *_argv[])
+{
+  Router prs(_argv[0]);
 
-  TcpServer serv;
-  serv.bind(80);
-  serv.listen();
-  
+  Tcp server(&prs);
+  server.bind(80);
+  server.listen();
+
+  parser.add(GET, "/over/there", [](){}, Client::Type::SSL);
+
   return 0;
 }

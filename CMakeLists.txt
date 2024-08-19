@@ -6,6 +6,7 @@ set(SOURCE_FILES
     ./src/server/tcp.cpp
     ./src/server/tls.cpp
     ./src/server/clients.cpp
+    ./src/server/parser.cpp
     )
 
 set(INC_DIR /usr/local/include)

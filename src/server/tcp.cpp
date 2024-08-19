@@ -1,10 +1,17 @@
+#include <unistd.h>
+
 #include "../log.hpp"
 #include "server.hpp"
 
-#include <unistd.h>
-
-TcpServer::TcpServer()
+Tcp::Tcp(const Router *_parser)
 {
+  if (_parser == nullptr) {
+    ERR("Tcp was initialized without a parser");
+    exit(1);
+  }
+
+  this->parser_ = _parser;
+
   LOG("server initialization...");
   LOG("socket initialization...");
 
@@ -24,7 +31,7 @@ TcpServer::TcpServer()
   return;
 }
 
-void TcpServer::bind(const int _port)
+void Tcp::bind(const int _port)
 {
   LOG("binding socket to sockaddr on port " << _port << "...");
 
@@ -39,7 +46,7 @@ void TcpServer::bind(const int _port)
   return;
 }
 
-void TcpServer::listen()
+void Tcp::listen()
 {
   LOG("mark socket for listening...");
   if (::listen(this->socket_, SOMAXCONN) == -1) {
@@ -50,13 +57,13 @@ void TcpServer::listen()
   LOG("received call...");
 
   while (true) {
-    this->threads.push_back(new std::thread(&TcpServer::connect, this, this->newClient_()));
+    this->threads.push_back(new std::thread(&Tcp::connect, this, this->newClient_()));
   };
 
   return;
 }
 
-void TcpServer::connect(Client *_client)
+void Tcp::connect(Client *_client)
 {
   while (true) {
     // wait for client new message
@@ -65,6 +72,8 @@ void TcpServer::connect(Client *_client)
     if (bytes < 0) {
       VERBERR("failed to read client's message.");
       // should respond
+      _client->send(this->parser_->failed());
+
       break;
     }
 
@@ -73,8 +82,9 @@ void TcpServer::connect(Client *_client)
     // and then respond accordingly
     // http use \r\n for new line
     _client->buffer[bytes] = '\0';
+    _client->send(this->parser_->respond(_client->buffer, _client->type));
 
-    _client->send("500\n");
+    break;
   }
 
   delete _client;
@@ -82,9 +92,9 @@ void TcpServer::connect(Client *_client)
   return;
 }
 
-Client *TcpServer::newClient_() { return new Client(this->socket_); }
+Client *Tcp::newClient_() { return new Client(this->socket_); }
 
-TcpServer::~TcpServer()
+Tcp::~Tcp()
 {
   ::close(this->socket_);
   return;
