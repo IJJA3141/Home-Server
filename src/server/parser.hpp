@@ -13,21 +13,6 @@ struct Page {
   std::function<std::string(void)> *methods[8];
 };
 
-class Router
-{
-public:
-  Router(std::string _execPath);
-
-  void add(Method _method, std::string _path, std::function<std::string(void)> *_lambda,
-           bool _needSSL = false);
-  std::string respond(std::string _message, Client::Type _clientType) const;
-  std::string failed() const;
-
-private:
-  std::string execPath_;
-  std::unordered_map<std::string, Page> paths_;
-};
-
 struct Message {
   struct Command {
     Method method;
@@ -35,7 +20,7 @@ struct Message {
     std::string protocol;
   };
 
-  enum Failure { NONE, HEADER };
+  enum Failure { NONE, HEADER, LENGTH };
 
   Command cmd;
   std::unordered_map<std::string, std::string> headers;
@@ -43,7 +28,7 @@ struct Message {
   Failure failure;
 };
 
-Message parse(std::string _message);
+Message parse(const std::string _message);
 
 class Stream
 {
@@ -58,4 +43,19 @@ private:
   size_t begin_;
   size_t end_;
   size_t endOfSteam_;
+};
+
+class Router
+{
+public:
+  Router(std::string _execPath);
+
+  void add(Method _method, std::string _path, std::function<std::string(void)> *_lambda,
+           bool _needSSL = false);
+  std::string respond(Message _message, Client::Type _clientType) const;
+  std::string failed() const;
+
+private:
+  std::string execPath_;
+  std::unordered_map<std::string, Page> paths_;
 };

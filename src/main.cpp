@@ -3,7 +3,7 @@
 
 int main(int _argc, char *_argv[])
 {
-  test::stream();
+  test::parse();
 
   return 0;
 }

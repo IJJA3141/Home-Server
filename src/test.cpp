@@ -35,8 +35,29 @@ void parse()
     failed = true;
   }
 
-  for (const auto &pair : res1.headers) {
-    PRINT(pair.first << " | " << pair.second << "\n");
+  if (res1.headers["Host:"] != "google.com") {
+    ERR("wrong header value for host: " << res1.headers["Host:"]);
+    failed = true;
+  }
+  res1.headers.erase("Host:");
+
+  if (res1.headers["User-Agent:"] != "curl/8.9.1") {
+    ERR("wrong header value for user-agent: " << res1.headers["User-Agent:"]);
+    failed = true;
+  }
+  res1.headers.erase("User-Agent:");
+
+  if (res1.headers["Accept:"] != "*/*") {
+    ERR("wrong header value for accept: " << res1.headers["Accept:"]);
+    failed = true;
+  }
+  res1.headers.erase("Accept:");
+
+  if (res1.headers.size() > 0) {
+    for (const auto &key_val : res1.headers)
+      ERR(key_val.first << " | " << key_val.second);
+
+    failed = true;
   }
 
   if (!failed) {
@@ -62,6 +83,43 @@ void parse()
     failed = true;
   }
 
+  if (res2.headers["Host:"] != "www.google.com") {
+    ERR("wrong header value for host: " << res2.headers["Host:"]);
+    failed = true;
+  }
+  res2.headers.erase("Host:");
+
+  if (res2.headers["User-Agent:"] != "curl/8.9.1") {
+    ERR("wrong header value for user-agent: " << res2.headers["User-Agent:"]);
+    failed = true;
+  }
+  res2.headers.erase("User-Agent:");
+
+  if (res2.headers["Accept:"] != "*/*") {
+    ERR("wrong header value for accept: " << res2.headers["Accept:"]);
+    failed = true;
+  }
+  res2.headers.erase("Accept:");
+
+  if (res2.headers["Content-Length:"] != "19") {
+    ERR("wrong header value for content-length: |" << res2.headers["Content-Length:"] << "|");
+    failed = true;
+  }
+  res2.headers.erase("Content-Length:");
+
+  if (res2.headers["Content-Type:"] != "application/x-www-form-urlencoded") {
+    ERR("wrong header value for content-type: |" << res2.headers["Content-Type:"] << "|");
+    failed = true;
+  }
+  res2.headers.erase("Content-Type:");
+
+  if (res2.headers.size() > 0) {
+    for (const auto &key_val : res2.headers)
+      ERR(key_val.first << " | " << key_val.second << " should not be in the headers.");
+
+    failed = true;
+  }
+
   if (!failed) {
     PRINT("test 2 passed");
   }
@@ -75,7 +133,15 @@ void stream()
 
   Stream test(str);
   while (test >> str) {
-    PRINT("|" << str << "|");
+    if (str == "\r") {
+      PRINT("|r|");
+    } else if (str == "\n") {
+      PRINT("|n|");
+    } else if (str == "\r\n") {
+      PRINT("|rn|");
+    } else {
+      PRINT("|" << str << "|");
+    }
   }
 
   return;

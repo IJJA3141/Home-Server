@@ -1,6 +1,5 @@
 #include <fstream>
 #include <iterator>
-#include <sstream>
 
 #include "../log.hpp"
 #include "parser.hpp"
@@ -71,69 +70,79 @@ std::string Router::respond(std::string _message, Client::Type _clientType) cons
   return str;
 };
 
-Message parse(std::string _message)
+Message parse(const std::string _message)
 {
-  std::stringstream ss(_message);
-  ss >> _message;
+  Stream ss(_message);
+  std::string iterator;
+  ss >> iterator;
 
   Message message;
   message.failure = Message::Failure::NONE;
 
-  switch (_message.size()) {
+  switch (iterator.size()) {
   case 3:
-    if (_message.compare(0, 3, "GET") == 0) {
+    if (iterator.compare(0, 3, "GET") == 0) {
       message.cmd.method = Method::GET;
       break;
-    } else if (_message.compare(0, 3, "POST") == 0) {
+    } else if (iterator.compare(0, 3, "POST") == 0) {
       message.cmd.method = Method::PUT;
       break;
     }
   case 4:
-    if (_message.compare(0, 4, "HEAD") == 0) {
+    if (iterator.compare(0, 4, "HEAD") == 0) {
       message.cmd.method = Method::HEAD;
       break;
-    } else if (_message.compare(0, 4, "POST") == 0) {
+    } else if (iterator.compare(0, 4, "POST") == 0) {
       message.cmd.method = Method::POST;
       break;
     }
   case 5:
-    if (_message.compare(0, 5, "TRACE") == 0) {
+    if (iterator.compare(0, 5, "TRACE") == 0) {
       message.cmd.method = Method::TRACE;
       break;
     }
   case 6:
-    if (_message.compare(0, 6, "DELETE") == 0) {
+    if (iterator.compare(0, 6, "DELETE") == 0) {
       message.cmd.method = Method::DELETE;
       break;
     }
   case 7:
-    if (_message.compare(0, 7, "CONNECT") == 0) {
+    if (iterator.compare(0, 7, "CONNECT") == 0) {
       message.cmd.method = Method::CONNECT;
       break;
-    } else if (_message.compare(0, 7, "OPTIONS") == 0) {
+    } else if (iterator.compare(0, 7, "OPTIONS") == 0) {
       message.cmd.method = Method::OPTIONS;
       break;
     }
   default:
-    PRINT(_message.size());
+    PRINT(iterator.size());
     ERR("unknown method.");
-    exit(1);
+    message.failure = Message::Failure::HEADER;
+    return message;
   };
 
   ss >> message.cmd.path;
   ss >> message.cmd.protocol;
 
-  std::string buf;
-  ss >> buf;
-  ss >> _message;
+  std::string val;
 
-  message.headers[buf] = _message;
+  while (ss >> iterator && ss >> val && iterator != "")
+    message.headers[iterator] = val;
 
-  ss >> buf;
+  std::unordered_map<std::string, std::string>::const_iterator it =
+      message.headers.find("Content-Length:");
 
-  if(buf == _message) exit(1);
+  if (it != message.headers.end()) {
+    size_t length = atoi(it->second.c_str());
 
-  ss >> _message;
+    if (length <= 4096) {
+      iterator = _message;
+
+      message.body = iterator.substr(_message.size() - length, length);
+    } else {
+      message.failure = Message::Failure::LENGTH;
+    }
+  }
 
   return message;
 };
