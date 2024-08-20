@@ -72,7 +72,7 @@ void Tcp::connect(Client *_client)
     if (bytes < 0) {
       VERBERR("failed to read client's message.");
       // should respond
-      _client->send(this->parser_->failed());
+      _client->send("");
 
       break;
     }
@@ -82,7 +82,7 @@ void Tcp::connect(Client *_client)
     // and then respond accordingly
     // http use \r\n for new line
     _client->buffer[bytes] = '\0';
-    _client->send(this->parser_->respond(_client->buffer, _client->type));
+    _client->send("");
 
     break;
   }

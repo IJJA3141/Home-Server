@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iterator>
+#include <sstream>
 
 #include "../log.hpp"
 #include "parser.hpp"
@@ -72,72 +73,67 @@ std::string Router::respond(std::string _message, Client::Type _clientType) cons
 
 Message parse(std::string _message)
 {
+  std::stringstream ss(_message);
+  ss >> _message;
+
   Message message;
   message.failure = Message::Failure::NONE;
-  std::string cmd = _message.substr(0, _message.find("\r\n"));
 
-  size_t index = cmd.find(" ");
-
-  switch (index) {
+  switch (_message.size()) {
   case 3:
-    if (cmd.compare(0, 3, "GET") == 0) {
+    if (_message.compare(0, 3, "GET") == 0) {
       message.cmd.method = Method::GET;
       break;
-    } else if (cmd.compare(0, 3, "POST") == 0) {
+    } else if (_message.compare(0, 3, "POST") == 0) {
       message.cmd.method = Method::PUT;
       break;
     }
   case 4:
-    if (cmd.compare(0, 4, "HEAD") == 0) {
+    if (_message.compare(0, 4, "HEAD") == 0) {
       message.cmd.method = Method::HEAD;
       break;
-    } else if (cmd.compare(0, 4, "POST") == 0) {
+    } else if (_message.compare(0, 4, "POST") == 0) {
       message.cmd.method = Method::POST;
       break;
     }
   case 5:
-    if (cmd.compare(0, 5, "TRACE") == 0) {
+    if (_message.compare(0, 5, "TRACE") == 0) {
       message.cmd.method = Method::TRACE;
       break;
     }
   case 6:
-    if (cmd.compare(0, 6, "DELETE") == 0) {
+    if (_message.compare(0, 6, "DELETE") == 0) {
       message.cmd.method = Method::DELETE;
       break;
     }
   case 7:
-    if (cmd.compare(0, 7, "CONNECT") == 0) {
+    if (_message.compare(0, 7, "CONNECT") == 0) {
       message.cmd.method = Method::CONNECT;
       break;
-    } else if (cmd.compare(0, 7, "OPTIONS") == 0) {
+    } else if (_message.compare(0, 7, "OPTIONS") == 0) {
       message.cmd.method = Method::OPTIONS;
       break;
     }
   default:
+    PRINT(_message.size());
+    ERR("unknown method.");
     exit(1);
   };
 
-  message.cmd.path = cmd.substr(index + 1, cmd.rfind(" ") - index);
-  message.cmd.protocol = cmd.substr(cmd.rfind(" ") + 1);
+  ss >> message.cmd.path;
+  ss >> message.cmd.protocol;
 
-  std::string::size_type contentLength = _message.find("Content-Length: ");
+  std::string buf;
+  ss >> buf;
+  ss >> _message;
 
-  if (contentLength != std::string::npos) {
-    contentLength += 16;
-    size_t i = contentLength;
+  message.headers[buf] = _message;
 
-    while (_message[++i] != '\r')
-      ;
+  ss >> buf;
 
-    message.body = _message.substr(atoi(_message.substr(contentLength, i - contentLength).c_str()));
+  if(buf == _message) exit(1);
 
-    size_t ancer = i = cmd.size();
-    for(; i < _message.size(); i++)
-    {
-      
-
-    }
-  }
+  ss >> _message;
 
   return message;
 };
