@@ -1,5 +1,6 @@
 #include "log.hpp"
 #include "server/parser.hpp"
+#include "server/router.hpp"
 #include "server/server.hpp"
 
 namespace test
@@ -143,6 +144,33 @@ void stream()
       PRINT("|" << str << "|");
     }
   }
+
+  return;
+}
+
+void path()
+{
+  std::string str1 = "/over/there/[user]/end/[param1]/[param2]/path";
+  std::string str2 = "/[user]/end/[param1]/[param2]";
+  std::string str3 = "/over/end/param";
+  Path path1 = Path(str1);
+  Path path2 = Path(str2);
+  Path path3 = Path(str3);
+
+  PRINT(str1);
+  PRINT(path1.match);
+  for (const auto &pair : path1.skip)
+    PRINT(pair.first << " | " << pair.second);
+
+  PRINT(str2);
+  PRINT(path2.match);
+  for (const auto &pair : path2.skip)
+    PRINT(pair.first << " | " << pair.second);
+
+  PRINT(str3);
+  PRINT(path3.match);
+  for (const auto &pair : path3.skip)
+    PRINT(pair.first << " | " << pair.second);
 
   return;
 }

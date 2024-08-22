@@ -1,7 +1,7 @@
-#include <openssl/err.h>
-
 #include "../log.hpp"
 #include "server.hpp"
+
+#include <openssl/err.h>
 
 Tls::Tls(const Router *_parser, const char *_certFile, const char *_keyFile) : Tcp(_parser)
 {

@@ -8,6 +8,7 @@ set(SOURCE_FILES
     ./src/server/clients.cpp
     ./src/server/parser.cpp
     ./src/server/stream.cpp
+    ./src/server/router.cpp
 
     ./src/test.cpp
     )

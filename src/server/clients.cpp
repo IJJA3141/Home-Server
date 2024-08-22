@@ -1,8 +1,8 @@
-#include <openssl/err.h>
-#include <unistd.h>
-
 #include "../log.hpp"
 #include "server.hpp"
+
+#include <openssl/err.h>
+#include <unistd.h>
 
 Client::Client(const int &_socket)
 {

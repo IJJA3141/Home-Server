@@ -1,17 +1,9 @@
 #pragma once
 
-#include <functional>
 #include <string>
 #include <unordered_map>
 
-#include "server.hpp"
-
 enum Method { GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE };
-
-struct Page {
-  bool requireSSL;
-  std::function<std::string(void)> *methods[8];
-};
 
 struct Message {
   struct Command {
@@ -43,19 +35,4 @@ private:
   size_t begin_;
   size_t end_;
   size_t endOfSteam_;
-};
-
-class Router
-{
-public:
-  Router(std::string _execPath);
-
-  void add(Method _method, std::string _path, std::function<std::string(void)> *_lambda,
-           bool _needSSL = false);
-  std::string respond(Message _message, Client::Type _clientType) const;
-  std::string failed() const;
-
-private:
-  std::string execPath_;
-  std::unordered_map<std::string, Page> paths_;
 };

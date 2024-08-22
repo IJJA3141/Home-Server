@@ -1,7 +1,8 @@
-#include <unistd.h>
-
 #include "../log.hpp"
+#include "parser.hpp"
 #include "server.hpp"
+
+#include <unistd.h>
 
 Tcp::Tcp(const Router *_parser)
 {
@@ -82,6 +83,7 @@ void Tcp::connect(Client *_client)
     // and then respond accordingly
     // http use \r\n for new line
     _client->buffer[bytes] = '\0';
+    parse(_client->buffer);
     _client->send("");
 
     break;
