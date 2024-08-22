@@ -1,5 +1,6 @@
 #include "../log.hpp"
 #include "parser.hpp"
+#include "router.hpp"
 #include "server.hpp"
 
 #include <unistd.h>
@@ -66,28 +67,10 @@ void Tcp::listen()
 
 void Tcp::connect(Client *_client)
 {
-  while (true) {
-    // wait for client new message
-    size_t bytes = _client->read();
+  Request req = _client->read();
 
-    if (bytes < 0) {
-      VERBERR("failed to read client's message.");
-      // should respond
-      _client->send("");
-
-      break;
-    }
-
-    LOG("reading client message.");
-    // should read client responce
-    // and then respond accordingly
-    // http use \r\n for new line
-    _client->buffer[bytes] = '\0';
-    parse(_client->buffer);
-    _client->send("");
-
-    break;
-  }
+  this->router_->respond(req);
+  _client->send({});
 
   delete _client;
 

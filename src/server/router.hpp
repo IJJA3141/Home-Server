@@ -7,10 +7,8 @@
 #include <string>
 
 struct Path {
-  std::string match;
-  std::vector<std::pair<int, std::string>> skip;
-  std::function<std::string(void)> *methods[8];
-  std::function<std::string(void)> *SSLMethods[8];
+  std::vector<std::string> match;
+  const std::function<std::string(Request _message)> *methods[8];
 
   Path(std::string _path);
 };
@@ -20,11 +18,13 @@ class Router
 public:
   Router(std::string _execPath);
 
-  void add(const Method _method, std::string _path, std::function<std::string(void)> *_lambda,
-           bool _needSSL = false);
-  std::string respond(Message _message, Client::Type _clientType) const;
+  void add(const Method _method, std::string _path,
+           const std::function<std::string(Request)> &_lambda);
+  std::string respond(Request _message) const;
   std::string failed() const;
   std::string loadFile(std::string _path);
+  std::string handleErr(const Request _message) const;
+  std::string notInPath() const;
 
 private:
   std::string execPath_;

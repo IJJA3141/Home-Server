@@ -2,32 +2,42 @@
 #include "../log.hpp"
 
 #include <fstream>
-#include <unordered_map>
 
-Path::Path(std::string _path) : match("")
+Path::Path(std::string _path)
 {
-  size_t start = _path.find("[");
-  size_t end = _path.find("]");
-  size_t index = 0;
+  if (_path.size() == 0) {
+    ERR("[empty] is not a valid path");
+    exit(1);
+  }
 
-  while (_path.size() > 0) {
-    if (start != std::string::npos && end != std::string::npos && start < end) {
-      for (size_t i = 1; i < start; i++)
-        if (_path[i] == '/') index++;
+  if (_path[0] != '/') {
+    ERR("a path should start with /");
+    exit(1);
+  }
 
-      this->skip.push_back({index++, _path.substr(start + 1, end - start - 1)});
-      this->match += _path.substr(0, start - 1);
-      _path.erase(0, end + 1);
-      PRINT(_path);
-    } else {
-      this->match += _path;
+  // path sanitization
+  while (_path.size() >= 2 && _path[_path.size() - 1] == '/') {
+    _path = _path.substr(0, _path.size() - 1);
+    WARN("you should't have a tailing / in your path");
+  }
 
-      break;
+  if (_path.size() == 1) {
+    this->match = {"/"};
+    return;
+  }
+
+  size_t start = 0;
+  size_t end = 0;
+  while ((end = _path.find('/', end + 1)) != std::string::npos) {
+    if (start == end + 1) {
+      start = end;
+      continue;
     }
 
-    start = _path.find("[");
-    end = _path.find("]");
+    this->match.push_back(_path.substr(start, end - start));
+    start = end;
   }
+  this->match.push_back(_path.substr(start, end - start));
 
   return;
 }
@@ -38,18 +48,11 @@ Router::Router(std::string _execPath)
   return;
 };
 
-void Router::add(Method _method, std::string _path, std::function<std::string(void)> *_lambda,
-                 bool _needSSL)
+void Router::add(Method _method, std::string _path,
+                 const std::function<std::string(Request)> &_lambda)
 {
-  // path sanitization
-  if (_path[_path.size() - 1] == '/') _path = _path.substr(0, _path.size() - 1);
-
   Path path(_path);
-  if (_needSSL) {
-    path.SSLMethods[_method] = _lambda;
-  } else {
-    path.methods[_method] = _lambda;
-  }
+  path.methods[_method] = &_lambda;
 
   this->paths_.push_back(path);
 
@@ -68,24 +71,41 @@ std::string Router::loadFile(std::string _path)
   return str;
 }
 
-std::string Router::respond(const Message _message, Client::Type _clientType) const
+std::string Router::respond(Request _message, Client::Type _clientType) const
 {
-  std::string target = _message.cmd.path;
-  std::unordered_map<std::string, std::string> map;
-
-  size_t index = 1;
+  if (_message.failure != Request::Failure::NONE) return this->handleErr(_message);
 
   for (const Path &path : this->paths_) {
-    for (const std::pair<int, std::string> &pair : path.skip) {
-      for (int i = 0; i <= pair.first; i++) {
-        index += target.find("/", index + 1);
+    if (path.match.size() != _message.cmd.path.size()) continue;
+    _message.urlParam.clear();
+
+    for (size_t i = 0; i < path.match.size(); i++) {
+      if (path.match[i][1] == '[') {
+        size_t end = path.match[i].find(']');
+
+        if (end == std::string::npos) {
+          WARN("bracket not closed in path");
+          goto next;
+        } else {
+          _message.urlParam[path.match[i].substr(2, end - 2)] = _message.cmd.path[i].substr(1);
+        }
+
+        continue;
       }
 
-      size_t end = target.find("/", index + 1);
-      map[pair.second] = target.substr(index, end - index);
-      target.erase(index, end - index);
+      if (path.match[i] != _message.cmd.path[i]) goto next;
     }
+
+    if (path.methods[_message.cmd.method] != nullptr) {
+      return (*path.methods[_message.cmd.method])(_message);
+    } else
+      return this->notInPath();
+
+  next:;
   }
 
-  return "";
+  return this->notInPath();
 };
+
+std::string Router::handleErr(const Request _message) const { return ""; }
+std::string Router::notInPath() const { return ""; };

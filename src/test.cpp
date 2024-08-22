@@ -14,8 +14,8 @@ void parse()
       "POST /home/test HTTP/1.1\r\nHost: www.google.com\r\nUser-Agent: curl/8.9.1\r\nAccept: "
       "*/*\r\nContent-Length: 19\r\nContent-Type: application/x-www-form-urlencoded";
 
-  Message res1 = ::parse(msg1);
-  Message res2 = ::parse(msg2);
+  Request res1 = ::parse(msg1);
+  Request res2 = ::parse(msg2);
 
   bool failed = false;
 
@@ -24,13 +24,6 @@ void parse()
     ERR("failed to get http method.");
     failed = true;
   }
-
-  if (res1.cmd.path != "/") {
-    ERR("failed to get path");
-    ERR("|" << res1.cmd.path << "|")
-    failed = true;
-  }
-
   if (res1.cmd.protocol != "HTTP/1.1") {
     ERR("failed to get protocol");
     failed = true;
@@ -70,12 +63,6 @@ void parse()
   PRINT("parse test 2:");
   if (res2.cmd.method != Method::POST) {
     ERR("failed to get http method.");
-    failed = true;
-  }
-
-  if (res2.cmd.path != "/home/test") {
-    ERR("failed to get path");
-    ERR("|" << res2.cmd.path << "|")
     failed = true;
   }
 
@@ -153,24 +140,57 @@ void path()
   std::string str1 = "/over/there/[user]/end/[param1]/[param2]/path";
   std::string str2 = "/[user]/end/[param1]/[param2]";
   std::string str3 = "/over/end/param";
+  std::string str4 = "/";
+
   Path path1 = Path(str1);
   Path path2 = Path(str2);
   Path path3 = Path(str3);
+  Path path4 = Path(str4);
 
   PRINT(str1);
-  PRINT(path1.match);
-  for (const auto &pair : path1.skip)
-    PRINT(pair.first << " | " << pair.second);
+  PRINTV(path1.match);
 
   PRINT(str2);
-  PRINT(path2.match);
-  for (const auto &pair : path2.skip)
-    PRINT(pair.first << " | " << pair.second);
+  PRINTV(path2.match);
 
   PRINT(str3);
-  PRINT(path3.match);
-  for (const auto &pair : path3.skip)
-    PRINT(pair.first << " | " << pair.second);
+  PRINTV(path3.match);
+
+  PRINT(str4);
+  PRINTV(path4.match);
+
+  return;
+}
+
+void router()
+{
+  Router router("");
+
+  router.add(Method::GET, "/", [](Request _) -> std::string {
+    PRINT("simple");
+    return "";
+  });
+
+  router.add(Method::GET, "/over/there", [](Request _) -> std::string {
+    PRINT("less simple");
+    return "";
+  });
+
+  router.add(Method::GET, "/over/[user]/there", [](Request _) -> std::string {
+    PRINT("hard");
+    for (const auto &a : _.urlParam) {
+      PRINT("key " << a.first << " | val " << a.second);
+    }
+    return "";
+  });
+
+  Request msg1{{Method::GET, {"/"}, ""}, {}, "", Request::Failure::NONE, {}};
+  Request msg2{{Method::GET, {"/over", "/there"}, ""}, {}, "", Request::Failure::NONE, {}};
+  Request msg3{{Method::GET, {"/over", "/ijja", "/there"}, ""}, {}, "", Request::Failure::NONE, {}};
+
+  router.respond(msg1, Client::Type::NONSSL);
+  router.respond(msg2, Client::Type::NONSSL);
+  router.respond(msg3, Client::Type::NONSSL);
 
   return;
 }

@@ -2,25 +2,26 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 enum Method { GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE };
 
-struct Message {
+struct Request {
+  enum Failure { NONE, HEADER, LENGTH, PATH, MOVE };
   struct Command {
     Method method;
-    std::string path;
+    std::vector<std::string> path;
     std::string protocol;
   };
-
-  enum Failure { NONE, HEADER, LENGTH };
 
   Command cmd;
   std::unordered_map<std::string, std::string> headers;
   std::string body;
   Failure failure;
+  std::unordered_map<std::string, std::string> urlParam;
 };
 
-Message parse(const std::string _message);
+Request parse(const std::string _message);
 
 class Stream
 {

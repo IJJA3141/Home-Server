@@ -1,14 +1,14 @@
 #include "parser.hpp"
 #include "../log.hpp"
 
-Message parse(const std::string _message)
+Request parse(const std::string _message)
 {
   Stream ss(_message);
   std::string iterator;
   ss >> iterator;
 
-  Message message;
-  message.failure = Message::Failure::NONE;
+  Request message;
+  message.failure = Request::Failure::NONE;
 
   switch (iterator.size()) {
   case 3:
@@ -48,11 +48,44 @@ Message parse(const std::string _message)
   default:
     PRINT(iterator.size());
     ERR("unknown method.");
-    message.failure = Message::Failure::HEADER;
+    message.failure = Request::Failure::HEADER;
     return message;
   };
 
-  ss >> message.cmd.path;
+  ss >> iterator;
+
+  if (iterator.size() == 0) {
+    ERR("[empty] is not a valid path");
+    message.failure = Request::Failure::PATH;
+    return message;
+  }
+
+  if (iterator[0] != '/') {
+    ERR("a path should start with /");
+    message.failure = Request::Failure::PATH;
+    return message;
+  }
+
+  if (iterator.size() == 1) {
+    message.cmd.path = {"/"};
+  } else {
+    // path sanitization
+    if (iterator[iterator.size() - 1] == '/') {
+      message.failure = Request::Failure::MOVE;
+      message.cmd.path = {iterator};
+      return message;
+    }
+
+    size_t start = 0;
+    size_t end = 0;
+    while ((end = iterator.find('/', end + 1)) != std::string::npos) {
+      message.cmd.path.push_back(iterator.substr(start, end - start));
+      start = end;
+    }
+
+    message.cmd.path.push_back(iterator.substr(start, end - start));
+  }
+
   ss >> message.cmd.protocol;
 
   std::string val;
@@ -71,7 +104,7 @@ Message parse(const std::string _message)
 
       message.body = iterator.substr(_message.size() - length, length);
     } else {
-      message.failure = Message::Failure::LENGTH;
+      message.failure = Request::Failure::LENGTH;
     }
   }
 

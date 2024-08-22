@@ -2,11 +2,12 @@
 
 #include <arpa/inet.h>
 #include <openssl/ssl.h>
-#include <string>
 #include <thread>
 #include <vector>
 
 class Router;
+
+struct Response{};
 
 // http
 class Client
@@ -19,8 +20,8 @@ public:
   Client(const int &_socket);
   ~Client();
 
-  virtual size_t read();
-  virtual int send(const std::string _message);
+  virtual Request read();
+  virtual int send(const Response _res);
 
 protected:
   int socket_;
@@ -45,7 +46,7 @@ protected:
   int socket_;
   struct sockaddr_in hint_;
   int port_;
-  const Router *parser_;
+  const Router *router_;
 
   virtual Client *newClient_();
 };
@@ -59,8 +60,8 @@ public:
   SSLClient(const int &_socket, SSL_CTX *_CTX);
   ~SSLClient();
 
-  size_t read() override;
-  int send(const std::string _message) override;
+  Request read() override;
+  int send(const Response _res) override;
 
 private:
   ::SSL *ssl_;
