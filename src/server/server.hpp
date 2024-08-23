@@ -1,44 +1,20 @@
 #pragma once
 
-#include <arpa/inet.h>
-#include <openssl/ssl.h>
+#include "client.hpp"
+#include "router.hpp"
+#include <netinet/in.h>
+#include <openssl/crypto.h>
 #include <thread>
 #include <vector>
-
-class Router;
-
-struct Response{};
-
-// http
-class Client
-{
-public:
-  enum Type { NONSSL = 0, SSL = 2 };
-  const Type type = NONSSL;
-  char buffer[4096];
-
-  Client(const int &_socket);
-  ~Client();
-
-  virtual Request read();
-  virtual int send(const Response _res);
-
-protected:
-  int socket_;
-  sockaddr_in client_;
-  socklen_t size_;
-  size_t bufferSize_;
-};
 
 class Tcp
 {
 public:
-  std::vector<std::thread *> threads;
+  std::vector<std::thread *> active_client;
 
-  Tcp(const Router *_parser);
+  Tcp(const Router *_router);
   ~Tcp();
 
-  void connect(Client *_client);
   void bind(const int _port);
   void listen();
 
@@ -48,35 +24,18 @@ protected:
   int port_;
   const Router *router_;
 
-  virtual Client *newClient_();
+  virtual Client *await_client_();
+  void connect(Client *_client);
 };
 
-// https
-class SSLClient : public Client
+class Tls : public Tcp
 {
 public:
-  const Type type = SSL;
-
-  SSLClient(const int &_socket, SSL_CTX *_CTX);
-  ~SSLClient();
-
-  Request read() override;
-  int send(const Response _res) override;
-
-private:
-  ::SSL *ssl_;
-};
-
-static bool SSLLIBINIT = false;
-
-class Tls : private Tcp
-{
-public:
-  Tls(const Router *_parser, const char *_certFile, const char *_keyFile);
+  Tls(const Router *_router, const std::string _cert_path, const std::string _key_path);
   ~Tls();
 
 private:
-  SSL_CTX *CTX_;
+  SSL_CTX *ctx_;
 
-  virtual Client *newClient_() override;
+  Client *await_client_() override;
 };

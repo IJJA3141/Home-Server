@@ -1,32 +1,31 @@
 #pragma once
 
-#include "parser.hpp"
-#include "server.hpp"
-
+#include "client.hpp"
 #include <functional>
 #include <string>
-
-struct Path {
-  std::vector<std::string> match;
-  const std::function<std::string(Request _message)> *methods[8];
-
-  Path(std::string _path);
-};
+#include <vector>
 
 class Router
 {
 public:
-  Router(std::string _execPath);
+  Router(const Method _method, const std::string _path,
+         const std::function<Response(Request)> &_lambda);
 
-  void add(const Method _method, std::string _path,
-           const std::function<std::string(Request)> &_lambda);
-  std::string respond(Request _message) const;
-  std::string failed() const;
-  std::string loadFile(std::string _path);
-  std::string handleErr(const Request _message) const;
-  std::string notInPath() const;
+  Response respond(Request _req) const;
+  Response handle_err(Request _req) const;
+  void add_error_handler(
+      Request::Failure _err,
+      std::function<Response(Request, std::map<std::string, std::string> &)> &_lambda);
 
 private:
-  std::string execPath_;
-  std::vector<Path> paths_;
+  struct Route {
+    const std::function<Response(Request)> *methods[method_size];
+    std::vector<std::string> path;
+
+    Route(const std::string _path);
+  };
+
+  std::function<Response(Request, std::map<std::string, std::string> &)>
+      *error_handler_[Request::failure_size];
+  std::vector<Route> paths_;
 };
