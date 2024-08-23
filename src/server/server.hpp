@@ -24,9 +24,11 @@ protected:
   int port_;
   const Router *router_;
 
-  virtual Client *await_client_();
+  virtual Client *await_client();
   void connect(Client *_client);
 };
+
+static bool SSLLIBINIT = false;
 
 class Tls : public Tcp
 {
@@ -37,5 +39,5 @@ public:
 private:
   SSL_CTX *ctx_;
 
-  Client *await_client_() override;
+  Client *await_client() override;
 };

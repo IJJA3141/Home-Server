@@ -2,7 +2,10 @@ cmake_minimum_required(VERSION 3.29)
 project(Home-Server)
 
 set(SOURCE_FILES ./src/main.cpp
-
+  ./src/server/client.cpp
+  ./src/server/reqres.cpp
+  ./src/server/router.cpp
+  ./src/server/server.cpp
   )
 
 set(INC_DIR /usr/local/include)

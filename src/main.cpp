@@ -1,5 +1,4 @@
-int main(int _argc, char *_argv[])
-{
-  ;
-  return 0;
-}
+#include <string>
+#include <vector>
+
+int main(int _argc, char *_argv[]) { return 0; }
