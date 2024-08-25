@@ -1,4 +1,7 @@
-#include <string>
-#include <vector>
+#include "test/test.hpp"
 
-int main(int _argc, char *_argv[]) { return 0; }
+int main(int _argc, char *_argv[])
+{
+  test::all();
+  return 0;
+}

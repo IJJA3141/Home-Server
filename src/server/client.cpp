@@ -44,9 +44,12 @@ SSLClient::~SSLClient()
   return;
 }
 
+size_t Client::socket_read() { return ::read(this->socket_, this->buffer_, this->buffer_size_); }
+size_t SSLClient::socket_read() { return SSL_read(this->ssl_, this->buffer_, this->buffer_size_); }
+
 Request Client::read()
 {
-  size_t bytes = ::read(this->socket_, this->buffer_, this->buffer_size_);
+  size_t bytes = this->socket_read();
   if (bytes < 0) {
     VERBERR("failed to read client's message.")
     return Request();
@@ -56,6 +59,23 @@ Request Client::read()
   this->buffer_[bytes] = '\0';
 
   return Request(this->buffer_, this->type_);
+}
+
+void Client::socket_write(const std::string _res) const
+{
+  if (::write(this->socket_, _res.c_str(), _res.size() < 0)) {
+    ERR("?");
+  };
+
+  return;
+}
+void SSLClient::socket_write(const std::string _res) const
+{
+  if (SSL_write(this->ssl_, _res.c_str(), _res.size() < 0)) {
+    ERR("?");
+  };
+
+  return;
 }
 
 void Client::send(const Response _res) const
@@ -70,7 +90,6 @@ void Client::send(const Response _res) const
 
   res += "\n" + _res.body;
 
-  if (::write(this->socket_, res.c_str(), res.size() < 0)) {
-    ERR("?");
-  };
+  this->socket_write(res);
+  return;
 }

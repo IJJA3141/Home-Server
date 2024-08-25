@@ -8,7 +8,7 @@
 class Router
 {
 public:
-  Router() {};
+  Router(){};
 
   void add(const Method _method, std::string _path,
            const std::function<Response(Request)> &_lambda);
@@ -18,10 +18,10 @@ public:
 
 private:
   struct Route {
-    const std::function<Response(Request)> *methods[method_size];
+    const std::function<Response(Request)> *methods[method_size] = {};
     std::vector<std::string> path;
   };
 
-  std::function<Response(Request)> *error_handler_[Request::failure_size];
+  std::function<Response(Request)> *error_handler_[Request::failure_size] = {};
   std::vector<Route> paths_;
 };

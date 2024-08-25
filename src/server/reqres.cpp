@@ -1,8 +1,39 @@
 #include "reqres.hpp"
 #include "../log.hpp"
 
+bool Stream::operator>>(std::string &_string)
+{
+  if (this->end_ >= this->npos) return false;
+
+  for (; this->end_ != this->npos; this->end_++) {
+    switch (this->string_[this->end_]) {
+    case ' ':
+    case '\n':
+      _string = this->string_.substr(this->begin_, this->end_ - this->begin_);
+      this->begin_ = ++this->end_;
+      return true;
+    case '\r':
+      if (++this->end_ >= this->npos || this->string_[this->end_] == '\n') {
+        _string = this->string_.substr(this->begin_, --this->end_ - this->begin_);
+        this->begin_ = this->end_ += 2;
+        return true;
+      } else {
+        _string = this->string_.substr(this->begin_, --this->end_ - this->begin_);
+        this->begin_ = ++this->end_;
+        return true;
+      }
+    default:
+      break;
+    }
+  }
+
+  _string = this->string_.substr(this->begin_, ++this->end_ - this->begin_);
+
+  return true;
+};
+
 Request::Request()
-    : failure(Request::Failure::MALFORMED), connection_type(Client::Type::STANDARD) {};
+    : failure(Request::Failure::MALFORMED), connection_type(Client::Type::STANDARD){};
 
 Request::Request(const std::string _req, const Client::Type _connection_type)
     : connection_type(_connection_type)
@@ -72,24 +103,36 @@ Request::Request(const std::string _req, const Client::Type _connection_type)
 
     if (hash != std::string::npos) {
       if (iterator[hash - 1] == '/') {
-        this->failure = Request::Failure::TAILING;
+        this->failure = Request::Failure::TRAILING;
         return;
       };
 
+      //?user=IJJA&quoi=coupb&2+2=5
       std::string param = iterator.substr(hash + 1);
-      size_t start = 0;
-
       iterator.resize(hash);
 
-      while ((hash = param.find('=', start)) != std::string::npos) {
-        quest = param.find('&');
-        this->url_params[param.substr(start, hash)] = param.substr(hash, quest - hash);
-        start = quest;
+      size_t start = 0;
+      hash = 0;
+      quest = 0;
+
+      hash = param.find('=');
+      quest = param.find('&');
+
+      while (quest != std::string::npos) {
+        this->url_params[param.substr(start, hash - start)] =
+            param.substr(hash + 1, quest - hash - 1);
+
+        start = quest + 1;
+
+        hash = param.find('=', start);
+        quest = param.find('&', hash);
       }
+
+      this->url_params[param.substr(start, hash - start)] = param.substr(hash + 1);
 
     } else {
       if (iterator[iterator.size() - 1] == '/') {
-        this->failure = Request::Failure::TAILING;
+        this->failure = Request::Failure::TRAILING;
         return;
       };
     }
@@ -111,9 +154,14 @@ Request::Request(const std::string _req, const Client::Type _connection_type)
   stream >> this->cmd.protocol;
 
   std::string val;
-  while (stream >> iterator && stream >> val && iterator != "")
+  while (stream >> iterator && stream >> val && iterator != "") {
+    iterator.pop_back();
     this->headers[iterator] = val;
+  }
 
+  this->body = val;
+
+  /*
   std::map<std::string, std::string>::const_iterator it = this->headers.find("Content-Length:");
 
   if (it != this->headers.end()) {
@@ -128,6 +176,7 @@ Request::Request(const std::string _req, const Client::Type _connection_type)
       this->failure = Request::Failure::SIZE;
     }
   }
+  */
 
   return;
 }

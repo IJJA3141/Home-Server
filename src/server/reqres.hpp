@@ -9,8 +9,21 @@ static const int method_size = 8;
 enum Method { GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE };
 static_assert((method_size - 1) == Method::TRACE, "wrong size for method enum");
 
-struct Request {
+class Stream
+{
 public:
+  Stream(const std::string _string) : string_(_string), npos(_string.size() - 1){};
+
+  bool operator>>(std::string &_string);
+
+private:
+  std::string string_;
+  size_t npos;
+  size_t begin_ = 0;
+  size_t end_ = 0;
+};
+
+struct Request {
   struct Command {
     Method method;
     std::vector<std::string> path;
@@ -20,7 +33,7 @@ public:
   enum Failure {
     NONE,
     METHOD,
-    TAILING,
+    TRAILING,
     SIZE,
     PATH,
     LENDTH,
@@ -39,24 +52,8 @@ public:
   std::map<std::string, std::string> url_params;
   const Client::Type connection_type;
 
-  Request();
-
   Request(const std::string _req, const Client::Type _connection_type);
-
-private:
-  class Stream
-  {
-  public:
-    Stream(const std::string _string) : string_(_string), npos(_string.size() - 1) {};
-
-    bool operator>>(std::string &_string);
-
-  private:
-    std::string string_;
-    size_t npos;
-    size_t begin_ = 0;
-    size_t end_ = 0;
-  };
+  Request();
 };
 
 struct Response {

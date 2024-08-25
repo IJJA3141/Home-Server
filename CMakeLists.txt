@@ -6,6 +6,10 @@ set(SOURCE_FILES ./src/main.cpp
   ./src/server/reqres.cpp
   ./src/server/router.cpp
   ./src/server/server.cpp
+  
+  ./src/test/router.cpp
+  ./src/test/stream.cpp
+  ./src/test/request.cpp
   )
 
 set(INC_DIR /usr/local/include)

@@ -11,7 +11,6 @@ void Router::add(const Method _method, std::string _path,
 
     if (comp == _path) {
       if (route.methods[_method] != nullptr) WARN(_path << " has been overwriten");
-      PRINT("new method added to " << _path);
       route.methods[_method] = &_lambda;
     }
   }
@@ -49,7 +48,7 @@ void Router::add(const Method _method, std::string _path,
     route.path.push_back(_path.substr(start, end - start));
   }
 
-  PRINT("new route added: " << _path);
+  LOG("new route added: " << _path);
 
   if (route.methods[_method] != nullptr) WARN(_path << " has been overwriten");
   route.methods[_method] = &_lambda;
@@ -102,3 +101,5 @@ Response Router::respond(Request _req) const
   _req.failure = Request::Failure::WRONGPATH;
   return this->handle_err(_req);
 }
+
+Response Router::handle_err(Request _req) const { return {}; };
