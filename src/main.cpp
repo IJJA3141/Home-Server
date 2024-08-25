@@ -24,6 +24,7 @@ int main(int _argc, char *_argv[])
   path = path.substr(0, path.rfind("/"));
 
   Tcp http(&router);
+  Tls https(&router, path + "/ssl/cert.pem", path + "/ssl/key.pem");
 
   router.add(Method::GET, "/", [](Request _req) -> Response {
     Response res;
@@ -55,7 +56,13 @@ int main(int _argc, char *_argv[])
   });
 
   http.bind(80);
-  http.listen();
+  https.bind(443);
+
+  std::thread http_thread = std::thread(&Tcp::listen, &http);
+  std::thread https_thread = std::thread(&Tls::listen, &https);
+
+  http_thread.join();
+  https_thread.join();
 
   return 0;
 }
