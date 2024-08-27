@@ -57,7 +57,8 @@ void Router::add(const Method _method, std::string _path,
   return;
 }
 
-void Router::add_error_handler(Request::Failure _err, std::function<Response(Request)> &_lambda)
+void Router::add_error_handler(Request::Failure _err,
+                               const std::function<Response(Request)> &_lambda)
 {
   if (this->error_handler_[_err] != nullptr) WARN("an error handler has been overwriten");
   this->error_handler_[_err] = &_lambda;
@@ -102,4 +103,11 @@ Response Router::respond(Request _req) const
   return this->handle_err(_req);
 }
 
-Response Router::handle_err(Request _req) const { return {}; };
+Response Router::handle_err(Request _req) const
+{
+  PRINT("?");
+  if (this->error_handler_[_req.failure] == nullptr) return {{_req.cmd.protocol, 500}, {}, ""};
+  PRINT("?");
+
+  return (*this->error_handler_[_req.failure])(_req);
+};

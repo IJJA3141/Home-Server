@@ -32,8 +32,8 @@ bool Stream::operator>>(std::string &_string)
   return true;
 };
 
-Request::Request()
-    : failure(Request::Failure::MALFORMED), connection_type(Client::Type::STANDARD){};
+Request::Request(const Request::Failure _failure)
+    : failure(_failure), connection_type(Client::Type::STANDARD) {};
 
 Request::Request(const std::string _req, const Client::Type _connection_type)
     : connection_type(_connection_type)

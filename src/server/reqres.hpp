@@ -12,7 +12,7 @@ static_assert((method_size - 1) == Method::TRACE, "wrong size for method enum");
 class Stream
 {
 public:
-  Stream(const std::string _string) : string_(_string), npos(_string.size() - 1){};
+  Stream(const std::string _string) : string_(_string), npos(_string.size() - 1) {};
 
   bool operator>>(std::string &_string);
 
@@ -36,7 +36,7 @@ struct Request {
     TRAILING,
     SIZE,
     PATH,
-    LENDTH,
+    LENGTH,
     UNAUTHORIZEDMETHOD,
     MALFORMED,
     WRONGPATH
@@ -53,7 +53,7 @@ struct Request {
   const Client::Type connection_type;
 
   Request(const std::string _req, const Client::Type _connection_type);
-  Request();
+  Request(const Request::Failure _failure = Request::Failure::MALFORMED);
 };
 
 struct Response {

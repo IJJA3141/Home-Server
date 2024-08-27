@@ -58,7 +58,7 @@ Request Client::read()
   LOG("reading client message.");
   this->buffer_[bytes] = '\0';
 
-  PRINT(std::string(this->buffer_));
+  PRINT("reading\n" + std::string(this->buffer_));
   return Request(this->buffer_, this->type_);
 }
 
@@ -84,14 +84,14 @@ void Client::send(const Response _res) const
   std::string res = "";
 
   res += _res.cmd.protocol + " " + std::to_string(_res.cmd.status_code) + "\n";
-  res += "content-length: " + std::to_string(_res.body.size()) + "\n";
+  res += "content-length: " + std::to_string(_res.body.size() + 1) + "\n";
 
   for (const auto &header : _res.headers)
     res += header.first + ": " + header.second + "\n";
 
   res += "\n" + _res.body + "\n";
 
-  PRINT(res);
+  PRINT("sending\n" + res);
   this->socket_write(res);
   return;
 }
