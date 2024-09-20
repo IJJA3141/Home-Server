@@ -1,3 +1,0 @@
-/home/alexe/Prog/Home-Server/CMakeFiles/server.out.dir
-/home/alexe/Prog/Home-Server/CMakeFiles/edit_cache.dir
-/home/alexe/Prog/Home-Server/CMakeFiles/rebuild_cache.dir
