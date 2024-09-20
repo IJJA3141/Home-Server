@@ -107,7 +107,6 @@ Request::Request(const std::string _req, const Client::Type _connection_type)
         return;
       };
 
-      //?user=IJJA&quoi=coupb&2+2=5
       std::string param = iterator.substr(hash + 1);
       iterator.resize(hash);
 

@@ -58,7 +58,7 @@ Request Client::read()
   LOG("reading client message.");
   this->buffer_[bytes] = '\0';
 
-  PRINT("reading\n" + std::string(this->buffer_));
+  PRINT("reading\n" << this->buffer_);
   return Request(this->buffer_, this->type_);
 }
 

@@ -1,5 +1,13 @@
 #include "router.hpp"
 #include "../log.hpp"
+#include <functional>
+
+void Router::add(const Method _method, std::string _path,
+                 const std::function<Response(Request)> &&_lambda)
+{
+  this->add(_method, _path, *new std::function<Response(Request)>(_lambda));
+  return;
+}
 
 void Router::add(const Method _method, std::string _path,
                  const std::function<Response(Request)> &_lambda)
@@ -24,7 +32,7 @@ void Router::add(const Method _method, std::string _path,
   }
 
   if (_path[0] != '/') {
-    ERR(_path << "should start with a / this route will be ignored");
+    ERR(_path << " should start with a / this route will be ignored");
     exit(1);
   }
 
@@ -66,6 +74,15 @@ void Router::add_error_handler(Request::Failure _err,
   return;
 }
 
+void Router::add_error_handler(Request::Failure _err,
+                               const std::function<Response(Request)> &&_lambda)
+{
+  if (this->error_handler_[_err] != nullptr) WARN("an error handler has been overwriten");
+  this->error_handler_[_err] = new std::function<Response(Request)>(_lambda);
+
+  return;
+}
+
 Response Router::respond(Request _req) const
 {
   if (_req.failure != Request::Failure::NONE) return this->handle_err(_req);
@@ -91,7 +108,7 @@ Response Router::respond(Request _req) const
       if (route.path[i] != _req.cmd.path[i]) goto next;
     }
 
-    if (route.methods[_req.cmd.method] != nullptr) return (*route.methods[_req.cmd.method])(_req);
+    if (route.methods[_req.cmd.method] != nullptr) return ((*route.methods[_req.cmd.method])(_req));
 
     _req.failure = Request::Failure::UNAUTHORIZEDMETHOD;
     return this->handle_err(_req);
@@ -105,9 +122,6 @@ Response Router::respond(Request _req) const
 
 Response Router::handle_err(Request _req) const
 {
-  PRINT("?");
-  if (this->error_handler_[_req.failure] == nullptr) return {{_req.cmd.protocol, 500}, {}, ""};
-  PRINT("?");
-
+  if (this->error_handler_[_req.failure] == nullptr) return {{"HTTP/1.1", 500}, {}, "unhandled internal error ;("};
   return (*this->error_handler_[_req.failure])(_req);
 };

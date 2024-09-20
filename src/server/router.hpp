@@ -8,11 +8,14 @@
 class Router
 {
 public:
-  Router() {};
+  Router() = default;
 
   void add(const Method _method, std::string _path,
            const std::function<Response(Request)> &_lambda);
+  void add(const Method _method, std::string _path,
+           const std::function<Response(Request)> &&_lambda);
   void add_error_handler(Request::Failure _err, const std::function<Response(Request)> &_lambda);
+  void add_error_handler(Request::Failure _err, const std::function<Response(Request)> &&_lambda);
   Response respond(Request _req) const;
   Response handle_err(Request _req) const;
 
