@@ -6,6 +6,8 @@ set(SOURCE_FILES ./src/main.cpp
   ./src/server/reqres.cpp
   ./src/server/router.cpp
   ./src/server/server.cpp
+
+  ./src/file/loading.cpp
   
   ./src/test/router.cpp
   ./src/test/stream.cpp
