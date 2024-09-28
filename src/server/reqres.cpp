@@ -33,7 +33,7 @@ bool Stream::operator>>(std::string &_string)
 };
 
 Request::Request(const Request::Failure _failure)
-    : failure(_failure), connection_type(Client::Type::STANDARD) {};
+    : failure(_failure), connection_type(Client::Type::STANDARD){};
 
 Request::Request(const std::string _req, const Client::Type _connection_type)
     : connection_type(_connection_type)
@@ -178,4 +178,23 @@ Request::Request(const std::string _req, const Client::Type _connection_type)
   */
 
   return;
+}
+
+std::string Response::to_string() const
+{
+  std::string res = "";
+
+  res += this->cmd.protocol + " " + std::to_string(this->cmd.status_code) + "\n";
+  res += "content-length: " + std::to_string(this->body.size() + 1) + "\n";
+
+  PRINT(this->headers.size());
+
+  for (const auto &header : this->headers) {
+    PRINT("ALO");
+    res += header.first + ": " + header.second + "\n";
+  }
+
+  res += "\n" + this->body + "\n";
+
+  return res;
 }

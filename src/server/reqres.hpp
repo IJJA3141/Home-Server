@@ -12,7 +12,7 @@ static_assert((method_size - 1) == Method::TRACE, "wrong size for method enum");
 class Stream
 {
 public:
-  Stream(const std::string _string) : string_(_string), npos(_string.size() - 1) {};
+  Stream(const std::string _string) : string_(_string), npos(_string.size() - 1){};
 
   bool operator>>(std::string &_string);
 
@@ -65,4 +65,6 @@ struct Response {
   Command cmd;
   std::map<std::string, std::string> headers;
   std::string body;
+
+  std::string to_string() const;
 };

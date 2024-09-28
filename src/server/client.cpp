@@ -58,7 +58,7 @@ Request Client::read()
   LOG("reading client message.");
   this->buffer_[bytes] = '\0';
 
-  PRINT("reading\n" << this->buffer_);
+  LOG("reading\n" << this->buffer_);
   return Request(this->buffer_, this->type_);
 }
 
@@ -81,17 +81,14 @@ void SSLClient::socket_write(const std::string _res) const
 
 void Client::send(const Response _res) const
 {
-  std::string res = "";
+  std::string res = _res.to_string();
 
-  res += _res.cmd.protocol + " " + std::to_string(_res.cmd.status_code) + "\n";
-  res += "content-length: " + std::to_string(_res.body.size() + 1) + "\n";
+  if (_res.cmd.status_code != 200) {
+    WARN("sending\n" + res);
+  } else {
+    LOG("sending\n" + res);
+  }
 
-  for (const auto &header : _res.headers)
-    res += header.first + ": " + header.second + "\n";
-
-  res += "\n" + _res.body + "\n";
-
-  PRINT("sending\n" + res);
   this->socket_write(res);
   return;
 }
