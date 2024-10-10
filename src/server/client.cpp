@@ -84,9 +84,9 @@ void Client::send(const Response _res) const
   std::string res = _res.to_string();
 
   if (_res.cmd.status_code != 200) {
-    WARN("sending\n" + res);
+    //WARN("sending\n" + res);
   } else {
-    LOG("sending\n" + res);
+    //LOG("sending\n" + res);
   }
 
   this->socket_write(res);

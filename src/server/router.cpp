@@ -53,6 +53,7 @@ void Router::add(const Method _method, std::string _path,
       route.path.push_back(_path.substr(start, end - start));
       start = end;
     }
+
     route.path.push_back(_path.substr(start, end - start));
   }
 
@@ -122,6 +123,8 @@ Response Router::respond(Request _req) const
 
 Response Router::handle_err(Request _req) const
 {
-  if (this->error_handler_[_req.failure] == nullptr) return {{"HTTP/1.1", 500}, {}, "unhandled internal error ;("};
+  ERR(_req.failure);
+  if (this->error_handler_[_req.failure] == nullptr)
+    return {{"HTTP/1.1", 500}, {}, "unhandled internal error ;("};
   return (*this->error_handler_[_req.failure])(_req);
 };

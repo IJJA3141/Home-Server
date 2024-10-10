@@ -187,10 +187,7 @@ std::string Response::to_string() const
   res += this->cmd.protocol + " " + std::to_string(this->cmd.status_code) + "\n";
   res += "content-length: " + std::to_string(this->body.size() + 1) + "\n";
 
-  PRINT(this->headers.size());
-
   for (const auto &header : this->headers) {
-    PRINT("ALO");
     res += header.first + ": " + header.second + "\n";
   }
 

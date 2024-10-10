@@ -1,12 +1,12 @@
 #pragma once
 
-#include <iostream>
 #include <cstring>
+#include <iostream>
 
 #define LOG(STR) std::cout << "[log] " << STR << std::endl;
 #define WARN(STR) std::cout << "\x1b[33m[warn] " << STR << "\x1b[0m" << std::endl;
 #define ERR(STR) std::cout << "\x1b[31m[error] " << STR << "\x1b[0m" << std::endl;
-#define VERBERR(STR)                                                                        \
+#define VERBERR(STR)                                                                               \
   std::cerr << "\x1b[31m[error] " << STR << "\n" << strerror(errno) << "\x1b[0m" << std::endl;
 
 #ifdef DEBUG
@@ -50,6 +50,16 @@
   if (V.size() != 0) {                                                                             \
     for (const auto &arg : V)                                                                      \
       std::cout << "\t" << arg << "\n";                                                            \
+  } else {                                                                                         \
+    std::cout << "\t{}" << std::endl;                                                              \
+  }                                                                                                \
+  std::cout << "\x1b[0m";
+
+#define PRINTM(M)                                                                                  \
+  std::cout << "\x1b[36m[debug]";                                                                  \
+  if (M.size() != 0) {                                                                             \
+    for (const auto &[key, value] : M)                                                             \
+      std::cout << "\t[" << key << "]=" << value << "\n";                                          \
   } else {                                                                                         \
     std::cout << "\t{}" << std::endl;                                                              \
   }                                                                                                \

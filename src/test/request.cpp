@@ -40,6 +40,19 @@ void test::request()
 
   failed = failed || req2.url_params["user"] != "IJJA";
 
+  Request req3(
+      "GET /login HTTP/1.1\r\nHost: localhost\r\nUser-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; "
+      "x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 "
+      "GLS/100.10.9939.100\r\nAccept: */*\r\nAccept-Language: en-US,en;q=0.5\r\nAccept-Encoding: "
+      "gzip, deflate, br, zstd\r\nReferer: https://localhost/login\r\nAuthorization: Basic "
+      "Og==\r\nDNT: 1\r\nSec-GPC: 1\r\nConnection: keep-alive\r\nSec-Fetch-Dest: "
+      "empty\r\nSec-Fetch-Mode: cors\r\nSec-Fetch-Site: same-origin\r\nsec-ch-ua-platform: "
+      "\"Windows\"\r\nsec-ch-ua: \"Google Chrome\";v=\"125\", \"Chromium\";v=\"125\", "
+      "\"Not=A?Brand\";v=\"24\"\r\nsec-ch-ua-mobile: ?0\r\nPriority: u=0\"",
+      Client::Type::STANDARD);
+
+  PRINTM(req3.headers);
+
   if (failed) {
     ERR("request test failed");
     return;
