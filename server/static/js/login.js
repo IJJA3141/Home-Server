@@ -1,8 +1,8 @@
 document.getElementById("submit-button").onclick = () => {
     str =
-        document.getElementById("user").innerText +
+        document.getElementById("user").value+
         ":" +
-        document.getElementById("password").innerText;
+        document.getElementById("password").value;
 
     str = btoa(str);
     console.log(str);

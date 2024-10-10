@@ -65,7 +65,7 @@ Request Client::read()
 void Client::socket_write(const std::string _res) const
 {
   if (::write(this->socket_, _res.c_str(), _res.size()) < 0) {
-    ERR("?");
+    ERR("failed to write to the client !?");
   };
 
   return;
@@ -73,7 +73,7 @@ void Client::socket_write(const std::string _res) const
 void SSLClient::socket_write(const std::string _res) const
 {
   if (SSL_write(this->ssl_, _res.c_str(), _res.size()) < 0) {
-    ERR("?");
+    ERR("failed to write to the ssl client !?");
   };
 
   return;
