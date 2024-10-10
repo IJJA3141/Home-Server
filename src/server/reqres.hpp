@@ -12,14 +12,15 @@ static_assert((method_size - 1) == Method::TRACE, "wrong size for method enum");
 class Stream
 {
 public:
-  Stream(const std::string _string) : string_(_string), npos(_string.size() - 1){};
+  size_t begin = 0;
+
+  Stream(const std::string _string) : string_(_string), npos(_string.size() - 1) {};
 
   bool operator>>(std::string &_string);
 
 private:
   std::string string_;
   size_t npos;
-  size_t begin_ = 0;
   size_t end_ = 0;
 };
 
@@ -29,7 +30,7 @@ struct Request {
     std::vector<std::string> path;
     std::string protocol;
   };
-  static const int failure_size = 9;
+  static const int failure_size = 11;
   enum Failure {
     NONE,
     METHOD,
@@ -38,8 +39,10 @@ struct Request {
     PATH,
     LENGTH,
     UNAUTHORIZEDMETHOD,
+    HEADER,
     MALFORMED,
-    WRONGPATH
+    PROTOCOL,
+    WRONGPATH,
   };
   static_assert((failure_size - 1) == Request::Failure::WRONGPATH,
                 "wrong size for request failure enum");

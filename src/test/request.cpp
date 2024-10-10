@@ -4,6 +4,7 @@
 void test::request()
 {
   bool failed = false;
+
   Request req0(
       "POST /over/there?user=IJJA&quoi=coupb&2+2=5 HTTP/1.1\r\nHost: google.com\r\nUser-Agent: "
       "curl/8.9.1\r\nAccept: "
@@ -51,7 +52,16 @@ void test::request()
       "\"Not=A?Brand\";v=\"24\"\r\nsec-ch-ua-mobile: ?0\r\nPriority: u=0\"",
       Client::Type::STANDARD);
 
-  PRINTM(req3.headers);
+  failed = failed || req3.cmd.method != Method::GET;
+  failed = failed || req3.cmd.path != std::vector<std::string>({"/login"});
+  failed = failed || req3.cmd.protocol != "HTTP/1.1";
+
+  failed =
+      failed || req3.headers["sec-ch-ua"] !=
+                    "\"Google Chrome\";v=\"125\", \"Chromium\";v=\"125\", \"Not=A?Brand\";v=\"24\"";
+  failed = failed || req3.headers["Referer"] != "https://localhost/login";
+  failed = failed || req3.headers["Authorization"] != "Basic Og==";
+  failed = failed || req3.headers["Accept-Language"] != "en-US,en;q=0.5";
 
   if (failed) {
     ERR("request test failed");
