@@ -3,34 +3,28 @@
 #include "server/reqres.hpp"
 #include "server/router.hpp"
 #include "server/server.hpp"
-#include "test/test.hpp"
-#include <string>
 
 int main(int _argc, char *_argv[])
 {
-  Loader::init(_argv[0]);
-
-  // Loader::inject_file("static/js/test.js", {{"test", "str"}});
-
   Router router;
   Tls https(&router, "/home/alexe/tmp/cert.pem", "/home/alexe/tmp/key.pem");
+  Tcp http(&router);
 
-  router.add(Method::GET, "/", [](Request _req) -> Response {
-    PRINTM(_req.headers);
+  Loader::init(_argv[0]);
 
-    return {{"HTTP/1.1", 200}, {}, Loader::load_file("index.html")};
-  });
-
-  router.add(Method::GET, "/static/js/[file]", [](Request _) -> Response {
+  // static file access
+  router.add(Method::GET, "/static/js/[file]", [](Request _req) -> Response {
     Response res;
 
-    res.cmd = {"HTTP/1.1", 200};
     try {
-      res.body = Loader::load_file("static/js/" + _.url_args["file"]);
+      res.cmd = {"HTTP/1.1", 200};
+      res.body = Loader::load_file("static/js/" + _req.url_args["file"]);
     } catch (std::exception _error) {
       res.cmd.status_code = 404;
+      return res;
     } catch (Loader::exception _error) {
       res.cmd.status_code = 404;
+      return res;
     };
 
     res.headers["Content-type"] = "text/javascript";
@@ -38,16 +32,18 @@ int main(int _argc, char *_argv[])
     return res;
   });
 
-  router.add(Method::GET, "/static/css/[file]", [](Request _) -> Response {
+  router.add(Method::GET, "/static/css/[file]", [](Request _req) -> Response {
     Response res;
 
-    res.cmd = {"HTTP/1.1", 200};
     try {
-      res.body = Loader::load_file("static/css/" + _.url_args["file"]);
+      res.cmd = {"HTTP/1.1", 200};
+      res.body = Loader::load_file("static/css/" + _req.url_args["file"]);
     } catch (std::exception _error) {
       res.cmd.status_code = 404;
+      return res;
     } catch (Loader::exception _error) {
       res.cmd.status_code = 404;
+      return res;
     };
 
     res.headers["Content-type"] = "text/css";
@@ -55,7 +51,14 @@ int main(int _argc, char *_argv[])
     return res;
   });
 
-  router.add(Method::GET, "/test", [](Request _) -> Response {
+  // paths
+  router.add(Method::GET, "/", [](Request _req) -> Response {
+    PRINTM(_req.headers);
+
+    return {{"HTTP/1.1", 200}, {}, Loader::load_file("index.html")};
+  });
+
+  router.add(Method::GET, "/test", [](Request _req) -> Response {
     Response res;
 
     res.cmd = {"HTTP/1.1", 200};
@@ -84,33 +87,57 @@ int main(int _argc, char *_argv[])
       res.cmd = {"HTTP/1.1", 200};
       res.headers["WWW-Authenticate"] = "Basic realm=\"User Visible Realm\", charset=\"UTF-8\"";
       res.body = Loader::load_file("login.html");
+      return res;
+
     } else if (auth->second == "Basic dGVzdDoxMjM0") {
       LOG("auth request passed\nuser: " + auth->second)
       res.cmd = {"HTTP/1.1", 200};
       res.headers["Host"] = "localhost";
-      res.headers["Set-Cookie"] = "uuid=fdjaskl;fdsaklf;a; Max-Age=2592000; Secure; HttpOnly";
-      res.body = "200";
+      res.headers["Set-Cookie"] = "uuid=123456789; Max-Age=60; SameSite=Strict; Secure; HttpOnly";
+
     } else {
       LOG("auth failed")
       res.cmd = {"HTTP/1.1", 407};
       res.headers["WWW-Authenticate"] = "Basic realm=\"User Visible Realm\", charset=\"UTF-8\"";
-      res.body = "err";
+      res.headers["Set-Cookie"] = "uuid=; Max-Age=-1; SameSite=Strict; Secure; HttpOnly";
+      res.body = "no user";
     }
 
     return res;
   });
 
-  router.add_error_handler(Request::Failure::WRONGPATH, [](Request _) -> Response {
+  router.add(Method::GET, "/user", [](Request _req) -> Response {
+    Response res;
+
+    PRINTM(_req.headers)
+
+    std::map<std::string, std::string>::iterator auth = _req.headers.find("Cookie");
+
+    res.cmd = {"HTTP/1.1", 200};
+    res.body = "{\"logged\":false,\"username\":\"\"}";
+
+    if (auth != _req.headers.end() && auth->second == "uuid=123456789") {
+      res.body = "{\"logged\":true,\"username\":\"IJJA3141\"}";
+    }
+
+    res.headers["Content-type"] = "application/json";
+
+    return res;
+  });
+
+  // error handling
+  router.add_error_handler(Request::Failure::WRONGPATH, [](Request _req) -> Response {
     WARN("Path not found");
     return {{"HTTP/1.1", 404}, {}, "there is nothing here"};
   });
 
-  router.add_error_handler(Request::Failure::UNAUTHORIZEDMETHOD, [](Request _) -> Response {
+  router.add_error_handler(Request::Failure::UNAUTHORIZEDMETHOD, [](Request _req) -> Response {
     ERR("wrong method on ");
-    ERRV(_.cmd.path);
+    ERRV(_req.cmd.path);
     return {{"HTTP/1.1", 405}, {}, "there is nothing here"};
   });
 
+  // server start
   https.bind(443);
   https.listen();
 
