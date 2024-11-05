@@ -10,19 +10,21 @@
 class Tcp
 {
 public:
-  std::vector<std::thread *> active_client;
+  std::vector<std::pair<Client*, std::thread *>> active_client;
 
   Tcp(const Router *_router);
   ~Tcp();
 
   void bind(const int _port);
   void listen();
+  void stop(bool _force = false);
 
 protected:
   int socket_;
   struct sockaddr_in hint_;
   int port_;
   const Router *router_;
+  bool running;
 
   virtual Client *await_client();
   void connect(Client *_client);

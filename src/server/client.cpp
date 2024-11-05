@@ -7,6 +7,8 @@
 
 Client::Client(const int &_socket)
 {
+  INFO("new client");
+
   this->socket_size_ = sizeof(this->client_);
   this->buffer_size_ = sizeof(this->buffer_);
   this->socket_ = accept(_socket, (struct sockaddr *)&this->client_, &this->socket_size_);

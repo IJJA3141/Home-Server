@@ -1,6 +1,7 @@
 #include "reqres.hpp"
 #include "../log.hpp"
 #include <iterator>
+#include <utility>
 
 bool Stream::operator>>(std::string &_string)
 {
@@ -33,7 +34,7 @@ bool Stream::operator>>(std::string &_string)
 };
 
 Request::Request(const Request::Failure _failure)
-    : failure(_failure), connection_type(Client::Type::STANDARD){};
+    : failure(_failure), connection_type(Client::Type::STANDARD) {};
 
 Request::Request(const std::string _req, const Client::Type _connection_type)
     : connection_type(_connection_type)
@@ -41,8 +42,9 @@ Request::Request(const std::string _req, const Client::Type _connection_type)
   Stream stream(_req);
   std::string iterator, path;
   size_t pos, npos;
+  this->failure = Request::Failure::NONE;
 
-  // cmd.
+  //// cmd
   // method
   stream >> iterator;
   for (pos = 0; pos < iterator.size(); pos++)
@@ -186,6 +188,92 @@ Request::Request(const std::string _req, const Client::Type _connection_type)
   this->body = _req.substr(stream.begin);
 
   return;
+}
+
+std::string Request::to_string() const
+{
+  std::string res = "";
+
+  switch (this->failure) {
+  case NONE:
+    res += "Failure: NONE";
+    break;
+  case METHOD:
+    res += "Failure: METHOD";
+    break;
+  case TRAILING:
+    res += "Failure: TRAILING";
+    break;
+  case SIZE:
+    res += "Failure: SIZE";
+    break;
+  case PATH:
+    res += "Failure: PATH";
+    break;
+  case LENGTH:
+    res += "Failure: LENGTH";
+    break;
+  case UNAUTHORIZEDMETHOD:
+    res += "Failure: UNAUTHORIZEDMETHOD";
+    break;
+  case HEADER:
+    res += "Failure: HEADER";
+    break;
+  case MALFORMED:
+    res += "Failure: MALFORMED";
+    break;
+  case PROTOCOL:
+    res += "Failure: PROTOCOL";
+    break;
+  case WRONGPATH:
+    res += "Failure: WRONGPATH";
+    break;
+  default:
+    res += "Failure: fuck";
+  }
+
+  res += "\n\n";
+
+  switch (this->cmd.method) {
+  case GET:
+    res += "GET";
+    break;
+  case HEAD:
+    res += "HEAD";
+    break;
+  case POST:
+    res += "POST";
+    break;
+  case PUT:
+    res += "PUT";
+    break;
+  case DELETE:
+    res += "DELETE";
+    break;
+  case CONNECT:
+    res += "CONNECT";
+    break;
+  case OPTIONS:
+    res += "OPTIONS";
+    break;
+  case TRACE:
+    res += "TRACE";
+    break;
+  };
+
+  res += " ";
+
+  for (const auto &segment : this->cmd.path)
+    res += segment;
+
+  res += " " + this->cmd.protocol + "\n";
+
+  for (const auto &[key, val] : this->headers)
+    res += key + ": " + val + "\n";
+
+  res += "\n" + this->body;
+
+  return res;
 }
 
 std::string Response::to_string() const

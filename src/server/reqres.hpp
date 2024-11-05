@@ -53,10 +53,12 @@ struct Request {
   std::string body;
   std::map<std::string, std::string> url_args;
   std::map<std::string, std::string> url_params;
-  const Client::Type connection_type;
+  Client::Type connection_type;
 
   Request(const std::string _req, const Client::Type _connection_type);
   Request(const Request::Failure _failure = Request::Failure::MALFORMED);
+
+  std::string to_string() const;
 };
 
 struct Response {

@@ -2,6 +2,7 @@
 #include "../log.hpp"
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include <sys/socket.h>
 #include <unistd.h>
 
 Tcp::Tcp(const Router *_router)
@@ -121,15 +122,38 @@ Tls::~Tls()
   return;
 }
 
-//
 void Tcp::connect(Client *_client)
 {
-  Request req = _client->read();
+  INFO(this->active_client.size());
 
+  Request req = _client->read();
   Response res = this->router_->respond(req);
   _client->send(res);
 
+#if DEBUG
+  if (req.headers["Connection"] == "keep-alive") {
+    PRINT("ah ah ah ah stayin' alive stayin' alive");
+  } else {
+    PRINT(req.headers["Connection"]);
+  }
+#endif
+
+  while (req.headers["Connection"] == "keep-alive") {
+    INFO(this->active_client.size());
+    req = _client->read();
+    INFO("new request from alive client");
+    res = this->router_->respond(req);
+    _client->send(res);
+  };
+
   delete _client;
+
+  return;
+}
+
+void Tcp::stop(bool _force){
+  this->running = false;
+  ::shutdown(this->socket_, SHUT_RDWR);
 
   return;
 }

@@ -1,4 +1,5 @@
 #include "file/loading.hpp"
+#include "implementation/static.hpp"
 #include "log.hpp"
 #include "server/reqres.hpp"
 #include "server/router.hpp"
@@ -13,43 +14,8 @@ int main(int _argc, char *_argv[])
   Loader::init(_argv[0]);
 
   // static file access
-  router.add(Method::GET, "/static/js/[file]", [](Request _req) -> Response {
-    Response res;
-
-    try {
-      res.cmd = {"HTTP/1.1", 200};
-      res.body = Loader::load_file("static/js/" + _req.url_args["file"]);
-    } catch (std::exception _error) {
-      res.cmd.status_code = 404;
-      return res;
-    } catch (Loader::exception _error) {
-      res.cmd.status_code = 404;
-      return res;
-    };
-
-    res.headers["Content-type"] = "text/javascript";
-
-    return res;
-  });
-
-  router.add(Method::GET, "/static/css/[file]", [](Request _req) -> Response {
-    Response res;
-
-    try {
-      res.cmd = {"HTTP/1.1", 200};
-      res.body = Loader::load_file("static/css/" + _req.url_args["file"]);
-    } catch (std::exception _error) {
-      res.cmd.status_code = 404;
-      return res;
-    } catch (Loader::exception _error) {
-      res.cmd.status_code = 404;
-      return res;
-    };
-
-    res.headers["Content-type"] = "text/css";
-
-    return res;
-  });
+  router.add(Method::GET, "/static/js/[file]", read_js);
+  router.add(Method::GET, "/static/css/[file]", read_css);
 
   // paths
   router.add(Method::GET, "/", [](Request _req) -> Response {
@@ -140,6 +106,8 @@ int main(int _argc, char *_argv[])
   // server start
   https.bind(443);
   https.listen();
+
+  return 0;
 
   return 0;
 }

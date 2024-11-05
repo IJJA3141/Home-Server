@@ -4,6 +4,7 @@
 #include <iostream>
 
 #define LOG(STR) std::cout << "[log] " << STR << std::endl;
+#define INFO(STR) std::cout << "\x1b[34m[INFO] " << STR << "\x1b[0m" << std::endl;
 #define WARN(STR) std::cout << "\x1b[33m[warn] " << STR << "\x1b[0m" << std::endl;
 #define ERR(STR) std::cout << "\x1b[31m[error] " << STR << "\x1b[0m" << std::endl;
 #define VERBERR(STR)                                                                               \

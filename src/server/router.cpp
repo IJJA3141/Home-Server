@@ -86,6 +86,9 @@ void Router::add_error_handler(Request::Failure _err,
 
 Response Router::respond(Request _req) const
 {
+  PRINT(_req.to_string());
+  PRINT(_req.failure);
+
   if (_req.failure != Request::Failure::NONE) return this->handle_err(_req);
 
   for (const Router::Route &route : this->paths_) {
