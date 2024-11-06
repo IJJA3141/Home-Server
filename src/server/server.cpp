@@ -3,6 +3,7 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <sys/socket.h>
+#include <thread>
 #include <unistd.h>
 
 Tcp::Tcp(const Router *_router)
@@ -59,7 +60,17 @@ void Tcp::listen()
   LOG("received call...");
 
   while (true) {
-    this->active_client.push_back(new std::thread(&Tcp::connect, this, this->await_client()));
+    Client *incoming_client = this->await_client();
+
+    int i = this->free_index();
+
+    if (i != -1) {
+      this->client_array_[i] = incoming_client;
+      incoming_client->thread = new std::thread(&Tcp::connect, this, i);
+    } else {
+      incoming_client->send(this->router_->handle_err(Request(Request::Failure::SERVER)));
+      delete incoming_client;
+    }
   };
 
   return;
@@ -122,13 +133,10 @@ Tls::~Tls()
   return;
 }
 
-void Tcp::connect(Client *_client)
+void Tcp::connect(const int _index)
 {
-  INFO(this->active_client.size());
-
-  Request req = _client->read();
-  Response res = this->router_->respond(req);
-  _client->send(res);
+  Request req = this->client_array_[_index]->read();
+  Response res;
 
 #if DEBUG
   if (req.headers["Connection"] == "keep-alive") {
@@ -138,22 +146,35 @@ void Tcp::connect(Client *_client)
   }
 #endif
 
-  while (req.headers["Connection"] == "keep-alive") {
-    INFO(this->active_client.size());
-    req = _client->read();
+  if (req.headers["Connection"] != "keep-alive") {
+    res = this->router_->respond(req);
+    this->client_array_[_index]->send(res);
+
+    delete this->client_array_[_index];
+    this->client_array_[_index] = nullptr;
+
+    return;
+  }
+
+  while (req.headers["Connection"] == "keep-alive" && this->client_array_[_index]->state_.running) {
     INFO("new request from alive client");
     res = this->router_->respond(req);
-    _client->send(res);
+    this->client_array_[_index]->send(res);
+    req = this->client_array_[_index]->read();
   };
 
-  delete _client;
+  if (this->client_array_[_index]->state_.running) delete this->client_array_[_index];
+  this->client_array_[_index] = nullptr;
 
   return;
 }
 
-void Tcp::stop(bool _force){
-  this->running = false;
-  ::shutdown(this->socket_, SHUT_RDWR);
+int Tcp::free_index()
+{
+  int index = -1;
 
-  return;
+  while (this->client_array_[++index] != nullptr)
+    if (index == Tcp::CLIENT_ARRAY_SIZE_) return -1;
+
+  return index;
 }

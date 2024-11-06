@@ -3,23 +3,32 @@
 #include <netinet/in.h>
 #include <openssl/crypto.h>
 #include <string>
+#include <thread>
 
 struct Request;
 struct Response;
 
 class Client
 {
+protected:
+  struct State {
+    bool sleeping : 1;
+    bool running : 1;
+    const bool ssl : 1;
+  };
+
 public:
-  enum Type { STANDARD, SSL };
+  State state_ = {false, true, false};
+  std::thread* thread;
 
   Client(const int &_socket);
   ~Client();
 
   virtual Request read();
   virtual void send(const Response _res) const;
+  void close();
 
 protected:
-  const Type type_ = STANDARD;
   int socket_;
   sockaddr_in client_;
   socklen_t socket_size_;
@@ -33,11 +42,12 @@ protected:
 class SSLClient : public Client
 {
 public:
+  State state_ = {false, true, true};
+
   SSLClient(const int &_socket, SSL_CTX *_ctx);
   ~SSLClient();
 
 private:
-  const Type type_ = SSL;
   ::SSL *ssl_;
 
   size_t socket_read() override;

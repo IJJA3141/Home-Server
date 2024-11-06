@@ -108,6 +108,4 @@ int main(int _argc, char *_argv[])
   https.listen();
 
   return 0;
-
-  return 0;
 }

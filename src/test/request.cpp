@@ -9,7 +9,7 @@ void test::request()
       "POST /over/there?user=IJJA&quoi=coupb&2+2=5 HTTP/1.1\r\nHost: google.com\r\nUser-Agent: "
       "curl/8.9.1\r\nAccept: "
       "*/*\r\nContent-Length: 4\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\ntest",
-      Client::Type::SSL);
+      true);
 
   failed = failed || req0.cmd.method != Method::POST;
   failed = failed || req0.cmd.path != std::vector<std::string>({"/over", "/there"});
@@ -29,7 +29,7 @@ void test::request()
       "POST /over/there HTTP/1.1\r\nHost: google.com\r\nUser-Agent: "
       "curl/8.9.1\r\nAccept: "
       "*/*\r\nContent-Length: 4\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\ntest",
-      Client::Type::SSL);
+      true);
 
   failed = failed || req1.url_params.size() > 0;
 
@@ -37,7 +37,7 @@ void test::request()
       "POST /over/there?user=IJJA HTTP/1.1\r\nHost: google.com\r\nUser-Agent: "
       "curl/8.9.1\r\nAccept: "
       "*/*\r\nContent-Length: 4\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\ntest",
-      Client::Type::SSL);
+      true);
 
   failed = failed || req2.url_params["user"] != "IJJA";
 
@@ -50,7 +50,7 @@ void test::request()
       "empty\r\nSec-Fetch-Mode: cors\r\nSec-Fetch-Site: same-origin\r\nsec-ch-ua-platform: "
       "\"Windows\"\r\nsec-ch-ua: \"Google Chrome\";v=\"125\", \"Chromium\";v=\"125\", "
       "\"Not=A?Brand\";v=\"24\"\r\nsec-ch-ua-mobile: ?0\r\nPriority: u=0\"",
-      Client::Type::STANDARD);
+      false);
 
   failed = failed || req3.cmd.method != Method::GET;
   failed = failed || req3.cmd.path != std::vector<std::string>({"/login"});

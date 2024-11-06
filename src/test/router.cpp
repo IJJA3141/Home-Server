@@ -23,8 +23,8 @@ void test::router()
     return {};
   });
 
-  router.respond(Request("GET /over/there prot\r\nHeader: 0\r\n\r\nbody", Client::Type::SSL));
-  router.respond(Request("GET /over/IJJA/there prot\r\nHeader: 0\r\n\r\nbody", Client::Type::SSL));
+  router.respond(Request("GET /over/there prot\r\nHeader: 0\r\n\r\nbody", true));
+  router.respond(Request("GET /over/IJJA/there prot\r\nHeader: 0\r\n\r\nbody", true));
 
   std::function<Response(Request)> a = [](Request _req) -> Response { return {{"", 0}, {}, ""}; };
   router.add_error_handler(Request::Failure::METHOD, a);

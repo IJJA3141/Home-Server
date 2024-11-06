@@ -30,7 +30,7 @@ struct Request {
     std::vector<std::string> path;
     std::string protocol;
   };
-  static const int failure_size = 11;
+  static const int failure_size = 12;
   enum Failure {
     NONE,
     METHOD,
@@ -42,6 +42,7 @@ struct Request {
     HEADER,
     MALFORMED,
     PROTOCOL,
+    SERVER,
     WRONGPATH,
   };
   static_assert((failure_size - 1) == Request::Failure::WRONGPATH,
@@ -53,9 +54,9 @@ struct Request {
   std::string body;
   std::map<std::string, std::string> url_args;
   std::map<std::string, std::string> url_params;
-  Client::Type connection_type;
+  bool ssl;
 
-  Request(const std::string _req, const Client::Type _connection_type);
+  Request(const std::string _req, const bool _ssl);
   Request(const Request::Failure _failure = Request::Failure::MALFORMED);
 
   std::string to_string() const;

@@ -2,32 +2,32 @@
 
 #include "client.hpp"
 #include "router.hpp"
+#include <cstddef>
 #include <netinet/in.h>
 #include <openssl/crypto.h>
-#include <thread>
-#include <vector>
 
 class Tcp
 {
 public:
-  std::vector<std::pair<Client*, std::thread *>> active_client;
-
   Tcp(const Router *_router);
   ~Tcp();
 
   void bind(const int _port);
   void listen();
-  void stop(bool _force = false);
 
 protected:
+  const static size_t CLIENT_ARRAY_SIZE_ = 10;
+
   int socket_;
   struct sockaddr_in hint_;
   int port_;
   const Router *router_;
-  bool running;
+  Client *client_array_[Tcp::CLIENT_ARRAY_SIZE_]; // has ownership over the clients
 
   virtual Client *await_client();
-  void connect(Client *_client);
+  void connect(const int _index);
+  int free_index(); // return -1 if no place
+  int free_space();
 };
 
 static bool SSLLIBINIT = false;
