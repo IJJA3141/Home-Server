@@ -2,40 +2,52 @@
 
 #include "client.hpp"
 #include "router.hpp"
-#include <cstddef>
+
 #include <netinet/in.h>
 #include <openssl/crypto.h>
+#include <string>
+#include <thread>
 
 class Tcp
 {
 public:
-  Tcp(const Router *_router);
+  struct {
+    bool listening : 1;
+    bool stop : 1;
+  } state;
+
+  Tcp(const size_t _client_size, const Router *_router);
   ~Tcp();
 
   void bind(const int _port);
   void listen();
 
-protected:
-  const static size_t CLIENT_ARRAY_SIZE_ = 10;
+  void update_client_state();
+  int clean_client_array();         // return index of last removed client (-1 if none)
+  std::string client_array_state(); // mainly for debugging / login
 
+protected:
+  const Router *router_;
+  const size_t client_size_;
+  Client **client_array_; // has ownership over the clients
+  std::thread thread_;
+
+  // socket stuff
   int socket_;
   struct sockaddr_in hint_;
   int port_;
-  const Router *router_;
-  Client *client_array_[Tcp::CLIENT_ARRAY_SIZE_]; // has ownership over the clients
 
   virtual Client *await_client();
-  void connect(const int _index);
-  int free_index(); // return -1 if no place
-  int free_space();
+  void connect(const size_t _index); // should delete clients
+  int inactive_client_index();       // -1 if none
 };
 
 static bool SSLLIBINIT = false;
-
 class Tls : public Tcp
 {
 public:
-  Tls(const Router *_router, const std::string _cert_path, const std::string _key_path);
+  Tls(const size_t _client_size, const Router *_router, const std::string _cert_path,
+      const std::string _key_path);
   ~Tls();
 
 private:

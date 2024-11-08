@@ -42,7 +42,7 @@ struct Request {
     HEADER,
     MALFORMED,
     PROTOCOL,
-    SERVER,
+    SERVERFULL,
     WRONGPATH,
   };
   static_assert((failure_size - 1) == Request::Failure::WRONGPATH,

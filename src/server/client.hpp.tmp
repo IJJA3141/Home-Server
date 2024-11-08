@@ -2,6 +2,7 @@
 
 #include <netinet/in.h>
 #include <openssl/crypto.h>
+#include <string>
 #include <thread>
 
 struct Request;
@@ -9,23 +10,24 @@ struct Response;
 
 class Client
 {
-public:
-  struct {
+protected:
+  struct State {
     bool sleeping : 1;
     bool running : 1;
     bool closed : 1;
-    bool dead : 1;
-    bool ssl : 1;
-  } state;
+    const bool ssl : 1;
+  };
 
+public:
+  State state_ = {false, true, false, false};
   std::thread *thread;
 
   Client(const int &_socket);
   ~Client();
 
-  void close();
   virtual Request read();
-  virtual void send(Response _response) const;
+  virtual void send(const Response _res) const;
+  void close();
 
 protected:
   int socket_;
@@ -41,6 +43,8 @@ protected:
 class SSLClient : public Client
 {
 public:
+  State state_ = {false, true, false, true};
+
   SSLClient(const int &_socket, SSL_CTX *_ctx);
   ~SSLClient();
 

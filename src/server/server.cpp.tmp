@@ -1,5 +1,7 @@
 #include "server.hpp"
 #include "../log.hpp"
+#include <algorithm>
+#include <chrono>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <sys/socket.h>
@@ -177,4 +179,9 @@ int Tcp::free_index()
     if (index == Tcp::CLIENT_ARRAY_SIZE_) return -1;
 
   return index;
+}
+
+void Tcp::cleaner() {
+  std::this_thread::sleep_for(std::chrono::minutes(10));
+  for(int i = 0; i < this->CLIENT_ARRAY_SIZE_; i++);
 }

@@ -1,18 +1,25 @@
 #include "client.hpp"
 #include "../log.hpp"
 #include "reqres.hpp"
+
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-#include <sys/socket.h>
 #include <unistd.h>
 
 Client::Client(const int &_socket)
 {
   INFO("new client");
 
+  this->state.sleeping = false;
+  this->state.running = true;
+  this->state.closed = false;
+  this->state.dead = false;
+  this->state.ssl = false;
+
   this->socket_size_ = sizeof(this->client_);
   this->buffer_size_ = sizeof(this->buffer_);
   this->socket_ = accept(_socket, (struct sockaddr *)&this->client_, &this->socket_size_);
+
   this->thread = nullptr;
 
   if (this->socket_ == -1) VERBERR("connection with the client failed.");
@@ -22,10 +29,60 @@ Client::Client(const int &_socket)
 
 Client::~Client()
 {
-  this->state_.running = false;
-  ::close(this->socket_);
+  if (!this->state.closed) ::close(this->socket_);
+
   this->thread->detach();
   delete this->thread;
+
+  return;
+}
+
+void Client::close()
+{
+  this->state.running = false;
+  this->state.closed = true;
+
+  ::close(this->socket_);
+
+  return;
+}
+
+Request Client::read()
+{
+  size_t bytes = this->socket_read();
+  if (bytes < 0) {
+    VERBERR("failed to read client's message.")
+    return Request();
+  }
+
+  LOG("reading client message.");
+  this->buffer_[bytes] = '\0';
+
+  LOG("reading\n" << this->buffer_);
+  return Request(this->buffer_, this->state.ssl);
+}
+
+void Client::send(const Response _res) const
+{
+  std::string res = _res.to_string();
+
+  if (_res.cmd.status_code != 200) {
+    // WARN("sending\n" + res);
+  } else {
+    // LOG("sending\n" + res);
+  }
+
+  this->socket_write(res);
+  return;
+}
+
+size_t Client::socket_read() { return ::read(this->socket_, this->buffer_, this->buffer_size_); }
+
+void Client::socket_write(const std::string _res) const
+{
+  if (::write(this->socket_, _res.c_str(), _res.size()) < 0) {
+    ERR("failed to write to the client !?");
+  };
 
   return;
 }
@@ -45,58 +102,20 @@ SSLClient::SSLClient(const int &_socket, SSL_CTX *_ctx) : Client(_socket)
 
 SSLClient::~SSLClient()
 {
-  this->state_.running = false;
+  this->state.running = false;
   SSL_shutdown(this->ssl_);
   SSL_free(this->ssl_);
 
   return;
 }
 
-size_t Client::socket_read() { return ::read(this->socket_, this->buffer_, this->buffer_size_); }
 size_t SSLClient::socket_read() { return SSL_read(this->ssl_, this->buffer_, this->buffer_size_); }
 
-Request Client::read()
-{
-  size_t bytes = this->socket_read();
-  if (bytes < 0) {
-    VERBERR("failed to read client's message.")
-    return Request();
-  }
-
-  LOG("reading client message.");
-  this->buffer_[bytes] = '\0';
-
-  LOG("reading\n" << this->buffer_);
-  return Request(this->buffer_, this->state_.ssl);
-}
-
-void Client::socket_write(const std::string _res) const
-{
-  if (::write(this->socket_, _res.c_str(), _res.size()) < 0) {
-    ERR("failed to write to the client !?");
-  };
-
-  return;
-}
 void SSLClient::socket_write(const std::string _res) const
 {
   if (SSL_write(this->ssl_, _res.c_str(), _res.size()) < 0) {
     ERR("failed to write to the ssl client !?");
   };
 
-  return;
-}
-
-void Client::send(const Response _res) const
-{
-  std::string res = _res.to_string();
-
-  if (_res.cmd.status_code != 200) {
-    // WARN("sending\n" + res);
-  } else {
-    // LOG("sending\n" + res);
-  }
-
-  this->socket_write(res);
   return;
 }
