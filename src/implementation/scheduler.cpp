@@ -2,21 +2,37 @@
 #include <chrono>
 #include <thread>
 
-void Scheduler::run()
+Scheduler::Scheduler(std::chrono::minutes _interval, std::vector<Tcp *> _server_array)
 {
-  while (this->running) {
-    for (int i = 0; i < 6 * 24 * 7; i++) {
-      // action 1
-      // action 2
-      // ...
+  this->interval_ = _interval;
+  this->server_array_ = _server_array;
 
-      std::this_thread::sleep_for(std::chrono::minutes(10));
-    }
+  return;
+};
 
-    // action 3
-    // action 4
-    // ...
-    
-    std::this_thread::sleep_for(std::chrono::minutes(10));
-  }
+void Scheduler::start()
+{
+  this->running = true;
+  this->thread_ = std::thread([this](void(void)) -> void {
+    while (this->running) {
+      std::this_thread::sleep_for(this->interval_);
+
+      for (int i = 0; i < this->server_array_.size(); i++) {
+        this->server_array_[i]->update_client_state();
+        this->server_array_[i]->clean_client_array();
+      }
+    };
+
+    return;
+  });
+
+  return;
+}
+
+void Scheduler::stop()
+{
+  this->running = false;
+  this->thread_.join();
+
+  return;
 }

@@ -9,6 +9,7 @@ void request();
 void router();
 void stream();
 void cache();
+void login();
 
 inline void all()
 {
@@ -16,6 +17,7 @@ inline void all()
   request();
   router();
   cache();
+  login();
   return;
 };
 

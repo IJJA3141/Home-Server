@@ -15,6 +15,7 @@ public:
     bool listening : 1;
     bool stop : 1;
   } state;
+  std::thread thread;
 
   Tcp(const size_t _client_size, const Router *_router);
   ~Tcp();
@@ -29,8 +30,7 @@ public:
 protected:
   const Router *router_;
   const size_t client_size_;
-  Client **client_array_; // has ownership over the clients
-  std::thread thread_;
+  Client **client_array_; // has ownership over the clients 
 
   // socket stuff
   int socket_;

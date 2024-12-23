@@ -1,4 +1,5 @@
 #include "file/loading.hpp"
+#include "implementation/scheduler.hpp"
 #include "implementation/static.hpp"
 #include "log.hpp"
 #include "server/reqres.hpp"
@@ -8,8 +9,9 @@
 int main(int _argc, char *_argv[])
 {
   Router router;
-  Tls https(&router, "/home/alexe/tmp/cert.pem", "/home/alexe/tmp/key.pem");
-  Tcp http(&router);
+  Tls https(10, &router, "/home/alexe/tmp/cert.pem", "/home/alexe/tmp/key.pem");
+  Tcp http(10, &router);
+  Scheduler scheduler(std::chrono::minutes(10), {&https, &http});
 
   Loader::init(_argv[0]);
 
@@ -106,6 +108,14 @@ int main(int _argc, char *_argv[])
   // server start
   https.bind(443);
   https.listen();
+
+  http.bind(80);
+  http.listen();
+
+  https.thread.join();
+  http.thread.join();
+
+  scheduler.start();
 
   return 0;
 }

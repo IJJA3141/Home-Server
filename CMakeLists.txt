@@ -5,7 +5,8 @@ set(SOURCE_FILES ./src/main.cpp
   ./src/server/client.cpp
   ./src/server/reqres.cpp
   ./src/server/router.cpp
-  ./src/server/server.cpp
+  ./src/server/tcp.cpp
+  ./src/server/tls.cpp
 
   ./src/file/loading.cpp
 

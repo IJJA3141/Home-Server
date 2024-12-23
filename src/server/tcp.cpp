@@ -41,7 +41,7 @@ Tcp::~Tcp()
 {
   this->state.stop = true;
   ::close(this->socket_);
-  this->thread_.join();
+  this->thread.join();
 
   for (int i = 0; i < this->client_size_; i++)
     if (this->client_array_[i] != nullptr) delete this->client_array_[i];
@@ -74,7 +74,7 @@ void Tcp::listen()
 
   this->state.listening = true;
 
-  this->thread_ = std::thread([this]() -> void {
+  this->thread = std::thread([this]() -> void {
     while (!this->state.stop) {
       Client *incoming_client = this->await_client();
       int i = this->inactive_client_index();
