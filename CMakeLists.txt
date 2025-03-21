@@ -1,21 +1,7 @@
 cmake_minimum_required(VERSION 3.29)
 project(Home-Server)
 
-set(SOURCE_FILES ./src/main.cpp
-  ./src/server/client.cpp
-  ./src/server/reqres.cpp
-  ./src/server/router.cpp
-  ./src/server/tcp.cpp
-  ./src/server/tls.cpp
-
-  ./src/file/loading.cpp
-
-  ./src/implementation/static.cpp
-  
-  ./src/test/router.cpp
-  ./src/test/stream.cpp
-  ./src/test/request.cpp
-  )
+set(SOURCE_FILES ./src/main.cpp)
 
 set(INC_DIR /usr/local/include)
 set(LINK_DIR /usr/local/lib)
