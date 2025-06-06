@@ -1,8 +1,8 @@
-#include "log.hpp"
+#include <iostream>
 
-int main(int _argc, char *_argv[])
+int main(int argc, char* argv[])
 {
-  LOG("TEST")
+  std::cout << "Hello world !" << std::endl;
 
   return 0;
 }

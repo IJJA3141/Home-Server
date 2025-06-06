@@ -1,7 +1,9 @@
 ---
-BasedOnStyle: LLVM
-BreakBeforeBraces: Linux
-AllowShortIfStatementsOnASingleLine: true
-IndentCaseLabels: false
-AlignConsecutiveDeclarations: false
-ColumnLimit: 100
+BasedOnStyle: Microsoft
+IndentWidth: 2
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+AllowShortFunctionsOnASingleLine: All
+AllowShortLambdasOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
