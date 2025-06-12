@@ -1,84 +1,43 @@
 #pragma once
 
+#include <cerrno>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 
-#define LOG(STR) std::cout << "[log] " << STR << std::endl;
-#define INFO(STR) std::cout << "\x1b[34m[INFO] " << STR << "\x1b[0m" << std::endl;
-#define WARN(STR) std::cout << "\x1b[33m[warn] " << STR << "\x1b[0m" << std::endl;
-#define ERR(STR) std::cout << "\x1b[31m[error] " << STR << "\x1b[0m" << std::endl;
-#define VERBERR(STR) std::cerr << "\x1b[31m[error] " << STR << "\n" << strerror(errno) << "\x1b[0m" << std::endl;
+template <typename T> inline void log(const T& _msg) { std::clog << "[log] " << std::format("{}", _msg) << std::endl; }
+
+template <typename T> inline void err(const T& _msg)
+{
+  std::clog << "\x1b[31m[error] " << std::format("{}", _msg) << "\x1b[0m" << std::endl;
+}
+
+template <typename T> inline void warn(const T& _msg)
+{
+  std::clog << "\x1b[33m[warning] " << std::format("{}", _msg) << "\x1b[0m" << std::endl;
+}
 
 #ifdef DEBUG
-#define PRINT(STR) std::cout << "\x1b[36m[debug] " << STR << "\x1b[0m" << std::endl;
+template <typename T> inline void debugf(const T& _msg)
+{
+  std::clog << "\x1b[34m[debug] " << std::format("{}", _msg) << "\x1b[0m" << std::endl;
+};
+
+template <typename T> inline void debug(const T& _msg)
+{
+  std::clog << "\x1b[34m[debug] " << _msg << "\x1b[0m" << std::endl;
+};
 #else
-#define PRINT(STR)
-#endif // DEBUG
+template <typename T> inline void debugf(T _msg) {};
+template <typename T> inline void debug(T _msg) {};
+#endif
 
-#define LOGV(V)                                                                                                        \
-  std::cout << "[log]";                                                                                                \
-  if (V.size() == 1)                                                                                                   \
-  {                                                                                                                    \
-    for (const auto& arg : V)                                                                                          \
-      std::cout << "\t" << arg << "\n";                                                                                \
-  }                                                                                                                    \
-  else                                                                                                                 \
-  {                                                                                                                    \
-    std::cout << "\t{}" << std::endl;                                                                                  \
-  }                                                                                                                    \
-  std::cout << "\x1b[0m";
+template <typename T> void assert(bool _assertion, const T& _msg)
+{
+  if (_assertion) return;
 
-#define WARNV(V)                                                                                                       \
-  std::cout << "\x1b[33m[warn]";                                                                                       \
-  if (V.size() != 0)                                                                                                   \
-  {                                                                                                                    \
-    for (const auto& arg : V)                                                                                          \
-      std::cout << "\t" << arg << "\n";                                                                                \
-  }                                                                                                                    \
-  else                                                                                                                 \
-  {                                                                                                                    \
-    std::cout << "\t{}" << std::endl;                                                                                  \
-  }                                                                                                                    \
-  std::cout << "\x1b[0m";
-#define ERRV(V)                                                                                                        \
-  std::cout << "\x1b[31m[error]";                                                                                      \
-  if (V.size() != 0)                                                                                                   \
-  {                                                                                                                    \
-    for (const auto& arg : V)                                                                                          \
-      std::cout << "\t" << arg << "\n";                                                                                \
-  }                                                                                                                    \
-  else                                                                                                                 \
-  {                                                                                                                    \
-    std::cout << "\t{}" << std::endl;                                                                                  \
-  }                                                                                                                    \
-  std::cout << "\x1b[0m";
+  std::clog << "\x1b[38;5;196m[fatal] " << std::format("{}", _msg) << "\x1b[0m\n" << std::endl;
+  exit(1);
+}
 
-#ifdef DEBUG
-#define PRINTV(V)                                                                                                      \
-  std::cout << "\x1b[36m[debug]";                                                                                      \
-  if (V.size() != 0)                                                                                                   \
-  {                                                                                                                    \
-    for (const auto& arg : V)                                                                                          \
-      std::cout << "\t" << arg << "\n";                                                                                \
-  }                                                                                                                    \
-  else                                                                                                                 \
-  {                                                                                                                    \
-    std::cout << "\t{}" << std::endl;                                                                                  \
-  }                                                                                                                    \
-  std::cout << "\x1b[0m";
-
-#define PRINTM(M)                                                                                                      \
-  std::cout << "\x1b[36m[debug]";                                                                                      \
-  if (M.size() != 0)                                                                                                   \
-  {                                                                                                                    \
-    for (const auto& [key, value] : M)                                                                                 \
-      std::cout << "\t[" << key << "]=" << value << "\n";                                                              \
-  }                                                                                                                    \
-  else                                                                                                                 \
-  {                                                                                                                    \
-    std::cout << "\t{}" << std::endl;                                                                                  \
-  }                                                                                                                    \
-  std::cout << "\x1b[0m";
-#else
-#define PRINTV(V)
-#endif // DEBUG
+inline void assert(bool _assertion) { assert(_assertion, strerror(errno)); }

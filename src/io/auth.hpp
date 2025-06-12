@@ -2,10 +2,13 @@
 
 #include <chrono>
 #include <filesystem>
-#include <fstream>
 #include <uuid/uuid.h>
 
 #include "../config.hpp"
+
+enum error {
+  CLOSED
+};
 
 struct session_id
 {
@@ -19,9 +22,11 @@ class session_cache
 public:
   session_cache(std::filesystem::path _cache_path);
   const session_id generate(const std::string _user);
+  const session_id fetch(const uuid_t uuid);
 
-private:
+// private:
   session_id cache_[session_cache_size];
   std::filesystem::path cache_path_;
-  void add(session_id id);
 };
+
+std::ostream& operator<<(std::ostream& _ostream, const session_id& _id);
