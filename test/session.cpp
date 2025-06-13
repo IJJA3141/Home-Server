@@ -27,7 +27,7 @@ bool test_load()
   stream << data;
   stream.close();
 
-  session_cache cache(path);
+  session_cache<session_cache_size> cache(path, session_ttl);
   uuid_t uuid;
   int i;
 
@@ -84,8 +84,8 @@ bool test_load()
 bool test_gen()
 {
   auto path = std::filesystem::current_path().append("test").append("data").append("gen.db");
-  std::vector<session_id> uuids;
-  session_cache cache(path);
+  std::vector<session> uuids;
+  session_cache<session_cache_size> cache(path, session_ttl);
   bool res = false;
 
   for (int i = 0; i < session_cache_size * 10; i++)
@@ -112,7 +112,7 @@ int session(int argc, char* argv[])
   bool o = 0;
 
   if (o += test_load()) err("load failed");
-  if(o += test_gen()) err("gen failed");
+  if (o += test_gen()) err("gen failed");
 
   return o;
 }

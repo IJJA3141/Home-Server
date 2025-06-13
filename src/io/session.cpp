@@ -1,86 +1,108 @@
 #include "../log.hpp"
 #include "auth.hpp"
 
-#include <chrono>
-#include <filesystem>
-#include <format>
 #include <fstream>
-#include <ios>
-#include <uuid/uuid.h>
 
-#define FMT "%D:%T"
+#ifndef SESSION_TIME_FMT
+#define SESSION_TIME_FMT "%D:%T"
+#endif
 
-constexpr auto elaps = 24 * 3;
-
-std::ostream& operator<<(std::ostream& _ostream, const session_id& _id)
+std::ostream& operator<<(std::ostream& _ostream, const session& _session)
 {
   char uuid[37];
-  uuid_unparse(_id.uuid, uuid);
-  return _ostream << uuid << std::format("{:" FMT "}", _id.valid_until) << _id.user;
+  uuid_unparse(_session.uuid, uuid);
+  return _ostream << uuid << std::format("{:" SESSION_TIME_FMT "}", _session.valid_until) << _session.user;
 }
 
-session_cache::session_cache(std::filesystem::path _cache_path) : cache_path_(_cache_path)
+template <std::size_t _N>
+session_cache<_N>::session_cache(std::filesystem::path _cache_path, std::chrono::seconds _ttl)
+    : read_path_(_cache_path), write_path_(_cache_path), ttl_(_ttl)
 {
-  this->cache_path_tmp_ = this->cache_path_;
-  this->cache_path_tmp_.replace_filename("." + std::string(this->cache_path_.filename()));
+  this->write_path_.replace_filename("." + std::string(_cache_path.filename()));
+
+  // initialize cache
   unsigned char null[37];
   this->fetch(null);
 
   return;
 }
 
-const session_id session_cache::generate(const std::string _user)
+template <std::size_t _N> std::size_t session_cache<_N>::hash(const uuid_t& _uuid) { return _uuid[0] % _N; }
+
+template <std::size_t _N> const session session_cache<_N>::generate(const std::string _user)
 {
-  assert(!_user.empty(), "attempted to create an empty user");
+  // sanitization
+  assert(!_user.empty(), "empty user name.");
+  assert(_user.find("\n") == _user.npos, "\\n in user name.");
 
-  session_id id = {std::chrono::system_clock::now() + std::chrono::hours{elaps}, _user};
-  uuid_generate(id.uuid);
+  // generate session
+  session session = {std::chrono::system_clock::now() + this->ttl_, _user};
+  uuid_generate(session.uuid);
 
-  std::ofstream stream(this->cache_path_, std::ios::app);
-  stream << id << "\n";
-  stream.close();
-  assert(!stream.fail(), "could not save generated uuid");
+  // store session in file
+  std::ofstream cache(this->read_path_, std::ios::app);
+  cache << session << "\n";
+  cache.close();
+  assert(!cache.fail(), "could not save generated session.");
 
-  this->cache_[id.uuid[0] % session_cache_size] = id;
-  return id;
+  // store session in cache
+  this->sessions_[this->hash(session.uuid)] = session;
+
+  return session;
 }
 
-int session_cache::fetch(const uuid_t _uuid)
+template <std::size_t _N> int session_cache<_N>::fetch(const uuid_t _uuid)
 {
   std::chrono::time_point now = std::chrono::system_clock::now();
-  std::ofstream out(this->cache_path_tmp_, std::ios::out | std::ios::trunc);
-  std::ifstream in(this->cache_path_);
+
+  // search for match in cache
+  for (int i = 0; i < _N; ++i)
+    if (now < this->sessions_[i].valid_until && !uuid_compare(_uuid, this->sessions_[i].uuid)) return i;
+
+  // open read and write files
+  std::ofstream out(this->write_path_, std::ios::out | std::ios::trunc);
+  std::ifstream in(this->read_path_);
+  assert(in.is_open() && out.is_open());
+
+  session session;
+  char buffer[37];
   int index = -1;
-  session_id id;
-  char buff[37];
+  buffer[36] = '\0';
 
-  assert(in.is_open());
-  while (in.read(buff, 36))
+  while (in.read(buffer, 36))
   {
-    buff[36] = '\0';
-    assert(!uuid_parse(buff, id.uuid), "could not parse uuid: " + std::string(buff));
-    in >> std::chrono::parse(FMT, id.valid_until);
-    std::getline(in, id.user);
+    // read session
+    assert(!uuid_parse(buffer, session.uuid), "could not parse uuid: " + std::string(buffer));
+    in >> std::chrono::parse(SESSION_TIME_FMT, session.valid_until);
+    assert(!in.fail(), "could not parse life time");
+    std::getline(in, session.user);
+    assert(!in.fail(), "could not parse user name");
 
-    if (id.valid_until > now)
+    if (now < session.valid_until)
     {
-      out << id << std::endl;
-      this->cache_[id.uuid[0] % session_cache_size] = id;
-      if (!uuid_compare(_uuid, id.uuid)) index = id.uuid[0] % session_cache_size;
+      // store session if valid
+      out << session << std::endl;
+      this->sessions_[this->hash(session.uuid)] = session;
+
+      // set index to matching session
+      if (!uuid_compare(_uuid, session.uuid)) index = this->hash(session.uuid);
     }
   }
 
+  // save cache
   in.close();
   out.close();
   assert(!out.fail(), "failed to save cache");
 
-  std::filesystem::rename(this->cache_path_tmp_, this->cache_path_);
+  std::filesystem::rename(this->write_path_, this->read_path_);
 
   return index;
 }
 
-const session_id session_cache::operator[](const size_t _index) const
+template <std::size_t _N> const session session_cache<_N>::operator[](const std::size_t _index) const
 {
-  assert(_index < session_cache_size, "Assertion '_index < session_cache_size' failed.");
-  return this->cache_[_index];
+  assert(_index < _N, "Assertion '_index < _N' failed.");
+  return this->sessions_[_index];
 }
+
+template class session_cache<session_cache_size>;
