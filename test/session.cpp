@@ -9,7 +9,7 @@
 
 bool test_load()
 {
-  const auto path = std::filesystem::current_path().append("test").append("data").append("load.db");
+  const auto path = std::filesystem::current_path() / "test" / "data" / "load";
 
   const auto data = "334dc436-d22c-487c-84ce-cf9e369d5a3206/12/30:20:38:25.149326666user 1\n"
                     "1fade928-1b0b-4cbc-8773-1e5a1484f1d206/12/30:20:38:25.149326666user 3\n"
@@ -21,13 +21,13 @@ bool test_load()
                     "7eb9aba8-4959-4c66-ad4c-9bfa63edfb4f06/12/23:20:38:25.149326666user 9\n"
                     "fc0244c8-ebc6-458a-a8bc-f4fdbe01082f06/12/30:20:38:25.149326666user 10\n";
 
-  std::ofstream stream(path);
+  std::ofstream stream(path / "session.db");
 
   stream.clear();
   stream << data;
   stream.close();
 
-  session_cache<session_cache_size> cache(path, session_ttl);
+  auth_agent<session_cache_size> cache(path, session_ttl);
   uuid_t uuid;
   int i;
 
@@ -62,7 +62,7 @@ bool test_load()
   }
 
   std::string str, line;
-  std::ifstream in(path);
+  std::ifstream in(path / "session.db");
   while (std::getline(in, line))
     str += line + "\n";
 
@@ -83,9 +83,9 @@ bool test_load()
 
 bool test_gen()
 {
-  auto path = std::filesystem::current_path().append("test").append("data").append("gen.db");
+  auto path = std::filesystem::current_path() / "test" / "data" / "gen";
   std::vector<session> uuids;
-  session_cache<session_cache_size> cache(path, session_ttl);
+  auth_agent<session_cache_size> cache(path, session_ttl);
   bool res = false;
 
   for (int i = 0; i < session_cache_size * 10; i++)
@@ -101,10 +101,20 @@ bool test_gen()
     }
   }
 
-  std::ofstream stream(path, std::ios::out | std::ios::trunc);
+  std::ofstream stream(path / "session.db", std::ios::out | std::ios::trunc);
   stream << "";
 
   return res;
+}
+
+bool test_password()
+{
+  auto path = std::filesystem::current_path() / "test" / "data" / "pass";
+  auth_agent<session_cache_size> cache(path, session_ttl);
+
+  cache.save_password_hash("user", "12345good-@$@-password<3");
+  return !cache.invalidate_password("user", "12345good-@$@-password<3") &&
+         cache.invalidate_password("user", "fkdl;safjkd;ffk;ajf;dklsa;fjdksfjdsk");
 }
 
 int session(int argc, char* argv[])
@@ -112,7 +122,11 @@ int session(int argc, char* argv[])
   bool o = 0;
 
   if (o += test_load()) err("load failed");
+  log("load passed");
   if (o += test_gen()) err("gen failed");
+  log("gen passed");
+  if (o += test_password()) err("password failed");
+  log("password passed");
 
   return o;
 }

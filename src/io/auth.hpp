@@ -4,6 +4,8 @@
 
 #include <chrono>
 #include <filesystem>
+#include <ostream>
+#include <string_view>
 #include <uuid/uuid.h>
 
 struct session
@@ -11,13 +13,14 @@ struct session
   std::chrono::system_clock::time_point valid_until;
   std::string user;
   uuid_t uuid;
+
+  friend std::ostream& operator<<(std::ostream& _ostream, const session& _session);
 };
 
-std::ostream& operator<<(std::ostream& _ostream, const session& _session);
-
-template <std::size_t _N> class session_cache
+template <size_t _N> class auth_agent
 {
 public:
+  /// TODO change -v
   /**
    * @brief Constructs a session cache.
    *
@@ -26,7 +29,7 @@ public:
    * @param _cache_path The path of the file used to store sessions.
    * @param _ttl The time-to-live duration for each session.
    */
-  session_cache(const std::filesystem::path _cache_path, const std::chrono::seconds _ttl);
+  auth_agent(const std::filesystem::path _data_dir, const std::chrono::seconds _ttl);
 
   /**
    * @brief Creates a new session and stores it.
@@ -51,14 +54,22 @@ public:
    */
   int fetch(const uuid_t _uuid);
 
-  const session operator[](const std::size_t _index) const;
+  const session operator[](const size_t _index) const;
+  /**
+   * @return if the _password is invalide.
+   */
+  bool invalidate_password(const std::string_view _user, const std::string& _password) const;
+  void save_password_hash(const std::string_view _user, const std::string& _password) const;
 
 private:
-  std::filesystem::path write_path_;
-  std::filesystem::path read_path_;
+  const std::filesystem::path write_path_;
+  const std::filesystem::path read_path_;
+  const std::filesystem::path user_dir_;
 
   const std::chrono::seconds ttl_;
   session sessions_[_N];
 
-  inline std::size_t hash(const uuid_t& _uuid);
+  inline size_t hash_uuid(const uuid_t& _uuid) const noexcept;
+
+  static void user_sanitization(const std::string_view _user);
 };
