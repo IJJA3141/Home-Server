@@ -1,9 +1,16 @@
 set(TEST_FILES                      # test
   session.cpp
+
+  parsing/method.cpp
+  parsing/querys.cpp
 )
 
 set(SOURCE_FILES                    # src
-  ../src/io/session.cpp
+  ../src/network/auth.cpp
+  ../src/network/tcp.cpp
+  ../src/network/tls.cpp
+  ../src/network/client.cpp
+  ../src/network/parser.cpp
 )
 
 #===================================#==========#
