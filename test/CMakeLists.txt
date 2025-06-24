@@ -3,6 +3,8 @@ set(TEST_FILES                      # test
 
   parsing/method.cpp
   parsing/querys.cpp
+  parsing/url.cpp
+  parsing/request.cpp
 )
 
 set(SOURCE_FILES                    # src

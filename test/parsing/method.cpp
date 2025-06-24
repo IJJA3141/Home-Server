@@ -15,5 +15,6 @@ int parsing_method(int argc, char* argv[])
 
   o += !check(Level::ERR, parse_method("fjksdlaf", parsed_method), "should have failed");
 
+  check(Level::LOG, o, "parsing_method test passed.");
   return o;
 }

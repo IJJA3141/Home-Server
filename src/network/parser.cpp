@@ -1,7 +1,7 @@
 #include "../log.hpp"
 #include "http.hpp"
 
-// helper
+// helper class
 class Iterator
 {
 public:
@@ -14,7 +14,7 @@ public:
     if ((pos = this->model.find("\r\n")) == this->model.npos || pos == 0) return false;
 
     _view = this->model.substr(0, pos);
-    this->model.remove_prefix(this->model.size() - pos - 2);
+    this->model.remove_prefix(pos + 2);
 
     return true;
   };
@@ -22,16 +22,16 @@ public:
 
 bool parse_request(const std::string_view _model, Request& _request)
 {
-  // debug( _model);
-  std::string_view view;
   Iterator it(_model);
+  std::string_view view;
 
   it >> view;
 
   std::size_t pos = view.find(' ');
   if (pos == view.npos || parse_method(view.substr(0, pos), _request.cmd.method)) return true;
 
-  pos = view.find(' ', pos + 1);
+  view.remove_prefix(pos + 1);
+  pos = view.find(' ');
   if (pos == view.npos || parse_url(view.substr(0, pos), _request.cmd.url)) return true;
 
   _request.cmd.protocol = std::string(view.substr(pos + 1));
@@ -42,6 +42,7 @@ bool parse_request(const std::string_view _model, Request& _request)
     _request.headers[std::string(view.substr(0, pos))] = std::string(view.substr(pos + 2));
   }
 
+  it.model.remove_prefix(2);
   _request.body = it.model;
   return false;
 }
@@ -103,13 +104,13 @@ bool parse_url(std::string_view _model, Url& _url)
 
   if ((pos = _model.find_last_of('#')) != _model.npos)
   {
-    _url.fragment = std::string(_model.substr(pos));
+    _url.fragment = std::string(_model.substr(pos + 1));
     _model.remove_suffix(_model.size() - pos);
   }
 
   if ((pos = _model.find_last_of('?')) != _model.npos)
   {
-    if (parse_querys(_model.substr(pos), _url.querys)) return true;
+    if (parse_querys(_model.substr(pos + 1), _url.querys)) return true;
     _model.remove_suffix(_model.size() - pos);
   }
 
@@ -119,7 +120,7 @@ bool parse_url(std::string_view _model, Url& _url)
   while ((pos = _model.find('/')) != _model.npos)
   {
     _url.path.push_back(std::string(_model.substr(0, pos)));
-    _model.remove_prefix(pos);
+    _model.remove_prefix(pos + 1);
   }
 
   _url.path.push_back(std::string(_model));
@@ -130,16 +131,16 @@ bool parse_querys(std::string_view _model, std::map<std::string, std::string>& _
 {
   std::size_t pos, eq;
 
-  while ((pos = _model.find_last_of('&') != _model.npos))
+  while ((pos = _model.find_last_of('&')) != _model.npos)
   {
     if ((eq = _model.find_last_of('=')) == _model.npos) return true;
-    _querys[std::string(_model.substr(pos, eq - pos))] = std::string(_model.substr(eq));
+    _querys[std::string(_model.substr(pos + 1, eq - pos - 1))] = std::string(_model.substr(eq + 1));
 
     _model.remove_suffix(_model.size() - pos);
   }
 
   if ((eq = _model.find_last_of('=')) == _model.npos) return true;
-  _querys[std::string(_model.substr(0, eq))] = std::string(_model.substr(eq));
+  _querys[std::string(_model.substr(0, eq))] = std::string(_model.substr(eq + 1));
 
   return false;
 }
