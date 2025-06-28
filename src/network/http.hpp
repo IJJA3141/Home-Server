@@ -4,11 +4,10 @@
 
 #include <map>
 #include <string>
+#include <string_view>
 #include <vector>
 
-class Client;
-
-static const int method_size = 8;
+constexpr int method_size = 8;
 enum Method
 {
   GET,
@@ -22,28 +21,19 @@ enum Method
 };
 static_assert((method_size - 1) == Method::TRACE, "wrong size for method enum");
 
-constexpr auto method_to_string(const Method _method)
+constexpr const auto method_to_string(const Method _method)
 {
   switch (_method)
   {
-  case GET:
-    return "GET";
-  case HEAD:
-    return "HEAD";
-  case POST:
-    return "POST";
-  case PUT:
-    return "PUT";
-  case DELETE:
-    return "DELETE";
-  case CONNECT:
-    return "CONNECT";
-  case OPTIONS:
-    return "OPTIONS";
-  case TRACE:
-    return "TRACE";
-  default:
-    return "NAM";
+  case GET: return "GET";
+  case HEAD: return "HEAD";
+  case POST: return "POST";
+  case PUT: return "PUT";
+  case DELETE: return "DELETE";
+  case CONNECT: return "CONNECT";
+  case OPTIONS: return "OPTIONS";
+  case TRACE: return "TRACE";
+  default: return "NAM";
   };
 }
 
@@ -63,6 +53,20 @@ struct Command
 
 struct Request
 {
+  static const int error_size = 8;
+  enum Error
+  {
+    READ,
+    M_METHOD,
+    M_URL,
+    M_HEADER,
+    I_METHOD,
+    NOT_FOUND,
+    CLOSED,
+    NONE
+  } state = Error::NONE;
+  static_assert((Request::error_size - 1) == Error::NONE, "wrong size for request error enum");
+
   Command cmd;
   std::map<std::string, std::string> headers;
 
@@ -75,7 +79,6 @@ struct Response
   int code;
   std::string message;
   std::map<std::string, std::string> headers;
-  Session session;
 
   std::string body;
 
@@ -83,6 +86,8 @@ struct Response
 };
 
 /**
+ * TODO update
+ * 
  * @brief Parses a string into a Request struct.
  *
  * This function analyzes the given input string and fills the provided
@@ -93,7 +98,7 @@ struct Response
  *
  * @return true if parsing fails, false otherwise.
  */
-bool parse_request(const std::string_view _model, Request& _request);
+Request parse_request(const std::string_view _model);
 
 /**
  * @brief Parses a string into a Method enum.

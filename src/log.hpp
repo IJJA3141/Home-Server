@@ -1,9 +1,16 @@
 #pragma once
 
-#include <cstring>
 #include <format>
 #include <iostream>
 #include <type_traits>
+
+#if __has_builtin(__builtin_FILE)
+#define __ASSERT_FILE __builtin_FILE()
+#define __ASSERT_LINE __builtin_LINE()
+#else
+#define __ASSERT_FILE
+#define __ASSERT_LINE
+#endif
 
 enum Level
 {
@@ -13,18 +20,8 @@ enum Level
   ERR
 };
 
-// template <typename... T> constexpr void debug(const T&...);
-
-// template <typename... T> constexpr void log(const T&...);
-// template <typename... T> constexpr void warn(const T&...);
-// template <typename... T> constexpr void err(const T&...);
-
-// template <typename... T> constexpr void assert(const bool&& _assertion, const T&...);
-// template <typename... T> constexpr bool check(const Level, const bool&&  _check, const T&...);
-
 template <typename T> constexpr void fmt(std::ostream& _ostream, const T& _)
 {
-
   if constexpr (std::is_default_constructible_v<std::formatter<T, char>>) _ostream << std::format("{}", _) << " ";
   else _ostream << _ << " ";
 };
@@ -74,12 +71,12 @@ template <typename... T> constexpr void assert(bool _assertion, const T&... _)
   if (!_assertion)
   {
     std::clog << "\x1b[38;5;196m[fatal]\t";
-    if constexpr (sizeof...(T) == 0) fmt(std::clog, strerror(errno));
-    else (fmt(std::clog, _), ...);
-    std::clog << std::endl;
+    (fmt(std::clog, _), ...);
     exit(1);
   }
 }
+
+#define AT "in file", __builtin_FILE(), "at line", __builtin_LINE()
 
 template <typename... T> constexpr bool check(Level _level, const bool&& _check, const T&... _)
 {

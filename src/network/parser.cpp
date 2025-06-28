@@ -1,4 +1,3 @@
-#include "../log.hpp"
 #include "http.hpp"
 
 // helper class
@@ -20,31 +19,32 @@ public:
   };
 };
 
-bool parse_request(const std::string_view _model, Request& _request)
+Request parse_request(const std::string_view _model)
 {
   Iterator it(_model);
   std::string_view view;
+  Request request;
 
   it >> view;
 
   std::size_t pos = view.find(' ');
-  if (pos == view.npos || parse_method(view.substr(0, pos), _request.cmd.method)) return true;
+  if (pos == view.npos || parse_method(view.substr(0, pos), request.cmd.method)) return {Request::M_METHOD};
 
   view.remove_prefix(pos + 1);
   pos = view.find(' ');
-  if (pos == view.npos || parse_url(view.substr(0, pos), _request.cmd.url)) return true;
+  if (pos == view.npos || parse_url(view.substr(0, pos), request.cmd.url)) return {Request::M_URL};
 
-  _request.cmd.protocol = std::string(view.substr(pos + 1));
+  request.cmd.protocol = std::string(view.substr(pos + 1));
 
   while (it >> view)
   {
-    if ((pos = view.find(':')) == view.npos) return true;
-    _request.headers[std::string(view.substr(0, pos))] = std::string(view.substr(pos + 2));
+    if ((pos = view.find(':')) == view.npos) return {Request::M_HEADER};
+    request.headers[std::string(view.substr(0, pos))] = std::string(view.substr(pos + 2));
   }
 
   it.model.remove_prefix(2);
-  _request.body = it.model;
-  return false;
+  request.body = it.model;
+  return request;
 }
 
 bool parse_method(const std::string_view _model, Method& _method)

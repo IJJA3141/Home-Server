@@ -15,7 +15,7 @@ struct Session
   friend std::ostream& operator<<(std::ostream& _ostream, const Session& _session);
 };
 
-class AuthAgent
+class Authenticator
 {
 public:
   const std::filesystem::path write_path;
@@ -31,7 +31,7 @@ public:
    * @param _cache_path The path of the file used to store sessions.
    * @param _ttl The time-to-live duration for each session.
    */
-  AuthAgent(const size_t _size, const std::filesystem::path _data_dir, const std::chrono::seconds _ttl);
+  Authenticator(const size_t _size, const std::filesystem::path _data_dir, const std::chrono::seconds _ttl);
 
   /**
    * @brief Creates a new session and stores it.

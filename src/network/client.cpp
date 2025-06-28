@@ -9,27 +9,42 @@
 #include <unistd.h>
 
 // common
-std::expected<Request, Client::Error> Client::read()
+Request Client::read()
 {
   ssize_t bytes = this->socket_read();
-  if (bytes < 0) return std::unexpected(Client::Error::FAILED);
-  if (bytes == 0) return std::unexpected(Client::Error::CLOSED);
+  if (bytes < 0)
+  {
+    err("client failed reading");
+    return {Request::READ};
+  };
+
+  if (bytes == 0)
+  {
+    warn("client removed");
+    return {Request::CLOSED};
+  }
+
   this->buffer_[bytes] = '\0';
 
   std::string str = this->buffer_;
 
+  debug(str);
+
   if (bytes == CLIENT_BUFF_SIZE)
   {
     while ((bytes = this->socket_read()) == CLIENT_BUFF_SIZE)
+    {
+      err("fdp");
       str += this->buffer_;
+    }
 
     this->buffer_[bytes] = '\0';
     str += this->buffer_;
   }
 
-  Request req;
-  if (parse_request(str, req)) return std::unexpected(Client::MALFORMED);
-  return req;
+  log("new message from client");
+  debug(str);
+  return parse_request(str);
 }
 
 void Client::send(const Response _response)
@@ -50,8 +65,9 @@ Client::Client(const int _socket, const int _epoll) : socket_size_(sizeof(this->
   event.events = EPOLLIN | EPOLLONESHOT;
   event.data.fd = _socket;
 
-  assert(epoll_ctl(_epoll, EPOLL_CTL_ADD, _socket, &event) != -1);
+  assert(epoll_ctl(_epoll, EPOLL_CTL_ADD, _socket, &event) != -1, "epoll failed", errno, AT);
 
+  log("new client created");
   return;
 }
 

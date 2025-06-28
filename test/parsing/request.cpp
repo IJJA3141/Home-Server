@@ -74,7 +74,7 @@ int parsing_request(int argc, char* argv[])
   {
     Request parsed_request;
 
-    o += !check(Level::ERR, !parse_request(requests[i], parsed_request), "couldn't parse", requests[i]);
+    o += !check(Level::ERR, parse_request(requests[i]).state == Request::NONE, "couldn't parse", requests[i]);
     o += !check(Level::ERR, parsed_request.cmd.method == expected_methods[i], parsed_request.cmd.method, "!=", expected_methods[i]);
     o += !check(Level::ERR, parsed_request.cmd.url.path == expected_paths[i], parsed_request.cmd.url.path, "!=", expected_paths[i]);
     o += !check(Level::ERR, parsed_request.cmd.url.querys == expected_queries[i], parsed_request.cmd.url.querys, "!=", expected_queries[i]);
@@ -85,7 +85,7 @@ int parsing_request(int argc, char* argv[])
   }
 
   Request parsed_request;
-  o += !check(Level::ERR, parse_request("INVALID REQUEST", parsed_request), "should have failed");
+  o += !check(Level::ERR, parse_request("INVALID REQUEST").state != Request::NONE, "should have failed");
 
   check(Level::LOG, o, "parse_request test passed.");
   return o;

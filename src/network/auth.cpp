@@ -18,7 +18,7 @@ std::ostream& operator<<(std::ostream& _ostream, const Session& _session)
   return _ostream << uuid << std::format("{:" SESSION_TIME_FMT "}", _session.valid_until) << _session.user;
 }
 
-AuthAgent::AuthAgent(const size_t _size, const std::filesystem::path _data_dir, const std::chrono::seconds _ttl)
+Authenticator::Authenticator(const size_t _size, const std::filesystem::path _data_dir, const std::chrono::seconds _ttl)
     : read_path(_data_dir / "session.db"), write_path(_data_dir / ".session.db"), user_dir(_data_dir / "users/"),
       ttl_(_ttl), size_(_size), sessions_(new Session[_size])
 {
@@ -31,11 +31,11 @@ AuthAgent::AuthAgent(const size_t _size, const std::filesystem::path _data_dir, 
   return;
 }
 
-size_t AuthAgent::hash_uuid(const uuid_t& _uuid) const noexcept { return _uuid[0] % this->size_; }
+size_t Authenticator::hash_uuid(const uuid_t& _uuid) const noexcept { return _uuid[0] % this->size_; }
 
-void AuthAgent::save_password_hash(const std::string_view _user, const std::string& _password)
+void Authenticator::save_password_hash(const std::string_view _user, const std::string& _password)
 {
-  AuthAgent::user_sanitization(_user);
+  Authenticator::user_sanitization(_user);
 
   // compute hash
   unsigned char hash[SHA256_DIGEST_LENGTH];
@@ -52,9 +52,9 @@ void AuthAgent::save_password_hash(const std::string_view _user, const std::stri
   return;
 }
 
-bool AuthAgent::invalidate_password(const std::string_view _user, const std::string& _password) const
+bool Authenticator::invalidate_password(const std::string_view _user, const std::string& _password) const
 {
-  AuthAgent::user_sanitization(_user);
+  Authenticator::user_sanitization(_user);
 
   // compute hash
   unsigned char hash[SHA256_DIGEST_LENGTH];
@@ -76,9 +76,9 @@ bool AuthAgent::invalidate_password(const std::string_view _user, const std::str
   return false;
 }
 
-const Session AuthAgent::generate(const std::string _user)
+const Session Authenticator::generate(const std::string _user)
 {
-  AuthAgent::user_sanitization(_user);
+  Authenticator::user_sanitization(_user);
 
   // generate session
   Session session = {std::chrono::system_clock::now() + this->ttl_, _user};
@@ -96,7 +96,7 @@ const Session AuthAgent::generate(const std::string _user)
   return session;
 }
 
-int AuthAgent::fetch(const uuid_t _uuid)
+int Authenticator::fetch(const uuid_t _uuid)
 {
   std::chrono::time_point now = std::chrono::system_clock::now();
 
@@ -145,14 +145,14 @@ int AuthAgent::fetch(const uuid_t _uuid)
   return index;
 }
 
-const Session AuthAgent::operator[](const size_t _index) const
+const Session Authenticator::operator[](const size_t _index) const
 {
   assert(_index < this->size_, "Assertion '_index < _N' failed.");
   return this->sessions_[_index];
 }
 
 // TODO bether
-void AuthAgent::user_sanitization(const std::string_view _user)
+void Authenticator::user_sanitization(const std::string_view _user)
 {
   assert(!_user.empty(), "empty user name.");
   assert(_user.find("\n") == _user.npos, "\\n in user name.");

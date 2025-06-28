@@ -28,7 +28,7 @@ bool test_load()
   stream << data;
   stream.close();
 
-  AuthAgent cache(session_cache_size, path, session_ttl);
+  Authenticator cache(session_cache_size, path, session_ttl);
   uuid_t uuid;
   int i;
 
@@ -86,7 +86,7 @@ bool test_gen()
 {
   auto path = std::filesystem::current_path() / "test" / "data" / "gen";
   std::vector<Session> uuids;
-  AuthAgent cache(session_cache_size, path, session_ttl);
+  Authenticator cache(session_cache_size, path, session_ttl);
   bool res = false;
 
   for (int i = 0; i < session_cache_size * 10; i++)
@@ -111,7 +111,7 @@ bool test_gen()
 bool test_password()
 {
   auto path = std::filesystem::current_path() / "test" / "data" / "pass";
-  AuthAgent cache(session_cache_size, path, session_ttl);
+  Authenticator cache(session_cache_size, path, session_ttl);
 
   cache.save_password_hash("user", "12345good-@$@-password<3");
   return !cache.invalidate_password("user", "12345good-@$@-password<3") &&

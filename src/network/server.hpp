@@ -1,6 +1,7 @@
 #pragma once
 
 #include "client.hpp"
+#include "router.hpp"
 
 #include <filesystem>
 #include <map>
@@ -12,6 +13,8 @@
 class Tcp
 {
 public:
+  Router router;
+
   Tcp(const size_t _pool_size);
   ~Tcp();
 
@@ -32,6 +35,7 @@ protected:
   int socket_;
   sockaddr_in hint_;
 
+  // epoll
   int epoll_;
   const size_t pool_size_;
   epoll_event * const events_;

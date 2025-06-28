@@ -2,7 +2,6 @@
 
 #include "http.hpp"
 
-#include <expected>
 #include <netinet/in.h>
 #include <openssl/crypto.h>
 
@@ -11,17 +10,10 @@
 class Client
 {
 public:
-  enum Error
-  {
-    CLOSED,
-    FAILED,
-    MALFORMED
-  };
-
   Client(const int _socket, const int _epoll);
   ~Client();
 
-  std::expected<Request, Error> read();
+  Request read();
   void send(const Response _response);
 
   inline operator int() const { return this->socket_; }

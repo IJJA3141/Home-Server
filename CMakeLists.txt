@@ -10,6 +10,7 @@ set(SOURCE_FILES src/main.cpp         # src
   src/network/tls.cpp
   src/network/client.cpp
   src/network/parser.cpp
+  ./src/network/router.cpp
 )
 
 #===================================#==========#
