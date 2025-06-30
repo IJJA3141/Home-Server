@@ -4,55 +4,44 @@
 #include "router.hpp"
 
 #include <filesystem>
-#include <map>
-#include <memory>
-#include <openssl/crypto.h>
-#include <sys/epoll.h>
-#include <thread>
+#include <set>
 
 class Tcp
 {
 public:
-  Router router;
-
-  Tcp(const size_t _pool_size);
+  Tcp(int _port, const Router& _router);
   ~Tcp();
 
-  bool is_running() const;
+  inline bool is_running() const { return running_; }
 
-  void bind(const int _port);
   void listen();
   void close();
 
 protected:
-  std::thread client_bay_;
-  std::thread client_pool_;
+  sockaddr_in addr_;
+  int socket_;
+  int epoll_;
 
-  std::map<int, std::unique_ptr<Client>> clients_;
+private:
+  std::set<Client*> client_bay_;
+  const Router router_;
   bool running_;
 
-  // socket stuff
-  int socket_;
-  sockaddr_in hint_;
-
-  // epoll
-  int epoll_;
-  const size_t pool_size_;
-  epoll_event * const events_;
-
-  virtual std::unique_ptr<Client> await_client();
+  virtual Client* anchor_client() const;
 };
 
 class Tls : public Tcp
 {
 public:
-  Tls(const size_t _pool_size, const std::filesystem::path& _cert, const std::filesystem::path& _key);
+  Tls(int _port, const std::filesystem::path& _cert, const std::filesystem::path& _key, const Router& _router);
   ~Tls();
 
 private:
   static bool SSLLIBINIT;
-
   SSL_CTX* ctx_;
 
-  std::unique_ptr<Client> await_client() override;
+  Client* anchor_client() const override;
 };
+
+// epoll_event socket_event_;
+// epoll_event client_event_[10];

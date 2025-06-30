@@ -1,7 +1,5 @@
 #pragma once
 
-#include "auth.hpp"
-
 #include <map>
 #include <string>
 #include <string_view>
@@ -53,7 +51,7 @@ struct Command
 
 struct Request
 {
-  static const int error_size = 8;
+  static const int error_size = 7;
   enum Error
   {
     READ,
@@ -61,8 +59,7 @@ struct Request
     M_URL,
     M_HEADER,
     I_METHOD,
-    NOT_FOUND,
-    CLOSED,
+    I_URL,
     NONE
   } state = Error::NONE;
   static_assert((Request::error_size - 1) == Error::NONE, "wrong size for request error enum");
@@ -71,6 +68,8 @@ struct Request
   std::map<std::string, std::string> headers;
 
   std::string body;
+
+  operator const std::string() const;
 };
 
 struct Response
@@ -87,7 +86,7 @@ struct Response
 
 /**
  * TODO update
- * 
+ *
  * @brief Parses a string into a Request struct.
  *
  * This function analyzes the given input string and fills the provided

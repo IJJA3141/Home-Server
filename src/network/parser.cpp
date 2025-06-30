@@ -1,4 +1,5 @@
 #include "http.hpp"
+#include <sstream>
 
 // helper class
 class Iterator
@@ -144,6 +145,37 @@ bool parse_querys(std::string_view _model, std::map<std::string, std::string>& _
 
   return false;
 }
+
+Request::operator const std::string() const
+{
+  std::stringstream ss;
+
+  ss << method_to_string(this->cmd.method) << " ";
+
+  for (const auto& path : this->cmd.url.path)
+    ss << "/" << path;
+
+  if (!this->cmd.url.querys.empty())
+  {
+    ss << "?";
+
+    auto it = this->cmd.url.querys.begin();
+
+    while (it != --this->cmd.url.querys.end())
+      ss << it->first << "=" << it++->second << "&";
+
+    ss << it->first << "=" << it->second << "&";
+  }
+
+  if (!this->cmd.url.fragment.empty()) ss << "#" << this->cmd.url.fragment;
+  ss << "\r\n";
+
+  for (const auto& header : this->headers)
+    ss << header.first << ": " << header.second << "\r\n";
+  ss << "\r\n" << this->body;
+
+  return ss.str();
+};
 
 Response::operator const std::string() const
 {

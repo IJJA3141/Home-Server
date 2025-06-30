@@ -2,97 +2,72 @@
 #include "../log.hpp"
 #include "http.hpp"
 
-#include <openssl/crypto.h>
-#include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <sys/epoll.h>
 #include <unistd.h>
 
-// common
-Request Client::read()
+#define BUFFER_SIZE 4096
+
+// iclient
+Request Client::read() const
 {
-  ssize_t bytes = this->socket_read();
-  if (bytes < 0)
-  {
-    err("client failed reading");
-    return {Request::READ};
-  };
+  char buffer[BUFFER_SIZE];
+  std::string message;
+  ssize_t bytes;
 
-  if (bytes == 0)
+  while ((bytes = this->recv(buffer)) == BUFFER_SIZE)
   {
-    warn("client removed");
-    return {Request::CLOSED};
+    if (!check(Level::ERR, bytes >= 0, "read failed")) return {Request::Error::READ};
+
+    buffer[bytes] = '\0';
+    message += buffer;
   }
 
-  this->buffer_[bytes] = '\0';
+  if (!check(Level::ERR, bytes >= 0, "read failed")) return {Request::Error::READ};
 
-  std::string str = this->buffer_;
+  buffer[bytes] = '\0';
+  message += buffer;
 
-  debug(str);
-
-  if (bytes == CLIENT_BUFF_SIZE)
-  {
-    while ((bytes = this->socket_read()) == CLIENT_BUFF_SIZE)
-    {
-      err("fdp");
-      str += this->buffer_;
-    }
-
-    this->buffer_[bytes] = '\0';
-    str += this->buffer_;
-  }
-
-  log("new message from client");
-  debug(str);
-  return parse_request(str);
+  return parse_request(message);
 }
 
-void Client::send(const Response _response)
+void Client::write(Response _response) const
 {
-  // if (_response.code != 200) warn("sending\n" + (std::string)_response);
+  check(Level::WARN, _response.code < 500 || 599 < _response.code, "error while responding to client");
+  check(Level::ERR, this->send(_response) >= 0, "");
 
-  this->socket_write(_response);
   return;
 }
 
-// client specifications
-Client::Client(const int _socket, const int _epoll) : socket_size_(sizeof(this->client_))
+// tcp
+Client::Client(int _epoll, int _socket, sockaddr_in _addr) : epoll_(_epoll)
 {
-  this->socket_ = accept(_socket, (struct sockaddr*)&this->client_, &this->socket_size_);
+  socklen_t len = sizeof(_addr);
+  this->socket_ = accept4(_socket, reinterpret_cast<sockaddr*>(&_addr), &len, SOCK_NONBLOCK);
   assert(this->socket_ != -1);
 
-  epoll_event event;
-  event.events = EPOLLIN | EPOLLONESHOT;
-  event.data.fd = _socket;
+  epoll_event event(EPOLLIN | EPOLLET | EPOLLRDHUP, epoll_data(this));
+  assert(epoll_ctl(_epoll, EPOLL_CTL_ADD, this->socket_, &event) != -1);
 
-  assert(epoll_ctl(_epoll, EPOLL_CTL_ADD, _socket, &event) != -1, "epoll failed", errno, AT);
-
-  log("new client created");
   return;
 }
 
 Client::~Client()
 {
-  close(this->socket_);
   assert(epoll_ctl(this->epoll_, EPOLL_CTL_DEL, this->socket_, nullptr) != -1);
+  assert(close(this->socket_) != -1);
 
   return;
 }
 
-ssize_t Client::socket_read() { return ::read(this->socket_, this->buffer_, this->buffer_size_); }
+ssize_t Client::recv(char* _buffer) const { return ::recv(this->socket_, _buffer, BUFFER_SIZE, 0); }
+int Client::send(const std::string& _msg) const { return ::send(this->socket_, _msg.c_str(), _msg.size(), 0); }
 
-void Client::socket_write(const std::string& _res)
-{
-  if (::write(this->socket_, _res.c_str(), _res.size()) < 0)
-    ; // err("failed to write to the client !?");
-}
-
-// ssl client specifications
-SSL_Client::SSL_Client(const int _socket, const int _epoll, SSL_CTX* _ctx) : Client(_socket, _epoll)
+// tls
+SSL_Client::SSL_Client(int _epoll, int _socket, sockaddr_in _addr, SSL_CTX* _ctx) : Client(_epoll, _socket, _addr)
 {
   this->ssl_ = SSL_new(_ctx);
-  SSL_set_fd(this->ssl_, this->socket_);
-
+  assert(SSL_set_fd(this->ssl_, this->socket_) != -1);
   assert(SSL_accept(this->ssl_) != -1);
 
   return;
@@ -106,10 +81,5 @@ SSL_Client::~SSL_Client()
   return;
 }
 
-ssize_t SSL_Client::socket_read() { return SSL_read(this->ssl_, this->buffer_, this->buffer_size_); }
-
-void SSL_Client::socket_write(const std::string& _res)
-{
-  if (SSL_write(this->ssl_, _res.c_str(), _res.size()) < 0)
-    ; // err("failed to write to the ssl client !?");
-}
+ssize_t SSL_Client::recv(char* _buffer) const { return SSL_read(this->ssl_, _buffer, BUFFER_SIZE); }
+int SSL_Client::send(const std::string& _res) const { return SSL_write(this->ssl_, _res.c_str(), _res.size()); }

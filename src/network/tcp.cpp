@@ -1,111 +1,101 @@
 #include "../log.hpp"
-#include "client.hpp"
-#include "http.hpp"
 #include "server.hpp"
 
-#include <cstring>
-#include <map>
-#include <memory>
+#include <netinet/tcp.h>
 #include <sys/epoll.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
-Tcp::Tcp(const size_t _pool_size) : running_(false), pool_size_(_pool_size), events_(new epoll_event[_pool_size])
+constexpr int EPOLL_SIZE = 10;
+
+Tcp::Tcp(int _port, const Router& _router)
+    : running_(false), router_(_router), addr_(AF_INET, htons(_port), in_addr(htonl(INADDR_ANY)))
 {
-  this->socket_ = socket(AF_INET, SOCK_STREAM, 0);
-  assert(this->socket_ != -1, "socket(AF_INET, SOCK_STREAM, 0) failed", strerror(errno), AT);
+  // socket
+  // int opts[] = {TCP_NODELAY, TCP_COOKIE_TRANSACTIONS};
+  // int opts[] = {TCP_COOKIE_TRANSACTIONS};
+  int opts[] = {0};
 
-  int opt = 1;
-  assert(!setsockopt(this->socket_, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)),
-         "failed to set socket option", strerror(errno), AT);
+  assert((this->socket_ = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0)) != -1);
+  assert(setsockopt(this->socket_, SOL_SOCKET, SO_REUSEADDR, &opts, sizeof(opts)) != -1, "failed to set options");
+  assert(bind(this->socket_, reinterpret_cast<sockaddr*>(&this->addr_), sizeof(addr_)) != -1);
 
-  this->epoll_ = epoll_create1(0);
-  assert(this->epoll_ != -1, "filed to create epoll", strerror(errno), AT);
+  // epoll
+  epoll_event event(EPOLLIN | EPOLLRDHUP, epoll_data(nullptr)); // might need to bee stored
 
-  log("server created");
+  assert((this->epoll_ = epoll_create1(0)) != -1);
+  assert(epoll_ctl(this->epoll_, EPOLL_CTL_ADD, this->socket_, &event) != -1);
+
   return;
 }
 
 Tcp::~Tcp() { this->close(); }
 
-bool Tcp::is_running() const { return this->running_; }
-
-void Tcp::bind(const int _port)
-{
-  this->hint_.sin_family = AF_INET;
-  this->hint_.sin_addr.s_addr = htonl(INADDR_ANY);
-  this->hint_.sin_port = htons(_port);
-
-  assert(::bind(this->socket_, (struct sockaddr*)&this->hint_, sizeof(this->hint_)) != -1, "failed to bind",
-         strerror(errno), AT);
-
-  log("server binded on port", _port);
-  return;
-}
-
 void Tcp::listen()
 {
-  assert(::listen(this->socket_, SOMAXCONN) != -1, "failed to listen", strerror(errno), AT);
-  log("listening");
+  assert(::listen(this->socket_, SOMAXCONN) != -1);
 
   this->running_ = true;
+  epoll_event conn_bay[EPOLL_SIZE];
 
-  this->client_bay_ = std::thread([this]() -> void {
-    while (this->running_)
+  while (this->running_)
+  {
+    int n = epoll_wait(this->epoll_, conn_bay, EPOLL_SIZE, -1);
+    assert(n != -1);
+
+    log(n, "updates");
+    for (int i = 0; i < n; i++)
     {
-      std::unique_ptr<Client> client = this->await_client();
-      this->clients_[*client] = std::move(client);
-    }
+      Client* client = static_cast<Client*>(conn_bay[i].data.ptr);
+      bool closed = conn_bay[i].events & EPOLLRDHUP;
 
-    return;
-  });
-
-  this->client_pool_ = std::thread([this]() -> void {
-    while (this->running_)
-    {
-      int socket_number = epoll_wait(this->epoll_, this->events_, this->pool_size_, -1);
-      assert(socket_number != -1, "epoll wait failed", AT);
-
-      for (int i = 0; i < socket_number; ++i)
+      if (client == nullptr)
       {
-        int client = this->events_[i].data.fd;
-
-        std::thread([this, client]() -> void {
-          Request req = this->clients_[client]->read();
-
-          switch (req.state)
-          {
-          case Request::NONE:
-            log("responded to client");
-            this->router.respond(req);
-            break;
-          case Request::CLOSED:
-            this->clients_.erase(client);
-            break;
-          default:
-            this->router.handle_error(req.state);
-          }
-
+        if (closed) // this->socket_ was closed
+        {
+          log("stoped listeninnng");
+          this->running_ = false;
           return;
-        });
+        }
+
+        // add new client
+        log("new client");
+        this->client_bay_.insert(this->anchor_client());
+      }
+      else
+      {
+        if (closed)
+        {
+          log("client closed");
+          this->client_bay_.erase(reinterpret_cast<Client*>(conn_bay[i].data.ptr));
+          delete static_cast<Client*>(conn_bay[i].data.ptr);
+          continue;
+        }
+
+        client->write(this->router_.respond(client->read()));
       }
     }
-
-    return;
-  });
+  }
 
   return;
 }
 
 void Tcp::close()
 {
+  assert(this->running_);
+
   this->running_ = false;
 
   ::close(this->socket_);
   ::close(this->epoll_);
 
-  this->client_bay_.join();
-  this->client_pool_.join();
+  for (Client* client : this->client_bay_)
+    delete client;
 
+  this->client_bay_.clear();
+
+  log("closed server");
   return;
 }
 
-std::unique_ptr<Client> Tcp::await_client() { return std::make_unique<Client>(this->socket_, this->epoll_); };
+Client* Tcp::anchor_client() const { return new Client(this->epoll_, this->socket_, this->addr_); }
