@@ -40,13 +40,9 @@ int parsing_request(int argc, char* argv[])
 
   };
 
-  std::vector<Method> expected_methods{Method::GET, Method::POST, Method::GET, Method::PUT, Method::DELETE};
+  std::vector<http::Method> expected_methods{http::Method::GET, http::Method::POST, http::Method::GET, http::Method::PUT, http::Method::DELETE};
 
-  std::vector<std::vector<std::string>> expected_paths{{"users", "profile"},
-                                                       {"api", "data", "upload"},
-                                                       {"search", "results"},
-                                                       {"api", "v1", "users", "123"},
-                                                       {"posts", "456"}};
+  std::vector<std::string> expected_paths{"/users/profile", "/api/data/upload", "/search/results", "/api/v1/users/123", "/posts/456"};
 
   std::vector<std::map<std::string, std::string>> expected_queries{{{"user", "john"}, {"id", "42"}},
                                                                    {},
@@ -56,15 +52,17 @@ int parsing_request(int argc, char* argv[])
 
   std::vector<std::string> expected_fragments{"", "", "top", "", ""};
 
-  std::vector<std::string> expected_protocol{"HTTP/1.1", "HTTP/1.1", "HTTP/1.1", "HTTP/1.1", "HTTP/1.1"};
+  std::vector<http::Protocol> expected_protocol{http::Protocol::HTTP_11, http::Protocol::HTTP_11, http::Protocol::HTTP_11, http::Protocol::HTTP_11, http::Protocol::HTTP_11};
 
   std::vector<std::map<std::string, std::string>> expected_headers{
       {{"Host", "www.example.com"}, {"User-Agent", "MyBrowser/1.0"}, {"Accept", "*/*"}},
       {{"Host", "api.example.com"}, {"Content-Type", "application/json"}, {"Content-Length", "27"}},
       {{"Host", "www.search.com"}, {"Accept", "text/html"}},
-      {{"Host", "api.service.com"}, {"Content-Type", "application/json"}, {"Content-Length", "31"}, {"Authorization", "Bearer token123"}},
-      {{"Host", "blog.example.com"}, {"Authorization", "Basic abc123"}}
-  };
+      {{"Host", "api.service.com"},
+       {"Content-Type", "application/json"},
+       {"Content-Length", "31"},
+       {"Authorization", "Bearer token123"}},
+      {{"Host", "blog.example.com"}, {"Authorization", "Basic abc123"}}};
 
   std::vector<std::string> expected_body{"", "{\"name\":\"John\",\"age\":30}", "", "{\"email\":\"new@example.com\"}", ""};
 
@@ -72,9 +70,9 @@ int parsing_request(int argc, char* argv[])
 
   for (int i = 0; i < requests.size(); ++i)
   {
-    Request parsed_request;
+    http::Request parsed_request = http::parse_request(requests[i]);
 
-    o += !check(Level::ERR, parse_request(requests[i]).state == Request::NONE, "couldn't parse", requests[i]);
+    o += !check(Level::ERR, parsed_request.state == http::Error::NONE, "couldn't parse", requests[i]);
     o += !check(Level::ERR, parsed_request.cmd.method == expected_methods[i], parsed_request.cmd.method, "!=", expected_methods[i]);
     o += !check(Level::ERR, parsed_request.cmd.url.path == expected_paths[i], parsed_request.cmd.url.path, "!=", expected_paths[i]);
     o += !check(Level::ERR, parsed_request.cmd.url.querys == expected_queries[i], parsed_request.cmd.url.querys, "!=", expected_queries[i]);
@@ -84,8 +82,8 @@ int parsing_request(int argc, char* argv[])
     o += !check(Level::ERR, parsed_request.body == expected_body[i], parsed_request.body.size(), "!=", expected_body[i].size(), "\n\r", parsed_request.body, "!=", expected_body[i]);
   }
 
-  Request parsed_request;
-  o += !check(Level::ERR, parse_request("INVALID REQUEST").state != Request::NONE, "should have failed");
+  http::Request parsed_request;
+  o += !check(Level::ERR, http::parse_request("INVALID REQUEST").state != http::Error::NONE, "should have failed");
 
   check(Level::LOG, o, "parse_request test passed.");
   return o;

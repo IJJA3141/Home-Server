@@ -84,18 +84,10 @@ template <typename... T> constexpr bool check(Level _level, const bool&& _check,
 
   switch (_level)
   {
-  case DBG:
-    debug(_...);
-    break;
-  case LOG:
-    log(_...);
-    break;
-  case WARN:
-    warn(_...);
-    break;
-  case ERR:
-    err(_...);
-    break;
+  case DBG: debug(_...); break;
+  case LOG: log(_...); break;
+  case WARN: warn(_...); break;
+  case ERR: err(_...); break;
   }
 
   return false;

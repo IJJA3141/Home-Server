@@ -9,7 +9,7 @@
 #define BUFFER_SIZE 4096
 
 // iclient
-Request Client::read() const
+http::Request Client::read() const
 {
   char buffer[BUFFER_SIZE];
   std::string message;
@@ -17,23 +17,26 @@ Request Client::read() const
 
   while ((bytes = this->recv(buffer)) == BUFFER_SIZE)
   {
-    if (!check(Level::ERR, bytes >= 0, "read failed")) return {Request::Error::READ};
+    if (!check(Level::ERR, bytes >= 0, "read failed")) return {http::Error::READ};
 
     buffer[bytes] = '\0';
     message += buffer;
   }
 
-  if (!check(Level::ERR, bytes >= 0, "read failed")) return {Request::Error::READ};
+  if (!check(Level::ERR, bytes >= 0, "read failed")) return {http::Error::READ};
 
   buffer[bytes] = '\0';
   message += buffer;
 
-  return parse_request(message);
+  debug((std::string)http::parse_request(message));
+  return http::parse_request(message);
 }
 
-void Client::write(Response _response) const
+void Client::write(http::Response _response) const
 {
-  check(Level::WARN, _response.code < 500 || 599 < _response.code, "error while responding to client");
+  _response.headers["Content-Length"] = std::format("{}", _response.body.size() + 2);
+
+  check(Level::WARN, _response.status < 500 || 599 < _response.status, "error while responding to client");
   check(Level::ERR, this->send(_response) >= 0, "");
 
   return;

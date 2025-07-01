@@ -1,6 +1,8 @@
 #include "../../src/log.hpp"
 #include "../../src/network/http.hpp"
 
+#include <vector>
+
 int parsing_url(int argc, char* argv[])
 {
   std::vector<std::string> urls{"/example",
@@ -14,16 +16,7 @@ int parsing_url(int argc, char* argv[])
                                 "/test/resource#footer",
                                 "/test/resource?id=456#footer"};
 
-  std::vector<std::vector<std::string>> fdafd{{"example"},
-                                              {"example", "page"},
-                                              {"example", "page"},
-                                              {"example", "page"},
-                                              {"example", "page"},
-                                              {"example", "page"},
-                                              {"test"},
-                                              {"test", "resource"},
-                                              {"test", "resource"},
-                                              {"test", "resource"}};
+  std::vector<std::string> fdafd{"/example",       "/example/page", "/example/page", "/example/page", "/example/page",  "/example/page", "/test",         "/test/resource", "/test/resource", "/test/resource"};
 
   std::vector<std::map<std::string, std::string>> fjkdla{{},
                                                          {},
@@ -42,14 +35,14 @@ int parsing_url(int argc, char* argv[])
 
   for (int i = 0; i < urls.size(); ++i)
   {
-    Url parsed_url;
+    http::Url parsed_url;
     o += !check(Level::ERR, !parse_url(urls[i], parsed_url), "couldn't parse", urls[i]);
     o += !check(Level::ERR, parsed_url.path == fdafd[i], parsed_url.path, "!=", fdafd[i]);
     o += !check(Level::ERR, parsed_url.querys == fjkdla[i], parsed_url.querys, "!=", fjkdla[i]);
     o += !check(Level::ERR, parsed_url.fragment == frag[i], parsed_url.fragment, "!=", frag[i]);
   }
 
-  Url parsed_url;
+  http::Url parsed_url;
   o += !check(Level::ERR, parse_url("jflds;a", parsed_url), "should have failed");
 
   check(Level::LOG, o, "parsing_url test passed.");

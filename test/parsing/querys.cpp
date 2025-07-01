@@ -33,12 +33,12 @@ int parsing_querys(int argc, char* argv[])
 
   for (int i = 0; i < kv.size(); ++i)
   {
-    o += !check(Level::ERR, !parse_querys(str[i], map), "couldn't parse", str[i]);
+    o += !check(Level::ERR, !http::parse_querys(str[i], map), "couldn't parse", str[i]);
     o += !check(Level::ERR, map == kv[i], map, "should be equal to", kv[i]);
     map.clear();
   }
 
-  o += !check(Level::ERR, parse_querys("a2&c=3&d=4", map), "should have failed");
+  o += !check(Level::ERR, http::parse_querys("a2&c=3&d=4", map), "should have failed");
 
   check(Level::LOG, o, "parsing_querys test passed.");
   return o;

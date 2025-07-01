@@ -20,27 +20,26 @@ public:
   };
 };
 
-Request parse_request(const std::string_view _model)
+http::Request http::parse_request(std::string_view _model)
 {
   Iterator it(_model);
-  std::string_view view;
-  Request request;
+  Request request{Error::NONE};
 
-  it >> view;
+  it >> _model;
 
-  std::size_t pos = view.find(' ');
-  if (pos == view.npos || parse_method(view.substr(0, pos), request.cmd.method)) return {Request::M_METHOD};
+  std::size_t pos = _model.find(' ');
+  if (pos == _model.npos || parse_method(_model.substr(0, pos), request.cmd.method)) return {Error::M_METHOD};
+  _model.remove_prefix(pos + 1);
 
-  view.remove_prefix(pos + 1);
-  pos = view.find(' ');
-  if (pos == view.npos || parse_url(view.substr(0, pos), request.cmd.url)) return {Request::M_URL};
+  pos = _model.find(' ');
+  if (pos == _model.npos || parse_url(_model.substr(0, pos), request.cmd.url)) return {Error::M_URL};
 
-  request.cmd.protocol = std::string(view.substr(pos + 1));
+  if (parse_protocol(_model.substr(pos + 1), request.cmd.protocol)) return {Error::M_PROTOCOL};
 
-  while (it >> view)
+  while (it >> _model)
   {
-    if ((pos = view.find(':')) == view.npos) return {Request::M_HEADER};
-    request.headers[std::string(view.substr(0, pos))] = std::string(view.substr(pos + 2));
+    if ((pos = _model.find(':')) == _model.npos) return {Error::M_HEADER};
+    request.headers[std::string(_model.substr(0, pos))] = std::string(_model.substr(pos + 2));
   }
 
   it.model.remove_prefix(2);
@@ -48,7 +47,7 @@ Request parse_request(const std::string_view _model)
   return request;
 }
 
-bool parse_method(const std::string_view _model, Method& _method)
+bool http::parse_method(const std::string_view _model, http::Method& _method)
 {
   switch (_model[0])
   {
@@ -99,7 +98,7 @@ bool parse_method(const std::string_view _model, Method& _method)
   return true;
 }
 
-bool parse_url(std::string_view _model, Url& _url)
+bool http::parse_url(std::string_view _model, http::Url& _url)
 {
   std::size_t pos;
 
@@ -116,27 +115,20 @@ bool parse_url(std::string_view _model, Url& _url)
   }
 
   if (_model[0] != '/') return true;
-  _model.remove_prefix(1);
+  _url.path = std::string(_model);
 
-  while ((pos = _model.find('/')) != _model.npos)
-  {
-    _url.path.push_back(std::string(_model.substr(0, pos)));
-    _model.remove_prefix(pos + 1);
-  }
-
-  _url.path.push_back(std::string(_model));
   return false;
 }
 
-bool parse_querys(std::string_view _model, std::map<std::string, std::string>& _querys)
+bool http::parse_querys(std::string_view _model, std::map<std::string, std::string>& _querys)
 {
   std::size_t pos, eq;
 
   while ((pos = _model.find_last_of('&')) != _model.npos)
   {
     if ((eq = _model.find_last_of('=')) == _model.npos) return true;
-    _querys[std::string(_model.substr(pos + 1, eq - pos - 1))] = std::string(_model.substr(eq + 1));
 
+    _querys[std::string(_model.substr(pos + 1, eq - pos - 1))] = std::string(_model.substr(eq + 1));
     _model.remove_suffix(_model.size() - pos);
   }
 
@@ -146,49 +138,37 @@ bool parse_querys(std::string_view _model, std::map<std::string, std::string>& _
   return false;
 }
 
-Request::operator const std::string() const
+bool http::parse_protocol(std::string_view _model, Protocol &_protocol)
 {
-  std::stringstream ss;
-
-  ss << method_to_string(this->cmd.method) << " ";
-
-  for (const auto& path : this->cmd.url.path)
-    ss << "/" << path;
-
-  if (!this->cmd.url.querys.empty())
+  if (_model == "HTTP/0.9")
   {
-    ss << "?";
-
-    auto it = this->cmd.url.querys.begin();
-
-    while (it != --this->cmd.url.querys.end())
-      ss << it->first << "=" << it++->second << "&";
-
-    ss << it->first << "=" << it->second << "&";
+    _protocol = Protocol::HTTP_09;
+    return false;
   }
 
-  if (!this->cmd.url.fragment.empty()) ss << "#" << this->cmd.url.fragment;
-  ss << "\r\n";
+  if (_model == "HTTP/1.0")
+  {
+    _protocol = Protocol::HTTP_10;
+    return false;
+  }
 
-  for (const auto& header : this->headers)
-    ss << header.first << ": " << header.second << "\r\n";
-  ss << "\r\n" << this->body;
+  if (_model == "HTTP/1.1")
+  {
+    _protocol = Protocol::HTTP_11;
+    return false;
+  }
 
-  return ss.str();
-};
+  if (_model == "HTTP/2.0")
+  {
+    _protocol = Protocol::HTTP_20;
+    return false;
+  }
 
-Response::operator const std::string() const
-{
-  std::stringstream ss;
+  if (_model == "HTTP/3.0")
+  {
+    _protocol = Protocol::HTTP_30;
+    return false;
+  }
 
-  ss << this->protocol << " ";
-  ss << this->code << " ";
-  ss << this->message << "\r\n";
-
-  for (const auto& header : this->headers)
-    ss << header.first << ": " << header.second << "\r\n";
-
-  ss << "\r\n" << this->body;
-
-  return ss.str();
-};
+  return true;
+}

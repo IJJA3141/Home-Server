@@ -42,6 +42,3 @@ private:
 
   Client* anchor_client() const override;
 };
-
-// epoll_event socket_event_;
-// epoll_event client_event_[10];

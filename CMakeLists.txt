@@ -6,11 +6,12 @@ set(CMAKE_CXX_STANDARD 26)            # cpp version
 set(LIBS -lpthread -lssl -lcrypto -luuid)    # libs
 set(SOURCE_FILES src/main.cpp         # src
   src/network/auth.cpp
+  src/network/client.cpp
+  src/network/parse.cpp
+  src/network/router.cpp
   src/network/tcp.cpp
   src/network/tls.cpp
-  src/network/client.cpp
-  src/network/parser.cpp
-  ./src/network/router.cpp
+  src/network/unparse.cpp
 )
 
 #===================================#==========#

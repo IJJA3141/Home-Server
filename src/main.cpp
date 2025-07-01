@@ -2,41 +2,46 @@
 #include "network/http.hpp"
 #include "network/router.hpp"
 #include "network/server.hpp"
-#include <iostream>
-#include <openssl/err.h>
+#include "res.hpp"
 
-const Response fallback{"HTTP/1.1",              // protocol
-                        500,                     // code
-                        "Internal Server Error", // message
-                        {                        // headers
-                         {"Content-Type", "text/html; charset=UTF-8"},
-                         {"Content-Length", "162"},
-                         {"Connection", "close"},
-                         {"Date", "Sun, 29 Jun 2025 14:30:00 GMT"},
-                         {"Server", "MyCustomServer/1.0"}},
-                        // body
-                        "<!DOCTYPE html>\n"
-                        "<html>\n"
-                        "<head><title>500 Internal Server Error</title></head>\n"
-                        "<body>\n"
-                        "<h1>500 Internal Server Error</h1>\n"
-                        "<p>para</p>\n"
-                        "</body>\n"
-                        "</html>\n"};
+#include <openssl/err.h>
+#include <string>
+
+http::Response func(http::Request _req)
+{
+  debug((std::string)_req);
+
+  http::Response res;
+
+  res.protocol = http::Protocol::HTTP_11;
+  res.status = HTTP_OK;
+  res.type = HTTP_MIME_HTML;
+
+  res.body =
+      "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\" /><meta name=\"viewport\" "
+      "content=\"width=device-width, initial-scale=1.0\"/><title>Welcome Page</title><style>body { margin: 0; padding: "
+      "0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; display: flex; "
+      "align-items: center; justify-content: center; height: 100vh; } .welcome-container { text-align: center; "
+      "background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); } h1 { "
+      "color: "
+      "#333; } p { color: #666; margin-top: 10px; } </style> </head> <body> <div class=\"welcome-container\"> "
+      "<h1>Welcome to Our Website!</h1> <p>We're glad you're here. Explore and enjoy your stay.</p> </div> </body> "
+      "</html>";
+
+  return res;
+}
 
 int main(int argc, char* argv[])
 {
-  Router router(fallback);
+  Router router(READ_ERROR);
 
-  router.add(Method::GET, "/",
-             [](Request _request) -> Response { return Response{"http/1.1", 200, "OK", {}, "Hello world!"}; });
+  router.add(http::Method::GET, "/", func);
 
-  Tcp server(60, router);
-  server.listen();
+  // Tcp http_server(80, router);
+  // http_server.listen();
 
-  std::string _;
-  std::getline(std::cin, _);
-  server.close();
+  Tls https_server(443, "./cert.pem", "./key.pem", router);
+  https_server.listen();
 
   return 0;
 }

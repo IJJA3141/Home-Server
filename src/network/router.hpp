@@ -8,21 +8,21 @@
 class Router
 {
 public:
-  Router(Response _fallback);
+  Router(http::Response _fallback);
 
-  void add(Method _method, std::string_view _path, std::function<Response(Request)> _function);
-  void add(Request::Error _error, Response _response);
+  void add(http::Method _method, std::string_view _path, std::function<http::Response(http::Request)> _function);
+  void add(http::Error _error, http::Response _response);
 
-  Response respond(Request _request) const;
-  Response handle_error(Request::Error _error) const;
+  http::Response respond(http::Request _request) const;
+  http::Response handle_error(http::Error _error) const;
 
 private:
   struct Route
   {
-    std::optional<std::function<Response(Request)>> functions[method_size];
-    std::vector<std::string> path;
+    std::string path;
+    std::optional<std::function<http::Response(http::Request)>> functions[http::method_size];
   };
 
-  std::optional<Response> error_handlers[Request::error_size]; // -1 for NONE
+  std::optional<http::Response> error_handlers[http::error_size]; // -1 for NONE
   std::vector<Route> routes_;
 };

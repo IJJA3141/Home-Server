@@ -2,29 +2,16 @@
 #include "../log.hpp"
 #include "http.hpp"
 
-Router::Router(Response _fallback) { this->error_handlers[Request::Error::NONE] = _fallback; }
+Router::Router(http::Response _fallback) { this->error_handlers[http::Error::NONE] = _fallback; }
 
-void Router::add(Method _method, std::string_view _path, std::function<Response(Request)> _function)
+void Router::add(http::Method _method, std::string_view _path, std::function<http::Response(http::Request)> _function)
 {
   assert(_path[0] == '/', _path, "is invalid paths should start with '/'");
-  _path.remove_prefix(1);
-
-  Router::Route new_route;
-  std::size_t pos;
-
-  // create path
-  while ((pos = _path.find("/")) != _path.npos)
-  {
-    new_route.path.push_back(std::string(_path.substr(0, pos)));
-    _path.remove_prefix(pos);
-  }
-
-  new_route.path.push_back(std::string(_path));
 
   // check for existing path
   for (Route& route : this->routes_)
   {
-    if (route.path == new_route.path)
+    if (route.path == _path)
     {
       check(Level::WARN, route.functions[_method].has_value(), "over vrite...");
       route.functions[_method] = _function;
@@ -32,13 +19,14 @@ void Router::add(Method _method, std::string_view _path, std::function<Response(
     }
   }
 
+  Router::Route new_route{std::string(_path)};
   new_route.functions[_method] = _function;
   this->routes_.push_back(new_route);
 
   return;
 }
 
-void Router::add(Request::Error _error, Response _response)
+void Router::add(http::Error _error, http::Response _response)
 {
   check(Level::WARN, this->error_handlers[_error].has_value(), "");
   this->error_handlers[_error] = _response;
@@ -46,9 +34,9 @@ void Router::add(Request::Error _error, Response _response)
   return;
 }
 
-Response Router::respond(Request _request) const
+http::Response Router::respond(http::Request _request) const
 {
-  if (!check(Level::WARN, _request.state == Request::Error::NONE, "failed", std::string(_request)))
+  if (!check(Level::WARN, _request.state == http::Error::NONE, "failed", std::string(_request)))
     return this->handle_error(_request.state);
 
   for (const Route& route : this->routes_)
@@ -58,17 +46,17 @@ Response Router::respond(Request _request) const
       if (route.functions[_request.cmd.method].has_value())
         return route.functions[_request.cmd.method].value()(_request);
 
-      return this->handle_error(Request::Error::I_METHOD);
+      return this->handle_error(http::Error::I_METHOD);
     }
   }
 
-  return this->handle_error(Request::Error::I_URL);
+  return this->handle_error(http::Error::I_URL);
 }
 
-Response Router::handle_error(Request::Error _error) const
+http::Response Router::handle_error(http::Error _error) const
 {
   if (check(Level::WARN, this->error_handlers[_error].has_value(), "no handler for", _error))
     return this->error_handlers[_error].value();
 
-  return this->error_handlers[Request::Error::NONE].value();
+  return this->error_handlers[http::Error::NONE].value();
 }

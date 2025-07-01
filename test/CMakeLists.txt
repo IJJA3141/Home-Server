@@ -9,10 +9,12 @@ set(TEST_FILES                      # test
 
 set(SOURCE_FILES                    # src
   ../src/network/auth.cpp
+  ../src/network/client.cpp
+  ../src/network/parse.cpp
+  ../src/network/router.cpp
   ../src/network/tcp.cpp
   ../src/network/tls.cpp
-  ../src/network/client.cpp
-  ../src/network/parser.cpp
+  ../src/network/unparse.cpp
 )
 
 #===================================#==========#

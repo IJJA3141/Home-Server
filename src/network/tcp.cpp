@@ -12,9 +12,7 @@ Tcp::Tcp(int _port, const Router& _router)
     : running_(false), router_(_router), addr_(AF_INET, htons(_port), in_addr(htonl(INADDR_ANY)))
 {
   // socket
-  // int opts[] = {TCP_NODELAY, TCP_COOKIE_TRANSACTIONS};
-  // int opts[] = {TCP_COOKIE_TRANSACTIONS};
-  int opts[] = {0};
+  int opts[] = {TCP_NODELAY, TCP_COOKIE_TRANSACTIONS};
 
   assert((this->socket_ = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0)) != -1);
   assert(setsockopt(this->socket_, SOL_SOCKET, SO_REUSEADDR, &opts, sizeof(opts)) != -1, "failed to set options");
@@ -43,7 +41,6 @@ void Tcp::listen()
     int n = epoll_wait(this->epoll_, conn_bay, EPOLL_SIZE, -1);
     assert(n != -1);
 
-    log(n, "updates");
     for (int i = 0; i < n; i++)
     {
       Client* client = static_cast<Client*>(conn_bay[i].data.ptr);
@@ -59,16 +56,16 @@ void Tcp::listen()
         }
 
         // add new client
-        log("new client");
         this->client_bay_.insert(this->anchor_client());
+        log(this->client_bay_.size(), "client connected");
       }
       else
       {
         if (closed)
         {
-          log("client closed");
           this->client_bay_.erase(reinterpret_cast<Client*>(conn_bay[i].data.ptr));
           delete static_cast<Client*>(conn_bay[i].data.ptr);
+          log(this->client_bay_.size(), "client connected");
           continue;
         }
 
@@ -94,7 +91,6 @@ void Tcp::close()
 
   this->client_bay_.clear();
 
-  log("closed server");
   return;
 }
 

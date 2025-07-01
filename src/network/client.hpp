@@ -13,8 +13,8 @@ public:
   Client(int _epoll, int _socket, sockaddr_in _addr);
   ~Client();
 
-  Request read() const;
-  void write(Response _response) const;
+  http::Request read() const;
+  void write(http::Response _response) const;
 
 protected:
   int socket_;
