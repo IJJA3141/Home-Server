@@ -43,22 +43,40 @@ void Client::write(http::Response _response) const
 }
 
 // tcp
-Client::Client(int _epoll, int _socket, sockaddr_in _addr) : epoll_(_epoll)
+Client::Client(int _epoll, int _socket, sockaddr_in _addr) : epoll_(_epoll), init(true)
 {
   socklen_t len = sizeof(_addr);
   this->socket_ = accept4(_socket, reinterpret_cast<sockaddr*>(&_addr), &len, SOCK_NONBLOCK);
-  assert(this->socket_ != -1);
+  if (this->socket_ == -1)
+  {
+    err("accept");
+    this->init = false;
+    return;
+  }
 
   epoll_event event(EPOLLIN | EPOLLET | EPOLLRDHUP, epoll_data(this));
-  assert(epoll_ctl(_epoll, EPOLL_CTL_ADD, this->socket_, &event) != -1);
+  if (epoll_ctl(_epoll, EPOLL_CTL_ADD, this->socket_, &event) == -1)
+  {
+    err("epoll");
+    assert(::close(this->socket_) != -1);
+    this->init = false;
+    return;
+  }
 
   return;
 }
 
 Client::~Client()
 {
+  if (this->init) this->close();
+
+  return;
+}
+
+void Client::close()
+{
   assert(epoll_ctl(this->epoll_, EPOLL_CTL_DEL, this->socket_, nullptr) != -1);
-  assert(close(this->socket_) != -1);
+  assert(::close(this->socket_) != -1);
 
   return;
 }
@@ -69,17 +87,90 @@ int Client::send(const std::string& _msg) const { return ::send(this->socket_, _
 // tls
 SSL_Client::SSL_Client(int _epoll, int _socket, sockaddr_in _addr, SSL_CTX* _ctx) : Client(_epoll, _socket, _addr)
 {
-  this->ssl_ = SSL_new(_ctx);
-  assert(SSL_set_fd(this->ssl_, this->socket_) != -1);
-  assert(SSL_accept(this->ssl_) != -1);
+  if (!this->init) return;
 
+  if ((this->ssl_ = SSL_new(_ctx)) == NULL)
+  {
+    err("ssl new");
+    this->close();
+    this->init = false;
+
+    return;
+  }
+
+  if (SSL_set_fd(this->ssl_, this->socket_) == -1)
+  {
+    err("set fd");
+    SSL_free(this->ssl_);
+    this->close();
+    this->init = false;
+
+    return;
+  };
+
+  epoll_event event(EPOLLIN | EPOLLOUT, epoll_data{});
+  int epoll, res;
+
+  if ((epoll = epoll_create1(0)) == -1)
+  {
+    err("epoll");
+    SSL_free(this->ssl_);
+    this->close();
+    this->init = false;
+
+    return;
+  };
+
+  if (epoll_ctl(epoll, EPOLL_CTL_ADD, this->socket_, &event) == -1)
+  {
+    err("epoll add");
+    ::close(epoll);
+    SSL_free(this->ssl_);
+    this->close();
+    this->init = false;
+
+    return;
+  };
+
+  res = SSL_get_error(this->ssl_, SSL_accept(this->ssl_));
+  while (res == SSL_ERROR_WANT_READ || res == SSL_ERROR_WANT_WRITE)
+  {
+    if (epoll_wait(epoll, &event, 1, -1) == -1)
+    {
+      err("epoll wait");
+      ::close(epoll);
+      SSL_free(this->ssl_);
+      this->close();
+      this->init = false;
+
+      return;
+    }
+
+    res = SSL_get_error(this->ssl_, SSL_accept(this->ssl_));
+  }
+
+  if (res != SSL_ERROR_NONE)
+  {
+    ::close(epoll);
+    err("ssl accept");
+    SSL_free(this->ssl_);
+    this->close();
+    this->init = false;
+
+    return;
+  }
+
+  ::close(epoll);
   return;
 };
 
 SSL_Client::~SSL_Client()
 {
-  SSL_shutdown(this->ssl_);
-  SSL_free(this->ssl_);
+  if (this->init)
+  {
+    SSL_shutdown(this->ssl_);
+    SSL_free(this->ssl_);
+  }
 
   return;
 }

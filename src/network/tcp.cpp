@@ -19,7 +19,7 @@ Tcp::Tcp(int _port, const Router& _router)
   assert(bind(this->socket_, reinterpret_cast<sockaddr*>(&this->addr_), sizeof(addr_)) != -1);
 
   // epoll
-  epoll_event event(EPOLLIN | EPOLLRDHUP, epoll_data(nullptr)); // might need to bee stored
+  epoll_event event(EPOLLIN | EPOLLRDHUP, epoll_data(nullptr));
 
   assert((this->epoll_ = epoll_create1(0)) != -1);
   assert(epoll_ctl(this->epoll_, EPOLL_CTL_ADD, this->socket_, &event) != -1);
@@ -56,8 +56,17 @@ void Tcp::listen()
         }
 
         // add new client
-        this->client_bay_.insert(this->anchor_client());
-        log(this->client_bay_.size(), "client connected");
+        auto client = this->anchor_client();
+        if (client->init)
+        {
+          this->client_bay_.insert(client);
+          log(this->client_bay_.size(), "client connected");
+        }
+        else
+        {
+          delete client;
+          warn("failed to connect client");
+        }
       }
       else
       {

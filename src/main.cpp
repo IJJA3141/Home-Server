@@ -6,6 +6,7 @@
 
 #include <openssl/err.h>
 #include <string>
+#include <thread>
 
 http::Response func(http::Request _req)
 {
@@ -31,17 +32,35 @@ http::Response func(http::Request _req)
   return res;
 }
 
+http::Response mv(http::Request _req)
+{
+  http::Response res{
+      .protocol = http::Protocol::HTTP_11,
+      .status = HTTP_MOVED_PERMANENTLY,
+      .type = HTTP_MIME_PLAIN,
+  };
+
+  res.body = "moved to somewere else";
+
+  return res;
+}
+
 int main(int argc, char* argv[])
 {
-  Router router(READ_ERROR);
+  Router http_router(READ_ERROR);
+  Router https_router(READ_ERROR);
 
-  router.add(http::Method::GET, "/", func);
+  http_router.add(http::Method::GET, "/", &mv);
+  https_router.add(http::Method::GET, "/", func);
 
-  // Tcp http_server(80, router);
-  // http_server.listen();
+  Tcp http_server(80, http_router);
+  std::thread http_thread([&]() -> void { http_server.listen(); });
 
-  Tls https_server(443, "./cert.pem", "./key.pem", router);
-  https_server.listen();
+  Tls https_server(443, "./cert.pem", "./key.pem", https_router);
+  std::thread https_thread([&]() -> void { https_server.listen(); });
+
+  http_thread.join();
+  https_thread.join();
 
   return 0;
 }

@@ -10,6 +10,8 @@
 class Client
 {
 public:
+  bool init;
+
   Client(int _epoll, int _socket, sockaddr_in _addr);
   ~Client();
 
@@ -18,6 +20,7 @@ public:
 
 protected:
   int socket_;
+  void close();
 
 private:
   const int epoll_;
