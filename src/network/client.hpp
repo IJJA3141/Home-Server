@@ -20,6 +20,7 @@ public:
    * Set to true if the client setup and registration with epoll completed successfully.
    */
   bool moored;
+  char ip[INET_ADDRSTRLEN];
 
   /**
    * @brief Constructs a Client.

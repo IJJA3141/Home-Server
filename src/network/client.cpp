@@ -2,8 +2,10 @@
 #include "../log.hpp"
 #include "http.hpp"
 
+#include <arpa/inet.h>
 #include <openssl/ssl.h>
 #include <sys/epoll.h>
+#include <sys/socket.h>
 #include <unistd.h>
 
 #define WARN_SERVERR "Server encountered an error while responding to client."
@@ -11,6 +13,7 @@
 #define ERR_READ             "Failed to read data from client socket."
 #define ERR_WRITE            "Failed to send data to client socket."
 #define ERR_ACCEPT_CLIENT    "Failed to accept new client connection."
+#define ERR_GET_IP           "Failed to get client ip addresse."
 #define ERR_EPOLL_ADD_CLIENT "Failed to register client socket with epoll instance."
 #define ERR_SSL_CREATE       "Failed to initialize SSL session for client."
 #define ERR_SSL_FD_BIND      "Failed to bind SSL session to socket descriptor."
@@ -62,7 +65,7 @@ void Client::write(http::Response _response) const
 // tcp
 Client::Client(int _epoll, int _socket, sockaddr_in _addr) : epoll_(_epoll), moored(true)
 {
-  socklen_t len = sizeof(_addr);
+  socklen_t len = sizeof _addr;
   this->socket_ = accept4(_socket, reinterpret_cast<sockaddr*>(&_addr), &len, SOCK_NONBLOCK);
   if (this->socket_ == -1)
   {
@@ -70,6 +73,20 @@ Client::Client(int _epoll, int _socket, sockaddr_in _addr) : epoll_(_epoll), moo
     this->moored = false;
     return;
   }
+
+  sockaddr_storage addr;
+  len = sizeof addr;
+  if (getpeername(this->socket_, reinterpret_cast<sockaddr*>(&addr), &len) == -1)
+  {
+    err(ERR_GET_IP);
+    assert(::close(this->socket_) != -1, ASS_SOCKET_CLOSE);
+    this->moored = false;
+    return;
+  }
+
+  sockaddr_in* s = reinterpret_cast<sockaddr_in*>(&addr);
+  int port = ntohs(s->sin_port);
+  inet_ntop(AF_INET, &s->sin_addr, this->ip, sizeof this->ip);
 
   epoll_event event(EPOLLIN | EPOLLET | EPOLLRDHUP, epoll_data(this));
   if (epoll_ctl(_epoll, EPOLL_CTL_ADD, this->socket_, &event) == -1)

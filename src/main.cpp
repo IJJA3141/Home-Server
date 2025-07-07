@@ -10,8 +10,6 @@
 
 http::Response func(http::Request _req)
 {
-  debug((std::string)_req);
-
   http::Response res;
 
   res.protocol = http::Protocol::HTTP_11;
@@ -32,6 +30,24 @@ http::Response func(http::Request _req)
   return res;
 }
 
+http::Response not_found{
+    .protocol = http::Protocol::HTTP_11,
+    .status = HTTP_NOT_FOUND,
+    .type = HTTP_MIME_HTML,
+
+    .body =
+        "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\" /><meta name=\"viewport\" "
+        "content=\"width=device-width, initial-scale=1.0\"/><title>404 Not Found</title><style>body { margin: 0; "
+        "padding: "
+        "0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; display: flex; "
+        "align-items: center; justify-content: center; height: 100vh; } .error-container { text-align: center; "
+        "background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); } h1 { "
+        "color: #e74c3c; font-size: 48px; margin-bottom: 10px; } p { color: #555; margin-top: 10px; font-size: 18px; } "
+        "a { color: #3498db; text-decoration: none; } a:hover { text-decoration: underline; } </style></head> "
+        "<body><div class=\"error-container\"> <h1>404 - Page Not Found</h1> "
+        "<p>Sorry, the page you are looking for does not exist.</p>"
+        "<p><a href=\"/\">Go back to home</a></p> </div> </body></html>"};
+
 http::Response mv(http::Request _req)
 {
   http::Response res{
@@ -49,6 +65,9 @@ int main(int argc, char* argv[])
 {
   Router http_router(READ_ERROR);
   Router https_router(READ_ERROR);
+
+  http_router.add(http::Error::I_URL, not_found);
+  https_router.add(http::Error::I_URL, not_found);
 
   http_router.add(http::Method::GET, "/", &mv);
   https_router.add(http::Method::GET, "/", func);

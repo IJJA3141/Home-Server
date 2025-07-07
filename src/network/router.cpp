@@ -4,7 +4,8 @@
 
 Router::Router(http::Response _fallback) { this->error_handlers[http::Error::NONE] = _fallback; }
 
-void Router::add(http::Method _method, std::string_view _path, std::function<http::Response(http::Request)> _function)
+void Router::add(http::Method _method, std::string_view _path,
+                 std::function<http::Response(http::Request)> _function)
 {
   assert(_path[0] == '/', _path, "is invalid paths should start with '/'");
 

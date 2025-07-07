@@ -1,8 +1,15 @@
 ---
 BasedOnStyle: Microsoft
+
 IndentWidth: 2
+
 DerivePointerAlignment: false
+
 PointerAlignment: Left
+
+ColumnLimit: 115
+
+AlignConsecutiveMacros: true
 
 AllowShortFunctionsOnASingleLine: All
 AllowShortLambdasOnASingleLine: All

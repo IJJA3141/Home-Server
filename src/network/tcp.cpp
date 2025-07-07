@@ -93,7 +93,7 @@ void Tcp::server_event(const bool _closed)
   if (client->moored)
   {
     this->client_bay_.insert(client);
-    log(this->client_bay_.size(), "client connected");
+    log(client->ip, "connected\n\t", this->client_bay_.size(), "clients connected");
     return;
   }
 
@@ -106,8 +106,9 @@ void Tcp::client_event(const bool _closed, const Client* _client)
   if (_closed)
   {
     this->client_bay_.erase(_client);
+    log(_client->ip, "disconnected");
     delete _client;
-    log(this->client_bay_.size(), "client connected");
+    log(this->client_bay_.size(), "clients connected");
     return;
   }
 

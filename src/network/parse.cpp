@@ -138,7 +138,7 @@ bool http::parse_querys(std::string_view _model, std::map<std::string, std::stri
   return false;
 }
 
-bool http::parse_protocol(std::string_view _model, Protocol &_protocol)
+bool http::parse_protocol(std::string_view _model, Protocol& _protocol)
 {
   if (_model == "HTTP/0.9")
   {
