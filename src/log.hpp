@@ -78,7 +78,7 @@ template <typename... T> constexpr void assert(bool _assertion, const T&... _)
 
 #define AT "in file", __builtin_FILE(), "at line", __builtin_LINE()
 
-template <typename... T> constexpr bool check(Level _level, const bool&& _check, const T&... _)
+template <typename... T> constexpr bool check(Level _level, const bool& _check, const T&... _)
 {
   if (_check) return true;
 
