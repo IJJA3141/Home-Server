@@ -2,62 +2,91 @@
 #include "../log.hpp"
 #include "http.hpp"
 
-Router::Router(http::Response _fallback) { this->error_handlers[http::Error::NONE] = _fallback; }
+#define WAR_OVERRIDE_ERR   ""
+#define WAR_OVERRIDE_ROUTE ""
+#define WAR_RES_FAILED     "the following request failed\n", std::string(_request)
+#define WAR_NO_ERR         ""
 
-void Router::add(http::Method _method, std::string_view _path,
-                 std::function<http::Response(http::Request)> _function)
+Router::Router(http::Response _fallback) { this->error_handlers_[http::Error::NONE] = _fallback; }
+
+void Router::add(const http::Method _method, const std::string_view _path,
+                 const std::function<http::Response(http::Request, std::string)> _function)
 {
-  assert(_path[0] == '/', _path, "is invalid paths should start with '/'");
+  this->add(_method, std::make_shared<SRoute>(std::string(_path), _function));
+  return;
+}
 
-  // check for existing path
-  for (Route& route : this->routes_)
+void Router::add(const http::Method _method, const std::string_view _path,
+                 const std::function<http::Response(http::Request)> _function)
+{
+  this->add(_method, std::make_shared<Route>(std::string(_path), _function));
+  return;
+}
+
+void Router::add(const http::Method _method, const std::string_view _path, const http::Response _response)
+{
+  this->add(_method, std::make_shared<CRoute>(std::string(_path), _response));
+  return;
+}
+
+void Router::add(const http::Method _method, const std::shared_ptr<IRoute> _route)
+{
+  for (std::shared_ptr<IRoute>& route : this->routes_[_method])
   {
-    if (route.path == _path)
+    if ((*route) == (*_route))
     {
-      check(Level::WARN, route.functions[_method].has_value(), "over vrite...");
-      route.functions[_method] = _function;
+      warn(WAR_OVERRIDE_ROUTE);
+      route = _route;
       return;
     }
   }
 
-  Router::Route new_route{std::string(_path)};
-  new_route.functions[_method] = _function;
-  this->routes_.push_back(new_route);
-
+  this->routes_[_method].push_back(_route);
   return;
 }
 
-void Router::add(http::Error _error, http::Response _response)
+void Router::add(const http::Error _error, const http::Response _response)
 {
-  check(Level::WARN, this->error_handlers[_error].has_value(), "");
-  this->error_handlers[_error] = _response;
-
+  check(Level::WARN, !this->error_handlers_[_error].has_value(), WAR_OVERRIDE_ERR);
+  this->error_handlers_[_error] = _response;
   return;
 }
 
-http::Response Router::respond(http::Request _request) const
+http::Response Router::respond(const http::Request _request) const
 {
-  if (!check(Level::WARN, _request.state == http::Error::NONE, "failed", std::string(_request)))
-    return this->handle_error(_request.state);
-
-  for (const Route& route : this->routes_)
+  if (_request.state != http::Error::NONE)
   {
-    if (route.path == _request.cmd.url.path)
-    {
-      if (route.functions[_request.cmd.method].has_value())
-        return route.functions[_request.cmd.method].value()(_request);
+    warn(WAR_RES_FAILED);
+    return this->handle_error(_request.state);
+  }
 
-      return this->handle_error(http::Error::I_METHOD);
+  for (const auto& route : this->routes_[_request.cmd.method])
+  {
+    if (route->match(_request.cmd.url.path))
+    {
+      return route->invoke(_request);
     }
   }
 
+  for (int i = 1; i < http::method_size; ++i)
+  {
+    for (const auto& route : this->routes_[(_request.cmd.method + i) % http::method_size])
+    {
+      if (route->match(_request.cmd.url.path))
+      {
+        return this->handle_error(http::Error::I_METHOD);
+      }
+    }
+  }
+
+  warn(_request.cmd.url.path, "not found.");
   return this->handle_error(http::Error::I_URL);
 }
 
-http::Response Router::handle_error(http::Error _error) const
+http::Response Router::handle_error(const http::Error _error) const
 {
-  if (check(Level::WARN, this->error_handlers[_error].has_value(), "no handler for", _error))
-    return this->error_handlers[_error].value();
+  if (this->error_handlers_[_error].has_value()) return this->error_handlers_[_error].value();
 
-  return this->error_handlers[http::Error::NONE].value();
+  warn(WAR_NO_ERR);
+  return this->error_handlers_[http::Error::NONE].value();
 }

@@ -13,6 +13,7 @@ struct Session
   uuid_t uuid;
 
   friend std::ostream& operator<<(std::ostream& _ostream, const Session& _session);
+  friend std::string& operator<<(std::string& _ostream, const Session& _session);
 };
 
 class Authenticator

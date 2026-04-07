@@ -150,6 +150,7 @@ struct Request
   Error state;
   Command cmd;
   std::map<std::string, std::string> headers;
+  std::map<std::string, std::string> cookies;
   std::string body;
 
   operator const std::string() const;
@@ -159,22 +160,84 @@ struct Response
 {
   Protocol protocol;
   int status;
-  std::string type;
   std::map<std::string, std::string> headers;
   std::string body;
 
   operator std::string();
 };
 
+/**
+ *
+ *
+ * @brief
+ *
+ * @param _model
+ *
+ * @return
+ */
 Request parse_request(std::string_view _model);
 
-bool parse_method(std::string_view _model, Method& _method);
-bool parse_url(std::string_view _model, Url& _url);
-bool parse_querys(std::string_view _model, std::map<std::string, std::string>& _querys);
-bool parse_protocol(std::string_view _model, Protocol& _protocol);
+/**
+ *
+ *
+ * @brief
+ *
+ * @param _model
+ * @param _method
+ *
+ * @return
+ */
+[[nodiscard]] bool parse_method(std::string_view _model, Method& _method);
+
+/**
+ * 
+ * 
+ * @brief 
+ * 
+ * @param _model
+ * @param _url
+ *
+ * @return 
+ */
+[[nodiscard]] bool parse_url(std::string_view _model, Url& _url);
+
+/**
+ * 
+ * 
+ * @brief 
+ * 
+ * @param _model
+ * @param _querys
+ * @return 
+ */
+[[nodiscard]] bool parse_querys(std::string_view _model, std::map<std::string, std::string>& _querys);
+
+/**
+ * 
+ * 
+ * @brief 
+ * 
+ * @param _model
+ * @param _protocol
+ *
+ * @return 0 = ok, 1 = failed
+ */
+[[nodiscard]] bool parse_protocol(std::string_view _model, Protocol& _protocol);
+
+/**
+ * 
+ * 
+ * @brief 
+ * 
+ * @param _model
+ * @param _cookies
+ *
+ * @return 
+ */
+[[nodiscard]] bool parse_cookies(std::string_view _model, std::map<std::string, std::string>& _cookies);
 
 constexpr const char* unparse_method(Method _protocol);
-constexpr const char* unparse_status(int _status);
+inline constexpr const char* unparse_status(int _status);
 constexpr const char* unparse_protocol(Protocol _protocol);
 
 }; // namespace http

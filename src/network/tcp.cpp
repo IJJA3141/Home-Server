@@ -1,6 +1,8 @@
 #include "../log.hpp"
 #include "server.hpp"
 
+#include <cerrno>
+#include <cstring>
 #include <netinet/tcp.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
@@ -46,10 +48,11 @@ void Tcp::listen()
   this->running_ = true;
   epoll_event conn_bay[EPOLL_SIZE];
 
+  int i = 0;
   while (this->running_)
   {
     int n = epoll_wait(this->epoll_, conn_bay, EPOLL_SIZE, -1);
-    assert(n != -1, ASS_EPOLL_WAIT);
+    assert(n != -1 || n != EINTR, ASS_EPOLL_WAIT, strerror(errno));
 
     for (int i = 0; i < n; ++i)
     {
@@ -93,7 +96,7 @@ void Tcp::server_event(const bool _closed)
   if (client->moored)
   {
     this->client_bay_.insert(client);
-    log(client->ip, "connected\n\t", this->client_bay_.size(), "clients connected");
+    log(client->ip, "connected\t", this->client_bay_.size(), "clients connected");
     return;
   }
 

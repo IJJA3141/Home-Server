@@ -1,38 +1,39 @@
 cmake_minimum_required(VERSION 4.0.2) # cmake version 
 project(server)                       # name
 
-set(CMAKE_CXX_STANDARD 26)            # cpp version
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 26)
 
-set(LIBS -lpthread -lssl -lcrypto -luuid)    # libs
-set(SOURCE_FILES src/main.cpp         # src
-  src/network/auth.cpp
-  src/network/client.cpp
-  src/network/parse.cpp
-  src/network/router.cpp
-  src/network/tcp.cpp
-  src/network/tls.cpp
-  src/network/unparse.cpp
+include_directories(/usr/local/include)
+link_directories(/usr/local/lib)
+
+set(LIBS -lpthread -lssl -lcrypto -luuid)     # libs
+set(SOURCE_FILES                              # src
+  # lib
+  ${CMAKE_SOURCE_DIR}/src/network/auth.cpp
+
+  ${CMAKE_SOURCE_DIR}/src/network/tcp.cpp
+  ${CMAKE_SOURCE_DIR}/src/network/tls.cpp
+  ${CMAKE_SOURCE_DIR}/src/network/client.cpp
+
+  ${CMAKE_SOURCE_DIR}/src/network/parse.cpp
+  ${CMAKE_SOURCE_DIR}/src/network/unparse.cpp
+
+  ${CMAKE_SOURCE_DIR}/src/network/router.cpp
+  ${CMAKE_SOURCE_DIR}/src/network/route.cpp
+
+  # imp
+  ${CMAKE_SOURCE_DIR}/src/implementation/file.cpp
+  ${CMAKE_SOURCE_DIR}/src/implementation/error_res.cpp
 )
 
-#===================================#==========#
-set(INC_DIR /usr/local/include)
-set(LINK_DIR /usr/local/lib)
-
-include_directories(${INC_DIR})
-link_directories(${LINK_DIR})
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS on)
-
-set(${CMAKE_RUNTIME_OUTPUT_DIRECTORY} "${CMAKE_SOURCE_DIR}/bin")
-
-IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-  add_compile_definitions(DEBUG)
-ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-
-add_executable(${PROJECT_NAME} ${SOURCE_FILES})
-target_link_libraries(${PROJECT_NAME} ${LIBS})
-
-include(CTest)
 enable_testing()
-
+add_subdirectory(src)
 add_subdirectory(test)
+
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${CMAKE_BINARY_DIR}/compile_commands.json
+  ${CMAKE_SOURCE_DIR}/compile_commands.json
+)

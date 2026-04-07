@@ -40,19 +40,20 @@ int parsing_request(int argc, char* argv[])
 
   };
 
-  std::vector<http::Method> expected_methods{http::Method::GET, http::Method::POST, http::Method::GET, http::Method::PUT, http::Method::DELETE};
+  std::vector<http::Method> expected_methods{http::Method::GET, http::Method::POST, http::Method::GET,
+                                             http::Method::PUT, http::Method::DELETE};
 
-  std::vector<std::string> expected_paths{"/users/profile", "/api/data/upload", "/search/results", "/api/v1/users/123", "/posts/456"};
+  std::vector<std::string> expected_paths{"/users/profile", "/api/data/upload", "/search/results",
+                                          "/api/v1/users/123", "/posts/456"};
 
-  std::vector<std::map<std::string, std::string>> expected_queries{{{"user", "john"}, {"id", "42"}},
-                                                                   {},
-                                                                   {{"query", "books"}, {"page", "2"}},
-                                                                   {},
-                                                                   {}};
+  std::vector<std::map<std::string, std::string>> expected_queries{
+      {{"user", "john"}, {"id", "42"}}, {}, {{"query", "books"}, {"page", "2"}}, {}, {}};
 
   std::vector<std::string> expected_fragments{"", "", "top", "", ""};
 
-  std::vector<http::Protocol> expected_protocol{http::Protocol::HTTP_11, http::Protocol::HTTP_11, http::Protocol::HTTP_11, http::Protocol::HTTP_11, http::Protocol::HTTP_11};
+  std::vector<http::Protocol> expected_protocol{http::Protocol::HTTP_11, http::Protocol::HTTP_11,
+                                                http::Protocol::HTTP_11, http::Protocol::HTTP_11,
+                                                http::Protocol::HTTP_11};
 
   std::vector<std::map<std::string, std::string>> expected_headers{
       {{"Host", "www.example.com"}, {"User-Agent", "MyBrowser/1.0"}, {"Accept", "*/*"}},
@@ -64,7 +65,8 @@ int parsing_request(int argc, char* argv[])
        {"Authorization", "Bearer token123"}},
       {{"Host", "blog.example.com"}, {"Authorization", "Basic abc123"}}};
 
-  std::vector<std::string> expected_body{"", "{\"name\":\"John\",\"age\":30}", "", "{\"email\":\"new@example.com\"}", ""};
+  std::vector<std::string> expected_body{"", "{\"name\":\"John\",\"age\":30}", "",
+                                         "{\"email\":\"new@example.com\"}", ""};
 
   int o = 0;
 
@@ -73,13 +75,20 @@ int parsing_request(int argc, char* argv[])
     http::Request parsed_request = http::parse_request(requests[i]);
 
     o += !check(Level::ERR, parsed_request.state == http::Error::NONE, "couldn't parse", requests[i]);
-    o += !check(Level::ERR, parsed_request.cmd.method == expected_methods[i], parsed_request.cmd.method, "!=", expected_methods[i]);
-    o += !check(Level::ERR, parsed_request.cmd.url.path == expected_paths[i], parsed_request.cmd.url.path, "!=", expected_paths[i]);
-    o += !check(Level::ERR, parsed_request.cmd.url.querys == expected_queries[i], parsed_request.cmd.url.querys, "!=", expected_queries[i]);
-    o += !check(Level::ERR, parsed_request.cmd.url.fragment == expected_fragments[i], parsed_request.cmd.url.fragment, "!=", expected_fragments[i]);
-    o += !check(Level::ERR, parsed_request.cmd.protocol == expected_protocol[i], parsed_request.cmd.protocol, "!=", expected_protocol[i]);
-    o += !check(Level::ERR, parsed_request.headers == expected_headers[i], parsed_request.headers, "!=", expected_headers[i]);
-    o += !check(Level::ERR, parsed_request.body == expected_body[i], parsed_request.body.size(), "!=", expected_body[i].size(), "\n\r", parsed_request.body, "!=", expected_body[i]);
+    o += !check(Level::ERR, parsed_request.cmd.method == expected_methods[i], parsed_request.cmd.method,
+                "!=", expected_methods[i]);
+    o += !check(Level::ERR, parsed_request.cmd.url.path == expected_paths[i], parsed_request.cmd.url.path,
+                "!=", expected_paths[i]);
+    o += !check(Level::ERR, parsed_request.cmd.url.querys == expected_queries[i], parsed_request.cmd.url.querys,
+                "!=", expected_queries[i]);
+    o += !check(Level::ERR, parsed_request.cmd.url.fragment == expected_fragments[i],
+                parsed_request.cmd.url.fragment, "!=", expected_fragments[i]);
+    o += !check(Level::ERR, parsed_request.cmd.protocol == expected_protocol[i], parsed_request.cmd.protocol,
+                "!=", expected_protocol[i]);
+    o += !check(Level::ERR, parsed_request.headers == expected_headers[i], parsed_request.headers,
+                "!=", expected_headers[i]);
+    o += !check(Level::ERR, parsed_request.body == expected_body[i], parsed_request.body.size(),
+                "!=", expected_body[i].size(), "\n\r", parsed_request.body, "!=", expected_body[i]);
   }
 
   http::Request parsed_request;

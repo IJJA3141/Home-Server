@@ -5,32 +5,28 @@ set(TEST_FILES                      # test
   parsing/querys.cpp
   parsing/url.cpp
   parsing/request.cpp
+  parsing/cookies.cpp
 )
 
-set(SOURCE_FILES                    # src
-  ../src/network/auth.cpp
-  ../src/network/client.cpp
-  ../src/network/parse.cpp
-  ../src/network/router.cpp
-  ../src/network/tcp.cpp
-  ../src/network/tls.cpp
-  ../src/network/unparse.cpp
-)
+add_executable(unit_tests)
 
-#===================================#==========#
-include(CTest)
-enable_testing()
+target_link_libraries(unit_tests PRIVATE ${LIBS})
+target_compile_definitions(unit_tests PRIVATE "$<$<CONFIG:Debug>:DEBUG>")
 
-create_test_sourcelist(tests tests.cxx ${TEST_FILES})
+create_test_sourcelist(unit_tests unit_tests.cpp ${TEST_FILES})
+target_sources(unit_tests PRIVATE ${SOURCE_FILES} ${TEST_FILES} unit_tests)
 
-add_executable(unit_tests ${tests} ${SOURCE_FILES})
-target_link_libraries(unit_tests ${LIBS})
-
-IF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-  add_compile_definitions(DEBUG)
-ENDIF(${CMAKE_BUILD_TYPE} MATCHES "Debug")
-
-FOREACH(test ${TEST_FILES})
+foreach(test ${TEST_FILES})
   get_filename_component(name ${test} NAME_WE)
-  add_test(NAME ${name} COMMAND "${CMAKE_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}/test/unit_tests"  ${name})
-ENDFOREACH()
+  get_filename_component(path ${test} DIRECTORY)
+
+  if(NOT(path STREQUAL ""))
+    set(name "${path}/${name}")
+  endif()
+
+  add_test(
+    NAME ${name}
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/"
+    COMMAND "${CMAKE_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}/test/unit_tests" ${name}
+  )
+endforeach()

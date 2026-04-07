@@ -1,6 +1,7 @@
 #include "auth.hpp"
 #include "../log.hpp"
 
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <openssl/sha.h>
@@ -18,7 +19,18 @@ std::ostream& operator<<(std::ostream& _ostream, const Session& _session)
   return _ostream << uuid << std::format("{:" SESSION_TIME_FMT "}", _session.valid_until) << _session.user;
 }
 
-Authenticator::Authenticator(const size_t _size, const std::filesystem::path _data_dir, const std::chrono::seconds _ttl)
+std::string& operator<<(std::string& _ostream, const Session& _session)
+{
+  char uuid[37];
+  uuid_unparse(_session.uuid, uuid);
+  return ((((_ostream += "session=") += uuid) += "; Max-Age=") +=
+          std::to_string(std::chrono::duration_cast<std::chrono::seconds>(_session.valid_until -
+                                                                          std::chrono::system_clock::now())
+                             .count())) += "; Secure; HttpOnly; SameSite=Strict; Path=/";
+}
+
+Authenticator::Authenticator(const size_t _size, const std::filesystem::path _data_dir,
+                             const std::chrono::seconds _ttl)
     : read_path(_data_dir / "session.db"), write_path(_data_dir / ".session.db"), user_dir(_data_dir / "users/"),
       ttl_(_ttl), size_(_size), sessions_(new Session[_size])
 {
@@ -43,11 +55,11 @@ void Authenticator::save_password_hash(const std::string_view _user, const std::
 
   // write hash
   std::ofstream out(this->user_dir / _user / ".password", std::ios::out | std::ios::trunc);
-  assert(out.is_open(), ""); // TODO msg
+  assert(out.is_open(), "couldn't open", this->user_dir / _user / ".password");
   out.write((char*)hash, SHA256_DIGEST_LENGTH);
   out << std::endl;
   out.close();
-  assert(!out.fail(), ""); // TODO msg
+  assert(!out.fail(), "couldn't close", this->user_dir / _user / ".password");
 
   return;
 }
@@ -62,18 +74,24 @@ bool Authenticator::invalidate_password(const std::string_view _user, const std:
 
   // get/check path to password
   std::filesystem::path path = this->user_dir / _user / ".password";
-  assert(std::filesystem::exists(path), ""); // TODO msg
+  if (!std::filesystem::exists(path))
+  {
+    err("couldn't find", this->user_dir / _user / ".password");
+    return true;
+  }
 
   // load stored password hash
   std::ifstream in(path);
-  char stored_hash[SHA256_DIGEST_LENGTH];
-  in.read(stored_hash, SHA256_DIGEST_LENGTH);
+  unsigned char stored_hash[SHA256_DIGEST_LENGTH];
+  in.read((char*)stored_hash, SHA256_DIGEST_LENGTH);
 
+  bool constant_time = false;
+  
   // compare
   for (size_t i = 0; i < SHA256_DIGEST_LENGTH; ++i)
-    if (hash[i] != stored_hash[i]) return true;
+    if (hash[i] != stored_hash[i]) constant_time = true;
 
-  return false;
+  return constant_time;
 }
 
 const Session Authenticator::generate(const std::string _user)
@@ -107,7 +125,9 @@ int Authenticator::fetch(const uuid_t _uuid)
   // open read and write files
   std::ofstream out(this->write_path, std::ios::out | std::ios::trunc);
   std::ifstream in(this->read_path);
-  assert(in.is_open() && out.is_open());
+
+  assert(out.is_open(), "couldn't open write path", this->write_path);
+  assert(in.is_open(), "couldn't open read path", this->read_path);
 
   Session session;
   char buffer[37];

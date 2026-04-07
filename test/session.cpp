@@ -114,13 +114,22 @@ bool test_password()
   Authenticator cache(session_cache_size, path, session_ttl);
 
   cache.save_password_hash("user", "12345good-@$@-password<3");
-  return !cache.invalidate_password("user", "12345good-@$@-password<3") &&
-         cache.invalidate_password("user", "fkdl;safjkd;ffk;ajf;dklsa;fjdksfjdsk");
+  cache.save_password_hash("test", "1234");
+  
+  bool a = cache.invalidate_password("user", "12345good-@$@-password<3");
+  bool b = cache.invalidate_password("user", "fkdl safjkd;ffk;ajf;dklsa;fjdksfjdsk");
+
+  bool c = cache.invalidate_password("test", "1234");
+  bool d = cache.invalidate_password("test", "fkdl safjkd;ffk;ajf;dklsa;fjdksfjdsk");
+
+  return a || !b || c || !d;
 }
 
 int session(int argc, char* argv[])
 {
   bool o = 0;
+
+  warn(std::filesystem::current_path());
 
   if (o += test_load()) err("load failed");
   log("load passed");

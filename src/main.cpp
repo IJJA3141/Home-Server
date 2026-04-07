@@ -1,82 +1,108 @@
+#include "implementation.hpp"
 #include "log.hpp"
+#include "network/auth.hpp"
 #include "network/http.hpp"
 #include "network/router.hpp"
 #include "network/server.hpp"
-#include "res.hpp"
 
-#include <openssl/err.h>
+#include <filesystem>
+#include <map>
 #include <string>
 #include <thread>
+#include <uuid/uuid.h>
 
-http::Response func(http::Request _req)
-{
-  http::Response res;
+// TODO parse cookies
 
-  res.protocol = http::Protocol::HTTP_11;
-  res.status = HTTP_OK;
-  res.type = HTTP_MIME_HTML;
-
-  res.body =
-      "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\" /><meta name=\"viewport\" "
-      "content=\"width=device-width, initial-scale=1.0\"/><title>Welcome Page</title><style>body { margin: 0; padding: "
-      "0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; display: flex; "
-      "align-items: center; justify-content: center; height: 100vh; } .welcome-container { text-align: center; "
-      "background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); } h1 { "
-      "color: "
-      "#333; } p { color: #666; margin-top: 10px; } </style> </head> <body> <div class=\"welcome-container\"> "
-      "<h1>Welcome to Our Website!</h1> <p>We're glad you're here. Explore and enjoy your stay.</p> </div> </body> "
-      "</html>";
-
-  return res;
-}
-
-http::Response not_found{
-    .protocol = http::Protocol::HTTP_11,
-    .status = HTTP_NOT_FOUND,
-    .type = HTTP_MIME_HTML,
-
-    .body =
-        "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\" /><meta name=\"viewport\" "
-        "content=\"width=device-width, initial-scale=1.0\"/><title>404 Not Found</title><style>body { margin: 0; "
-        "padding: "
-        "0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; display: flex; "
-        "align-items: center; justify-content: center; height: 100vh; } .error-container { text-align: center; "
-        "background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); } h1 { "
-        "color: #e74c3c; font-size: 48px; margin-bottom: 10px; } p { color: #555; margin-top: 10px; font-size: 18px; } "
-        "a { color: #3498db; text-decoration: none; } a:hover { text-decoration: underline; } </style></head> "
-        "<body><div class=\"error-container\"> <h1>404 - Page Not Found</h1> "
-        "<p>Sorry, the page you are looking for does not exist.</p>"
-        "<p><a href=\"/\">Go back to home</a></p> </div> </body></html>"};
-
-http::Response mv(http::Request _req)
-{
-  http::Response res{
-      .protocol = http::Protocol::HTTP_11,
-      .status = HTTP_MOVED_PERMANENTLY,
-      .type = HTTP_MIME_PLAIN,
-  };
-
-  res.body = "moved to somewere else";
-
-  return res;
-}
+#define ROUTERS_ADD(pack...)                                                                                      \
+  http_router.add(pack);                                                                                          \
+  https_router.add(pack)
 
 int main(int argc, char* argv[])
 {
-  Router http_router(READ_ERROR);
-  Router https_router(READ_ERROR);
+  std::filesystem::path cwd = std::filesystem::current_path();
+  Authenticator auth(10, cwd / "data", std::chrono::hours{3 * 24});
 
-  http_router.add(http::Error::I_URL, not_found);
-  https_router.add(http::Error::I_URL, not_found);
+  Router http_router(handler::internal_error);
+  Router https_router(handler::internal_error);
 
-  http_router.add(http::Method::GET, "/", &mv);
-  https_router.add(http::Method::GET, "/", func);
+  ROUTERS_ADD(http::Error::I_URL, handler::not_found);
+  ROUTERS_ADD(http::Error::I_METHOD, handler::method_not_allowed);
+
+  ROUTERS_ADD(http::Method::GET, "/static/", [=](http::Request _request, std::string _path) -> http::Response {
+    return Response(HTTP_OK, load(cwd / "public" / "static" / _path), _request.cmd.protocol);
+  });
+
+  ROUTERS_ADD(http::Method::GET, "/", Response(HTTP_OK, load(cwd / "public" / "main" / "main.html")));
+  https_router.add(http::Method::GET, "/login/", Response(HTTP_OK, load(cwd / "public" / "login" / "login.html")));
+
+  https_router.add(http::Method::POST, "/login/", [&](http::Request _request) -> http::Response {
+    std::map<std::string, std::string> query;
+
+    if (http::parse_querys(_request.body, query))
+    {
+      err("failed to parse login");
+      return handler::unauthorized;
+    }
+
+    if (query["user"] == "" || query["password"] == "")
+    {
+      // err("empty user or password field", query);
+      return handler::unauthorized;
+    }
+
+    if (auth.invalidate_password(query["user"], query["password"]))
+    {
+      log("invalid password for user:", query["user"], "password:", query["password"]);
+      return handler::login_failed;
+    }
+
+    log(query["user"], "succesfuly loged in.");
+    Session session = auth.generate(query["user"]);
+    std::string str;
+    str << session;
+    std::string red = _request.cmd.url.querys["redirect"];
+    if (red == "") red = "/";
+
+    return {
+        .protocol = _request.cmd.protocol,
+        .status = HTTP_FOUND,
+        .headers =
+            {
+                {"Strict-Transport-Security", "max-age=31536000"}, // 1 year
+                {"Set-Cookie", str},
+                {"Location", red},
+            },
+    };
+  });
+
+  https_router.add(http::Method::GET, "/api/user/banner/", [&](http::Request _request) -> http::Response {
+    uuid_t uuid;
+    if (uuid_parse(_request.headers["session"].c_str(), uuid) == 0)
+    {
+      int index = auth.fetch(uuid);
+      if (index != -1)
+      {
+        Session session = auth[index];
+
+        return Response(HTTP_OK, "<p>" + session.user + "</p>", _request.cmd.protocol);
+      }
+      {
+        debug("failed to log");
+      }
+    }
+    else
+    {
+      debug("failed to parse", _request.headers["session"].c_str(), "<--");
+    }
+
+    return handler::unauthorized;
+  });
 
   Tcp http_server(80, http_router);
-  std::thread http_thread([&]() -> void { http_server.listen(); });
+  Tls https_server(443, "/home/alexe/tmp/cert.pem", "/home/alexe/tmp/key.pem", https_router);
 
-  Tls https_server(443, "./cert.pem", "./key.pem", https_router);
-  std::thread https_thread([&]() -> void { https_server.listen(); });
+  std::thread http_thread([&]() { http_server.listen(); });
+  std::thread https_thread([&]() { https_server.listen(); });
 
   http_thread.join();
   https_thread.join();

@@ -39,7 +39,14 @@ http::Request http::parse_request(std::string_view _model)
   while (it >> _model)
   {
     if ((pos = _model.find(':')) == _model.npos) return {Error::M_HEADER};
-    request.headers[std::string(_model.substr(0, pos))] = std::string(_model.substr(pos + 2));
+    if (_model.substr(0, pos) == "")
+    {
+    }
+    else
+    {
+      // request.headers[std::string(_model.substr(0, pos))] = std::string(_model.substr(pos + 2));
+      // request.headers[std::string(_model.substr(0, pos))] = std::string(_model.substr(pos + 2));
+    }
   }
 
   it.model.remove_prefix(2);
@@ -171,4 +178,25 @@ bool http::parse_protocol(std::string_view _model, Protocol& _protocol)
   }
 
   return true;
+}
+
+bool http::parse_cookies(std::string_view _model, std::map<std::string, std::string>& _cookies)
+{
+  // 6 cookie, 2 : , 3 <...>=<...>
+  if (_model.size() < 8 + 3 || _model.substr(0, 8) != "Cookie: ") return true;
+  _model.remove_prefix(8);
+
+  std::size_t eq_pos, end_pos;
+  while (!_model.empty())
+  {
+    eq_pos = _model.find("=");
+    end_pos = _model.find(";");
+
+    _cookies.emplace(_model.substr(0, eq_pos), _model.substr(eq_pos + 1, end_pos - eq_pos - 1));
+
+    if (end_pos == _model.npos) break;
+    _model.remove_prefix(std::min(end_pos + 2, _model.size()));
+  }
+
+  return false;
 }

@@ -35,7 +35,6 @@ http::Response::operator std::string() {
   std::stringstream ss;
 
   this->headers["Content-Length"] = std::to_string(this->body.size());
-  this->headers["Content-Type"] = this->type;
 
   ss << unparse_protocol(this->protocol) << " ";
   ss << unparse_status(this->status) << "\r\n";
@@ -43,7 +42,6 @@ http::Response::operator std::string() {
   for (const auto& header : this->headers)
     ss << header.first << ": " << header.second << "\r\n";
 
-  // ss << "\r\n" << this->body << "\r\n";
   ss << "\r\n" << this->body;
   return ss.str();
 }
@@ -79,7 +77,7 @@ constexpr const char* http::unparse_protocol(Protocol _protocol)
   }
 }
 
-constexpr const char* http::unparse_status(int _code)
+inline constexpr const char* http::unparse_status(int _code)
 {
   switch (_code)
   {

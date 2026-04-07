@@ -19,19 +19,16 @@
 #define ERR_SSL_FD_BIND      "Failed to bind SSL session to socket descriptor."
 #define ERR_EPOLL_CREATE     "Failed to create epoll instance for SSL handshake."
 #define ERR_EPOLL_ADD_SSL    "Failed to register SSL socket with epoll for handshake readiness."
-#define ERR_EPOLL_CLOSE      "Failed to gracefully close epoll file descriptor."
 #define ERR_SSL_HANDSHAKE    "SSL handshake with client failed."
 #define ERR_SSL_SHUTDOWN     "SSL shutdown procedure did not complete successfully."
 #define ERR_EPOLL_WAIT       "epoll_wait failed while waiting for SSL handshake readiness."
+
+#define ASS_EPOLL_CLOSE      "Failed to gracefully close epoll file descriptor."
 #define ASS_SOCKET_CLOSE     "Unable to close client socket."
 #define ASS_EPOLL_REMOVE     "Unable to deregister client socket from epoll instance."
 
 #define BUFFER_SIZE 4096
-#define READ_FAILED                                                                                               \
-  {                                                                                                               \
-    err(ERR_READ);                                                                                                \
-    return {http::Error::READ};                                                                                   \
-  }
+#define READ_FAILED {err(ERR_READ);return {http::Error::READ};}
 
 // iclient
 http::Request Client::read() const
@@ -178,7 +175,7 @@ bool SSL_Client::dehaling() const
   if (epoll_ctl(epoll, EPOLL_CTL_ADD, this->socket_, &event) == -1)
   {
     err(ERR_EPOLL_ADD_SSL);
-    assert(::close(epoll) != -1);
+    assert(::close(epoll) != -1, ASS_EPOLL_CLOSE);
     return true;
   };
 
@@ -188,14 +185,14 @@ bool SSL_Client::dehaling() const
     if (epoll_wait(epoll, &event, 1, -1) == -1)
     {
       err(ERR_EPOLL_WAIT);
-      assert(::close(epoll) != -1, ERR_EPOLL_CLOSE);
+      assert(::close(epoll) != -1, ASS_EPOLL_CLOSE);
       return true;
     }
 
     res = SSL_get_error(this->ssl_, SSL_accept(this->ssl_));
   }
 
-  assert(::close(epoll) != -1, ERR_EPOLL_CLOSE);
+  assert(::close(epoll) != -1, ASS_EPOLL_CLOSE);
   return res != SSL_ERROR_NONE;
 }
 
