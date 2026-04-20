@@ -1,0 +1,177 @@
+#include "../../src/protocol/http.hpp"
+#include "../test.hpp"
+#include <exception>
+#include <string_view>
+
+using namespace protocol;
+using namespace test;
+using mss = std::map<std::string, std::string>;
+constexpr HTTP::Request Request(HTTP::Method, const std::string&, HTTP::Version, const mss&, const std::string&);
+constexpr HTTP::Response Response(HTTP::Version, int, const mss& headers, const std::string& body);
+constexpr void assert_equal(const HTTP::Response& l, const HTTP::Response& r);
+constexpr void assert_equal(const HTTP::Request& l, const HTTP::Request& r);
+
+int flag = 0;
+int protocol_http(int argc, char* argv[])
+{
+  int _i = 0, _j = 0;
+  bool _exception_caught;
+
+  SECTION("request deserialization")
+  {
+
+    REQUIRE({
+      const auto raw = "DELETE /resource/1 HTTP/1.0\r\n\r\n";
+      const auto expected = Request(HTTP::DELETE, "/resource/1", HTTP::HTTP_10, {}, "");
+      assert_equal(HTTP::Request(raw), expected);
+    })
+
+    NREQUIRE("???", {
+      const auto raw = "GET /index.html HTTP/1.1\r\nHost: localhost\r\n\r\n";
+      const auto expected = Request(HTTP::GET, "/index.html", HTTP::HTTP_11, {{"Host", "localhost"}}, "");
+      assert_equal(HTTP::Request(raw), expected);
+    });
+
+    NREQUIRE("TSETES fdjjkall;", {
+      const auto raw = "POST /login HTTP/1.1\r\nContent-Length: 12\r\n\r\nuser=admin12";
+      const auto expected =
+          Request(HTTP::POST, "/login", HTTP::HTTP_11, {{"Content-Length", "12"}}, "user=admin12");
+      assert_equal(HTTP::Request(raw), expected);
+    })
+
+    REQUIRE({
+      const auto raw = "GET /assets/style.css HTTP/2.0\r\n\r\n";
+      const auto expected = Request(HTTP::GET, "/assets/style.css", HTTP::HTTP_20, {}, "");
+      assert_equal(protocol::HTTP::Request(raw), expected);
+    })
+
+    REQUIRE({
+      const auto raw = "GET / HTTP/1.1\r\nAccept: */*\r\nUser-Agent: CppTest\r\n\r\n";
+      const auto expected =
+          Request(HTTP::GET, "/", HTTP::HTTP_11, {{"Accept", "*/*"}, {"User-Agent", "CppTest"}}, "");
+      assert_equal(HTTP::Request(raw), expected);
+    })
+
+    REQUIRE({
+      const auto raw = "DELETE /resource/1 HTTP/1.0\r\n\r\n";
+      const auto expected = Request(HTTP::DELETE, "/resource/1", HTTP::HTTP_10, {}, "");
+      assert_equal(HTTP::Request(raw), expected);
+    })
+
+    REQUIRE({
+      const auto raw =
+          "GET /index.html HTTP/1.1\r\nHost: example.com\r\nUser-Agent: TestAgent/1.0\r\nAccept: */*\r\n\r\n";
+      const auto expected =
+          Request(HTTP::GET, "/index.html", HTTP::HTTP_11,
+                  {{"Host", "example.com"}, {"User-Agent", "TestAgent/1.0"}, {"Accept", "*/*"}}, "");
+      assert_equal(HTTP::Request(raw), expected);
+    })
+
+    REQUIRE({
+      const auto raw =
+          "POST /api/v1/users HTTP/1.1\r\nHost: api.example.com\r\nContent-Type: "
+          "application/json\r\nContent-Length: 36\r\n\r\n{\"name\": \"Jane Doe\", \"role\": \"admin\"}";
+      const auto expected =
+          Request(HTTP::POST, "/api/v1/users", HTTP::HTTP_11,
+                  {{"Host", "api.example.com"}, {"Content-Type", "application/json"}, {"Content-Length", "36"}},
+                  "{\"name\": \"Jane Doe\", \"role\": \"admin\"}");
+      assert_equal(HTTP::Request(raw), expected);
+    })
+
+    REQUIRE({
+      const auto raw = "POST /empty HTTP/1.1\r\nHost: example.com\r\nContent-Length: 0\r\n\r\n";
+      const auto expected = Request(protocol::HTTP::POST, "/empty", protocol::HTTP::HTTP_11,
+                                    {{"Host", "example.com"}, {"Content-Length", "0"}}, "");
+      assert_equal(HTTP::Request(raw), expected);
+    })
+
+    REQUIRE_THROW("request with invalid method", HTTP::ParsingException, {
+      const auto raw = "NOT_A_METHOD /path/to/resource HTTP/1.1\r\nHost: example.com\r\n\r\n";
+      const auto _ = HTTP::Request(raw);
+    })
+
+    REQUIRE_THROW("request with invalid method", HTTP::ParsingException, {
+      const auto raw = "NOT_A_METHOD /path/to/resource HTTP/1.1\r\nHost: example.com\r\n\r\n";
+      const auto _ = HTTP::Request(raw);
+    })
+
+    REQUIRE({
+      const auto raw = "GET / HTTP/1.1\r\nHost: example.com\r\nInjected: Value\r\nFake-Header: Foo\r\n\r\n";
+      const auto expected = Request(protocol::HTTP::GET, "/", protocol::HTTP::HTTP_11,
+                                    {{"Host", "example.com"}, {"Injected", "Value"}, {"Fake-Header", "Foo"}}, "");
+      assert_equal(HTTP::Request(raw), expected);
+    })
+  }
+  ENDSECTION;
+
+  SECTION("response deserialization")
+  {
+    REQUIRE({
+      const auto raw = "HTTP/1.1 200 OK\r\nDate: Wed, 15 Apr 2026 12:00:00 GMT\r\nContent-Type: "
+                       "text/plain\r\nContent-Length: 13\r\n\r\nHello, World!";
+      const auto expected = Response(
+          protocol::HTTP::HTTP_11, 200,
+          {{"Date", "Wed, 15 Apr 2026 12:00:00 GMT"}, {"Content-Type", "text/plain"}, {"Content-Length", "13"}},
+          "Hello, World!");
+      assert_equal(HTTP::Response(raw), expected);
+    });
+
+    REQUIRE({
+      const auto raw = "HTTP/1.1 200 OK\r\nDate: Wed, 15 Apr 2026 12:00:00 GMT\r\nContent-Type: "
+                       "text/plain\r\nContent-Length: 13\r\n\r\nHello, World!";
+      const auto expected = Response(
+          protocol::HTTP::HTTP_11, 200,
+          {{"Date", "Wed, 15 Apr 2026 12:00:00 GMT"}, {"Content-Type", "text/plain"}, {"Content-Length", "13"}},
+          "Hello, World!");
+      assert_equal(HTTP::Response(raw), expected);
+    });
+  }
+  ENDSECTION;
+
+  return flag;
+}
+
+constexpr protocol::HTTP::Request Request(HTTP::Method method, const std::string& url, HTTP::Version version,
+                                          const std::map<std::string, std::string>& headers,
+                                          const std::string& body)
+{
+  HTTP::Request req;
+  req.method = method;
+  req.url = url;
+  req.version = version;
+  req.headers = headers;
+  req.body = body;
+  return req;
+}
+
+constexpr protocol::HTTP::Response Response(HTTP::Version version, int status,
+                                            const std::map<std::string, std::string>& headers,
+                                            const std::string& body)
+{
+  protocol::HTTP::Response res;
+  res.version = version;
+  res.status = status;
+  res.headers = headers;
+  res.body = body;
+  return res;
+}
+
+constexpr void assert_equal(const HTTP::Request& l, const HTTP::Request& r)
+{
+  if (l.method != r.method)
+    throw ComparisonException(HTTP::method_to_string(l.method), HTTP::method_to_string(r.method));
+  if (l.url != r.url) throw ComparisonException(l.url, r.url);
+  if (l.version != r.version)
+    throw ComparisonException(HTTP::version_to_string(l.version), HTTP::version_to_string(r.version));
+  if (l.headers != r.headers) throw ComparisonException(l.headers, r.headers);
+  if (l.body != r.body) throw ComparisonException(l.body, r.body);
+}
+
+constexpr void assert_equal(const HTTP::Response& l, const HTTP::Response& r)
+{
+  if (l.version != r.version)
+    throw ComparisonException(HTTP::version_to_string(l.version), HTTP::version_to_string(r.version));
+  if (l.status != r.status) throw ComparisonException(l.status, r.status);
+  if (l.headers != r.headers) throw ComparisonException(l.headers, r.headers);
+  if (l.body != r.body) throw ComparisonException(l.body, r.body);
+}

@@ -1,11 +1,5 @@
-set(TEST_FILES                      # test
-  session.cpp
-
-  parsing/method.cpp
-  parsing/querys.cpp
-  parsing/url.cpp
-  parsing/request.cpp
-  parsing/cookies.cpp
+set(TEST_FILES
+  protocol/http.cpp
 )
 
 add_executable(unit_tests)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0.2) # cmake version 
+cmake_minimum_required(VERSION 4.0.2) # cmake version
 project(server)                       # name
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -10,22 +10,21 @@ link_directories(/usr/local/lib)
 
 set(LIBS -lpthread -lssl -lcrypto -luuid)     # libs
 set(SOURCE_FILES                              # src
-  # lib
-  ${CMAKE_SOURCE_DIR}/src/network/auth.cpp
+  ${CMAKE_SOURCE_DIR}/src/ipc/server.cpp
+  ${CMAKE_SOURCE_DIR}/src/ipc/client.cpp
 
-  ${CMAKE_SOURCE_DIR}/src/network/tcp.cpp
-  ${CMAKE_SOURCE_DIR}/src/network/tls.cpp
-  ${CMAKE_SOURCE_DIR}/src/network/client.cpp
-
-  ${CMAKE_SOURCE_DIR}/src/network/parse.cpp
-  ${CMAKE_SOURCE_DIR}/src/network/unparse.cpp
-
-  ${CMAKE_SOURCE_DIR}/src/network/router.cpp
-  ${CMAKE_SOURCE_DIR}/src/network/route.cpp
-
-  # imp
-  ${CMAKE_SOURCE_DIR}/src/implementation/file.cpp
-  ${CMAKE_SOURCE_DIR}/src/implementation/error_res.cpp
+  ${CMAKE_SOURCE_DIR}/src/networking/auth.cpp
+  ${CMAKE_SOURCE_DIR}/src/networking/client.cpp
+  ${CMAKE_SOURCE_DIR}/src/networking/parse.cpp
+  ${CMAKE_SOURCE_DIR}/src/networking/route.cpp
+  ${CMAKE_SOURCE_DIR}/src/networking/router.cpp
+  ${CMAKE_SOURCE_DIR}/src/networking/tcp.cpp
+  ${CMAKE_SOURCE_DIR}/src/networking/tls.cpp
+  ${CMAKE_SOURCE_DIR}/src/networking/unparse.cpp
+  
+  ${CMAKE_SOURCE_DIR}/src/protocol/http_deserialization.cpp
+  ${CMAKE_SOURCE_DIR}/src/protocol/http_serialization.cpp
+  ${CMAKE_SOURCE_DIR}/src/protocol/http_transition.cpp
 )
 
 enable_testing()
