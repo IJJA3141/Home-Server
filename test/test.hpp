@@ -36,10 +36,9 @@ struct ComparisonException : std::exception
   {                                                                                                               \
     test_function                                                                                                 \
   }                                                                                                               \
-  CATCH(test_name, protocol::HTTP::ParsingException)                                                              \
   CATCH(test_name, test::ComparisonException)                                                                     \
   CATCH(test_name, std::out_of_range)                                                                             \
-  CATCH(test_name, std::exception)                                                                                \
+  CATCH(test_name, std::exception&)                                                                               \
   if (!_exception_caught)                                                                                         \
   {                                                                                                               \
     std::println("\x1b[32m  + {}\x1b[0m", test_name);                                                             \

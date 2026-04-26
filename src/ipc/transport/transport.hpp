@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../config.hpp"
 #include "../../protocol/http/http.hpp"
 #include "../../protocol/protocol.hpp"
 #include "../buffer/buffer.hpp"
@@ -24,8 +25,6 @@ template <protocol::Protocol P> class TransportServer
 public:
   /**
    *  @brief Creates a %TransportServer
-   *
-   *
    *
    *  @param ip  server listening IP
    *  @param port  server listening port
@@ -55,7 +54,7 @@ private:
   struct Client
   {
     const int socket;
-    ConnectionBuffer buffer;
+    RingBuffer<char, BUFFER_SIZE> connection_buffer;
     ParserContext parsing_ctx;
     char ip[INET_ADDRSTRLEN];
     int port;
@@ -123,11 +122,12 @@ private:
   const std::string ip_;
   const int port_;
   struct sockaddr_in addr_;
-  ConnectionBuffer buffer_;
+  RingBuffer<char, BUFFER_SIZE> buffer_;
+  P::Response::ParserContext parser_ctx_;
 };
 
 // Template instantiation for hyper text transfer protocol.
-template class TransportServer<protocol::http>;
-template class TransportClient<protocol::http>;
+template class TransportServer<protocol::HTTP>;
+template class TransportClient<protocol::HTTP>;
 
 } // namespace ipc

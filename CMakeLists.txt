@@ -10,9 +10,16 @@ link_directories(/usr/local/lib)
 
 set(LIBS -lpthread -lssl -lcrypto -luuid)     # libs
 set(SOURCE_FILES                              # src
-  ${CMAKE_SOURCE_DIR}/src/ipc/server.cpp
-  ${CMAKE_SOURCE_DIR}/src/ipc/client.cpp
+  # IPC
+  ${CMAKE_SOURCE_DIR}/src/ipc/transport/client.cpp
+  ${CMAKE_SOURCE_DIR}/src/ipc/transport/server.cpp
 
+  # PROTOCOL
+  ${CMAKE_SOURCE_DIR}/src/protocol/http/http.cpp
+  ${CMAKE_SOURCE_DIR}/src/protocol/http/request.cpp
+  ${CMAKE_SOURCE_DIR}/src/protocol/http/response.cpp
+
+  # NETWORK
   ${CMAKE_SOURCE_DIR}/src/networking/auth.cpp
   ${CMAKE_SOURCE_DIR}/src/networking/client.cpp
   ${CMAKE_SOURCE_DIR}/src/networking/parse.cpp
@@ -22,9 +29,6 @@ set(SOURCE_FILES                              # src
   ${CMAKE_SOURCE_DIR}/src/networking/tls.cpp
   ${CMAKE_SOURCE_DIR}/src/networking/unparse.cpp
   
-  ${CMAKE_SOURCE_DIR}/src/protocol/http_deserialization.cpp
-  ${CMAKE_SOURCE_DIR}/src/protocol/http_serialization.cpp
-  ${CMAKE_SOURCE_DIR}/src/protocol/http_transition.cpp
 )
 
 enable_testing()

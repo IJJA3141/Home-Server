@@ -18,7 +18,7 @@ enum class ParserResult
 };
 
 template <typename T>
-concept Parsable = requires(std::span<const std::byte> data, typename T::ParserContext ctx) {
+concept Parsable = requires(std::span<const char> data, typename T::ParserContext ctx) {
   { T::parse(data, ctx) } -> std::same_as<ssize_t>;
   { ctx.construct() } -> std::same_as<T>;
   { ctx.result } -> std::same_as<ParserResult&>;

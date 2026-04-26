@@ -18,7 +18,7 @@ namespace ipc
 template <protocol::Protocol P>
 TransportServer<P>::TransportServer(const std::string& _ip, const int _port, const protocol::Handler<P> _handler,
                                     const std::string _bad_request)
-    : handler_(_handler), bad_request_(_bad_request)
+    : ip_(_ip), port_(_port), handler_(_handler), bad_request_(_bad_request)
 {
   auto log = Logger::New();
 
@@ -41,7 +41,7 @@ TransportServer<P>::TransportServer(const std::string& _ip, const int _port, con
   this->addr_.sin_port = htons(_port);
   this->addr_.sin_addr.s_addr = INADDR_ANY;
 
-  if (inet_net_pton(AF_INET, _ip.c_str(), &this->addr_.sin_addr, sizeof this->addr_.sin_addr) == -1)
+  if (inet_pton(AF_INET, _ip.c_str(), &this->addr_.sin_addr) != 1)
   {
     log.crit("resolving IP failed: {}", strerror(errno));
     throw "IpResolvationException";
@@ -49,7 +49,7 @@ TransportServer<P>::TransportServer(const std::string& _ip, const int _port, con
 
   if (bind(this->socket_, reinterpret_cast<sockaddr*>(&this->addr_), sizeof this->addr_))
   {
-    log.error("socket bind failed: {}", strerror(errno));
+    log.crit("socket bind failed: {}", strerror(errno));
     throw "BindingException";
   }
 
@@ -80,9 +80,11 @@ template <protocol::Protocol P> void TransportServer<P>::listen()
 
   while (this->listening_)
   {
-    Client client = {.socket = accept(this->socket_, reinterpret_cast<sockaddr*>(&this->addr_), &len),
-                     .port = ntohs(this->addr_.sin_port)};
-    inet_net_ntop(AF_INET, &this->addr_.sin_addr, sizeof this->addr_.sin_addr, client.ip, INET_ADDRSTRLEN);
+    TransportServer<P>::Client client = {
+        .socket = accept(this->socket_, reinterpret_cast<sockaddr*>(&this->addr_), &len),
+        .port = ntohs(this->addr_.sin_port)};
+
+    inet_ntop(AF_INET, &this->addr_.sin_addr, client.ip, sizeof this->addr_.sin_addr);
 
     if (client.socket < 0)
     {
@@ -98,10 +100,10 @@ template <protocol::Protocol P> void TransportServer<P>::listen()
       typename P::Response response;
 
       // might want to grow buf
-      bytes = recv(client.socket, client.bufferr.write_begin(), client.bufferr.write_length(), 0);
+      bytes = recv(client.socket, client.connection_buffer.write(), client.connection_buffer.capacity(), 0);
       if (bytes == 0)
       {
-        log.log("disconnection (client={}:{})", client.ip, client.port);
+        log.info("disconnection (client={}:{})", client.ip, client.port);
         goto disconnect_client; // more explicit than break
       }
       if (bytes < 0)
@@ -109,13 +111,15 @@ template <protocol::Protocol P> void TransportServer<P>::listen()
         log.error("recv failed (fd={}): {}", client.socket, strerror(errno));
         goto disconnect_client;
       }
-      log.info("request received (fd={}, size={})", client.socket, bytes);
 
-      bytes = P::Request::parse(client.bufferr.read_span(), client.parsing_ctx);
+      log.info("request received (fd={}, size={})", client.socket, bytes);
+      client.connection_buffer.acknowledge(bytes);
+
+      bytes = P::Request::parse(client.connection_buffer.read(), client.parsing_ctx);
       switch (client.parsing_ctx.result)
       {
       case protocol::ParserResult::Invalid: {
-        log.warn("request invalid: {}", client.ctx.error_msg);
+        log.warn("request invalid: {}", client.parsing_ctx.error_msg);
         if (send(client.socket, this->bad_request_.c_str(), this->bad_request_.size(), 0) <= 0)
           log.error("send failed: {}", strerror(errno));
 
@@ -123,14 +127,13 @@ template <protocol::Protocol P> void TransportServer<P>::listen()
       }
 
       case protocol::ParserResult::NeedMoreData: {
-        client.bufferr.discard(bytes);
+        client.connection_buffer.discard(bytes);
         continue;
       }
 
       case protocol::ParserResult::Complete: {
         log.info("request parsed successfully", client.socket);
-        client.bufferr.discard(bytes);
-        // might want to clear buf
+        client.connection_buffer.clear(); // not sure if this is right
         break;
       }
       }

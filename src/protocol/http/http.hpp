@@ -1,11 +1,14 @@
+#pragma once
+
 #include "../protocol.hpp"
 #include <map>
+#include <optional>
 #include <string>
 
 namespace protocol
 {
 
-struct http
+struct HTTP
 {
   enum struct Method
   {
@@ -19,7 +22,7 @@ struct http
     TRACE
   };
 
-  enum Version
+  enum struct Version
   {
     HTTP_09,
     HTTP_10,
@@ -30,9 +33,9 @@ struct http
 
   struct Request
   {
-    Version version;
-    std::string path;
     Method method;
+    std::string path;
+    Version version;
     std::map<std::string, std::string> headers;
     std::string body;
 
@@ -42,23 +45,28 @@ struct http
       std::string error_msg;
       ParserResult result;
       Request construct();
+      void reset();
 
     private:
       enum
       {
-        COMMAND,
-        HEADER,
-        BODY
+        METHOD,
+        PATH,
+        VERSION,
+        HEADERS,
+        BODY,
       } state_;
 
-      Version version_;
-      std::string path_;
       Method method_;
+      std::string path_;
+      Version version_;
       std::map<std::string, std::string> headers_;
       std::string body_;
+
+      friend struct HTTP::Request;
     };
 
-    static ssize_t parse(std::span<const std::byte>, ParserContext&);
+    static ssize_t parse(std::span<const char>, ParserContext&);
     operator std::string() const;
   };
 
@@ -75,34 +83,38 @@ struct http
       std::string error_msg;
       ParserResult result;
       Response construct();
+      void reset();
 
     private:
       enum
       {
-        COMMAND,
-        HEADER,
-        BODY
+        VERSION,
+        STATUS,
+        STATUS_NAME,
+        HEADERS,
+        BODY,
       } state_;
 
       Version version_;
       int status_;
       std::map<std::string, std::string> headers_;
       std::string body_;
+
+      friend struct HTTP::Response;
     };
 
-    static ssize_t parse(std::span<const std::byte>, ParserContext&);
+    static ssize_t parse(std::span<const char>, ParserContext&);
     operator std::string() const;
   };
 
-  Version parse_version(std::string_view);
-  int parse_status(std::string_view);
-  Method parse_method(std::string_view);
-  std::pair<std::string, std::string> parse_header(std::string_view);
+  static std::optional<Version> parse_version(std::string_view);
+  static std::optional<int> parse_status(std::string_view);
+  static std::optional<Method> parse_method(std::string_view);
+  static std::optional<std::pair<std::string, std::string>> parse_header(std::string_view);
 
-  std::string version_to_string(Version);
-  std::string status_to_string(int);
-  std::string method_to_string(Method);
-  std::string headers_to_string(const std::map<std::string, std::string>&);
+  static std::string version_to_string(Version);
+  static std::string status_to_string(int);
+  static std::string method_to_string(Method);
 };
 
 } // namespace protocol

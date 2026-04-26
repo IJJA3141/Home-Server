@@ -1,5 +1,6 @@
 set(TEST_FILES
   protocol/http.cpp
+  ipc/ring_buffer.cpp
 )
 
 add_executable(unit_tests)

@@ -75,14 +75,34 @@ template <protocol::Protocol P> P::Response TransportClient<P>::transmit(const P
     throw "SendingException";
   }
 
-  bytes = recv(this->socket_, this->buffer_.write_begin(), this->buffer_.write_length(), 0);
-  if (bytes < 0)
+  while (true)
   {
-    log.crit("receive failed: {}", strerror(errno));
-    throw "ReceivingException";
-  }
+    bytes = recv(this->socket_, this->buffer_.write(), this->buffer_.capacity(), 0);
+    if (bytes < 0)
+    {
+      log.crit("receive failed: {}", strerror(errno));
+      throw "ReceivingException";
+    }
 
-  return response;
+    this->buffer_.acknowledge(bytes);
+
+    bytes = P::Response::parse(this->buffer_.read(), this->parser_ctx_);
+    switch (this->parser_ctx_.result)
+    {
+    case protocol::ParserResult::Invalid: {
+      log.crit("received an invalid response");
+      throw "ResponseParsingException";
+    };
+
+    case protocol::ParserResult::Complete: {
+      this->buffer_.clear(); // not sure
+      return this->parser_ctx_.construct();
+    }
+
+    case protocol::ParserResult::NeedMoreData:
+      this->buffer_.discard(bytes);
+    }
+  }
 }
 
 } // namespace ipc
