@@ -12,6 +12,8 @@ namespace protocol
 using Request = HTTP::Request;
 using ParserContext = Request::ParserContext;
 
+ParserContext::ParserContext() : state_(METHOD), result(ParserResult::NeedMoreData) {}
+
 Request ParserContext::construct()
 {
   if (this->result != ParserResult::Complete) throw "construct an uncompleted request";
@@ -143,9 +145,8 @@ ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
       return _stream.size();
     }
 
-    _ctx.body_ = iterator.head;
     _ctx.result = ParserResult::Complete;
-    return _stream.size();
+    return _stream.size() - iterator.head.size();
 
   default:
     std::unreachable();

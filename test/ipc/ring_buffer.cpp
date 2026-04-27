@@ -16,8 +16,8 @@ constexpr void assert_equal(const std::byte& l, const std::byte& r)
 
 int ipc_ring_buffer(int _argc, char* _argv[])
 {
-  int flag, _i, _j;
-  bool _exception_caught;
+  int _flag = 0, _i = 0, _j = 0;
+  bool _exception_caught = false;
 
   SECTION("Correct initialization")
   {
@@ -27,7 +27,6 @@ int ipc_ring_buffer(int _argc, char* _argv[])
     REQUIRE("buffer should have max cap upon creation", { assert_equal(buffer.capacity(), 10); })
     REQUIRE("read span should be empty upon creation", { assert_equal(buffer.read().size(), 0); })
   }
-  // ENDSECTION;
 
   SECTION("Write and acknowledge increases size")
   {
@@ -43,7 +42,6 @@ int ipc_ring_buffer(int _argc, char* _argv[])
     REQUIRE("size should reflect acknowledged bytes", { assert_equal(buffer.size(), 3); })
     REQUIRE("capacity should shrink accordingly", { assert_equal(buffer.capacity(), 7); })
   }
-  // ENDSECTION;
 
   SECTION("Read returns written data")
   {
@@ -63,7 +61,6 @@ int ipc_ring_buffer(int _argc, char* _argv[])
       assert_equal(data[1], std::byte{20});
     })
   }
-  // ENDSECTION;
 
   SECTION("Discard reduces readable size")
   {
@@ -84,7 +81,6 @@ int ipc_ring_buffer(int _argc, char* _argv[])
       assert_equal(data[0], std::byte{3});
     })
   }
-  // ENDSECTION;
 
   SECTION("Clear resets buffer state")
   {
@@ -99,7 +95,6 @@ int ipc_ring_buffer(int _argc, char* _argv[])
     REQUIRE("size should be zero after clear", { assert_equal(buffer.size(), 0); })
     REQUIRE("capacity should reset after clear", { assert_equal(buffer.capacity(), 10); })
   }
-  // ENDSECTION;
 
   SECTION("Discarding everything empties buffer")
   {
@@ -115,7 +110,6 @@ int ipc_ring_buffer(int _argc, char* _argv[])
     REQUIRE("size should return to zero", { assert_equal(buffer.size(), 0); })
     REQUIRE("capacity should return to full", { assert_equal(buffer.capacity(), 10); })
   }
-  // ENDSECTION;
 
   SECTION("Repeated write discard cycles")
   {
@@ -134,7 +128,6 @@ int ipc_ring_buffer(int _argc, char* _argv[])
       assert_equal(buffer.capacity(), 10);
     })
   }
-  // ENDSECTION;
 
   SECTION("Write wraps correctly when reaching end")
   {
@@ -164,7 +157,6 @@ int ipc_ring_buffer(int _argc, char* _argv[])
         assert_equal(data[i], static_cast<std::byte>(10 + i));
     })
   }
-  // ENDSECTION;
 
   SECTION("Discard wraps correctly at boundary")
   {
@@ -190,7 +182,6 @@ int ipc_ring_buffer(int _argc, char* _argv[])
 
     REQUIRE("buffer should be empty after wrap discard", { assert_equal(buffer.size(), 0); })
   }
-  // ENDSECTION;
 
   SECTION("Read across wrap boundary remains contiguous")
   {
@@ -226,7 +217,6 @@ int ipc_ring_buffer(int _argc, char* _argv[])
       assert_equal(data[5], std::byte{102});
     })
   }
-  // ENDSECTION;
 
   SECTION("Buffer correctly distinguishes full vs empty")
   {
@@ -251,7 +241,6 @@ int ipc_ring_buffer(int _argc, char* _argv[])
       assert_equal(buffer.capacity(), 10);
     })
   }
-  // ENDSECTION;
 
   SECTION("Multiple wrap cycles maintain correctness")
   {
@@ -276,7 +265,6 @@ int ipc_ring_buffer(int _argc, char* _argv[])
       assert_equal(buffer.size(), 0);
     }
   }
-  // ENDSECTION;
 
   SECTION("Partial wrap with remaining unread data")
   {
@@ -313,7 +301,6 @@ int ipc_ring_buffer(int _argc, char* _argv[])
       assert_equal(data[5], std::byte{52});
     })
   }
-  // ENDSECTION;
 
   SECTION("Capacity behaves correctly near wrap boundary")
   {
@@ -334,5 +321,5 @@ int ipc_ring_buffer(int _argc, char* _argv[])
   }
   ENDSECTION;
 
-  return flag;
+  return _flag;
 }

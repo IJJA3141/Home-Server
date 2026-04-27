@@ -45,7 +45,9 @@ struct HTTP
       std::string error_msg;
       ParserResult result;
       Request construct();
-      void reset();
+
+      void reset(); // ???
+      ParserContext();
 
     private:
       enum
@@ -83,7 +85,9 @@ struct HTTP
       std::string error_msg;
       ParserResult result;
       Response construct();
-      void reset();
+
+      void reset(); // ???
+      ParserContext();
 
     private:
       enum

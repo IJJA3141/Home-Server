@@ -11,6 +11,8 @@ namespace protocol
 using Response = HTTP::Response;
 using ParserContext = Response::ParserContext;
 
+ParserContext::ParserContext() : state_(VERSION), result(ParserResult::NeedMoreData) {}
+
 Response ParserContext::construct()
 {
   if (this->result != ParserResult::Complete) throw "construct an uncompleted request";

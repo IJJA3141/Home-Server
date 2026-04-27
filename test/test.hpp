@@ -27,7 +27,7 @@ struct ComparisonException : std::exception
 
 #define SECTION(section_name)                                                                                     \
   std::println("\x1b[36m{}:\x1b[0m", section_name);                                                               \
-  _i = 0, _j = 0;
+  // _i = 0, _j = 0;
 
 #define REQUIRE(test_name, test_function)                                                                         \
   _i++;                                                                                                           \
@@ -68,7 +68,7 @@ struct ComparisonException : std::exception
   if (_i != _j)                                                                                                   \
   {                                                                                                               \
     std::println("[\x1b[31mfailure\x1b[0m] Total: {}, Passed: {}, Failed {}\n", _i, _j, _i - _j);                 \
-    flag++;                                                                                                       \
+    _flag = _i - _j;                                                                                               \
   }                                                                                                               \
   else std::println("[\x1b[32msuccess\x1b[0m]\n");
 

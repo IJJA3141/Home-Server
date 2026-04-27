@@ -12,14 +12,14 @@ std::optional<HTTP::Version> HTTP::parse_version(std::string_view _)
   if (_ == "HTTP/1.1") return HTTP::Version::HTTP_11;
   if (_ == "HTTP/2.0") return HTTP::Version::HTTP_20;
   if (_ == "HTTP/3.0") return HTTP::Version::HTTP_30;
-  return {};
+  return std::nullopt;
 }
 
 std::optional<int> HTTP::parse_status(std::string_view _)
 {
   int status = std::stoi(_.data());
   if (100 <= status || status < 600) return status;
-  return {};
+  return std::nullopt;
 }
 
 std::optional<HTTP::Method> HTTP::parse_method(std::string_view _)
@@ -32,7 +32,7 @@ std::optional<HTTP::Method> HTTP::parse_method(std::string_view _)
   if (_ == "TRACE"  ) return HTTP::Method::TRACE;
   if (_ == "PUT"    ) return HTTP::Method::PUT;
   if (_ == "POST"   ) return HTTP::Method::POST;
-  return {};
+  return std::nullopt;
 } // clang-format on
 
 bool remove_ows(std::string& _)
@@ -66,7 +66,7 @@ std::optional<std::pair<std::string, std::string>> HTTP::parse_header(std::strin
   std::string value(_.substr(colon + 1));
 
   if (remove_ows(value)) return {{field, value}};
-  return {};
+  return std::nullopt;
 }
 
 std::string HTTP::version_to_string(HTTP::Version _)
