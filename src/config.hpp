@@ -5,6 +5,9 @@
 const auto CERT_PATH = std::filesystem::path("/home/alexe/tmp/cert.pem");
 const auto KEY_PATH = std::filesystem::path("/home/alexe/tmp/key.pem");
 
-#define MIHON_SYNC_PORT 23
-#define BUFFER_SIZE 4096
-#define LOCAL_HOST "127.0.0.0"
+#define MIHON_SYNC_PORT          23
+#define BUFFER_SIZE              4096
+#define LOCAL_HOST               "127.0.0.0"
+
+#define REVERSE_PROXY_EPOLL_SIZE 10
+#define REVERSE_PROXY_CLIENT_BUFFER_SIZE BUFFER_SIZE

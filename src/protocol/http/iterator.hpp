@@ -6,47 +6,49 @@
 class Iterator
 {
 public:
-  std::string_view model;
+  Iterator(std::span<const char> _) : tail(std::string_view(_)) {}
 
-  Iterator(const std::string_view _model) : model(_model) {};
-  bool operator>>(std::string_view& _view)
-  {
-    std::size_t pos;
-    if ((pos = this->model.find("\r\n")) == this->model.npos || pos == 0) return false;
-
-    _view = this->model.substr(0, pos);
-    this->model.remove_prefix(pos + 2);
-
-    return true;
-  };
-};
-
-class t
-{
-public:
-  t(std::span<const char> _) : head(std::string_view(_)) {}
-
-  std::string_view head;
   std::string_view tail;
+  std::string_view head;
 
+  /**
+   *  @brief  Extracts the leading substring up to @a _delimiter.
+   *  @param  _delimiter  Delimiter marking the end of the extracted substring.
+   *  @return  True if the delimiter was found, false otherwise.
+   *
+   *  Searches tail for @a _delimiter. If found, the substring from the
+   *  beginning of tail up to (but not including) @a _delimiter is extracted
+   *  into head (@a _delimiter is removed from tail). If the delimiter is not
+   *  found, tail remains unchanged.
+   */
   bool next(const std::string_view _delimiter)
   {
-    size_t pos = head.find(_delimiter);
-    if (pos == head.npos) return false;
+    size_t pos = tail.find(_delimiter);
+    if (pos == tail.npos) return false;
 
-    tail = head.substr(0, pos);
-    head.remove_prefix(pos + _delimiter.size());
+    head = tail.substr(0, pos);
+    tail.remove_prefix(pos + _delimiter.size());
 
     return true;
   }
 
+  /**
+   *  @brief  Extracts the leading substring up to @a _delimiter.
+   *  @param  _delimiter  Delimiter marking the end of the extracted substring.
+   *  @return  True if the delimiter was found, false otherwise.
+   *
+   *  Searches tail for @a _delimiter. If found, the substring from the
+   *  beginning of tail up to (but not including) @a _delimiter is extracted
+   *  into head (@a _delimiter is removed from tail). If the delimiter is not
+   *  found, tail remains unchanged.
+   */
   bool next(const char _delimiter)
   {
-    size_t pos = head.find(_delimiter);
-    if (pos == head.npos || pos == 0) return false;
+    size_t pos = tail.find(_delimiter);
+    if (pos == tail.npos) return false;
 
-    tail = head.substr(0, pos);
-    head.remove_prefix(pos + 1);
+    head = tail.substr(0, pos);
+    tail.remove_prefix(pos + 1);
 
     return true;
   }

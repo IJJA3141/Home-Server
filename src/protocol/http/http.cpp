@@ -5,6 +5,8 @@
 namespace protocol
 {
 
+HTTP::Response HTTP::standard_response(int status) { return {HTTP::Version::HTTP_11, status, {}, ""}; }
+
 std::optional<HTTP::Version> HTTP::parse_version(std::string_view _)
 {
   if (_ == "HTTP/0.9") return HTTP::Version::HTTP_09;

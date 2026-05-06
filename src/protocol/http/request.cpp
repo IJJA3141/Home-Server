@@ -31,7 +31,7 @@ void ParserContext::reset()
 
 ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
 {
-  t iterator{_stream};
+  Iterator iterator{_stream};
   std::optional<HTTP::Method> method;
   std::optional<HTTP::Version> version;
   std::optional<std::pair<std::string, std::string>> header;
@@ -54,14 +54,14 @@ ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
     {
       _ctx.result = ParserResult::NeedMoreData;
       _ctx.state_ = ParserContext::METHOD;
-      return _stream.size() - iterator.head.size();
+      return _stream.size() - iterator.tail.size();
     }
 
     method = HTTP::parse_method(iterator.tail);
     if (!method)
     {
       _ctx.result = ParserResult::Invalid;
-      return _stream.size() - iterator.head.size();
+      return _stream.size() - iterator.tail.size();
     }
 
     _ctx.method_ = method.value();
@@ -71,7 +71,7 @@ ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
     {
       _ctx.result = ParserResult::NeedMoreData;
       _ctx.state_ = ParserContext::PATH;
-      return _stream.size() - iterator.head.size();
+      return _stream.size() - iterator.tail.size();
     }
 
     _ctx.path_ = iterator.tail;
@@ -81,14 +81,14 @@ ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
     {
       _ctx.result = ParserResult::NeedMoreData;
       _ctx.state_ = ParserContext::VERSION;
-      return _stream.size() - iterator.head.size();
+      return _stream.size() - iterator.tail.size();
     }
 
     version = HTTP::parse_version(iterator.tail);
     if (!version)
     {
       _ctx.result = ParserResult::Invalid;
-      return _stream.size() - iterator.head.size();
+      return _stream.size() - iterator.tail.size();
     }
 
     _ctx.version_ = version.value();
@@ -98,7 +98,7 @@ ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
     {
       _ctx.result = ParserResult::NeedMoreData;
       _ctx.state_ = ParserContext::HEADERS;
-      return _stream.size() - iterator.head.size();
+      return _stream.size() - iterator.tail.size();
     }
 
     while (!iterator.tail.empty())
@@ -107,7 +107,7 @@ ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
       if (!header)
       {
         _ctx.result = ParserResult::Invalid;
-        return _stream.size() - iterator.head.size();
+        return _stream.size() - iterator.tail.size();
       }
 
       _ctx.headers_.insert(header.value());
@@ -116,7 +116,7 @@ ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
       {
         _ctx.result = ParserResult::NeedMoreData;
         _ctx.state_ = ParserContext::HEADERS;
-        return _stream.size() - iterator.head.size();
+        return _stream.size() - iterator.tail.size();
       }
     }
 
@@ -132,7 +132,7 @@ ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
         return _stream.size();
       }
 
-      _ctx.body_ += iterator.head.substr(0, (content_length - _ctx.body_.length()));
+      _ctx.body_ += iterator.tail.substr(0, (content_length - _ctx.body_.length()));
 
       if (_ctx.body_.length() < content_length)
       {
@@ -146,7 +146,7 @@ ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
     }
 
     _ctx.result = ParserResult::Complete;
-    return _stream.size() - iterator.head.size();
+    return _stream.size() - iterator.tail.size();
 
   default:
     std::unreachable();

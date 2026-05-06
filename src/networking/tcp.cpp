@@ -49,7 +49,6 @@ void Tcp::listen()
   this->running_ = true;
   epoll_event conn_bay[EPOLL_SIZE];
 
-  int i = 0;
   while (this->running_)
   {
     int n = epoll_wait(this->epoll_, conn_bay, EPOLL_SIZE, -1);

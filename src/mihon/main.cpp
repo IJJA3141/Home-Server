@@ -18,8 +18,6 @@ int main(void)
         res.headers = {};
         res.body = "pong";
 
-        std::println("み -> {}", std::string(res));
-
         return res;
       },
       "");
