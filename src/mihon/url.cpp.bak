@@ -1,0 +1,138 @@
+#include "url.hpp"
+
+#include "../../logger/logger.hpp"
+#include "iterator.hpp"
+#include <memory>
+#include <string>
+#include <string_view>
+
+namespace protocol
+{
+struct Router::ISegment
+{
+  enum
+  {
+    SEGMENT,
+    AUTH_SEGMENT,
+  } type;
+
+  virtual HTTP::Response resolve(Iterator&, HTTP::Request&) = 0;
+  virtual ISegment* nnn(std::string_view) = 0;
+  virtual ISegment* ddd(std::string_view, std::unique_ptr<ISegment>) = 0;
+  virtual ~ISegment() = default;
+  virtual bool callback(HTTP::Method) = 0;
+};
+
+struct Router::Segment : Router::ISegment
+{
+public:
+  Segment() { this->type = SEGMENT; };
+
+  HTTP::Response resolve(Iterator&, HTTP::Request&) override
+  {
+    static_assert(false, "Method `resolve` is not implemented.");
+  }
+
+  ISegment* ddd(std::string_view _segment_name, std::unique_ptr<ISegment> _segment) override
+  {
+    for (const auto& segment : this->table_)
+    {
+      if (segment.first == _segment_name)
+      {
+        auto log = Logger::New();
+        log.crit("path already exists");
+        throw "";
+      }
+    }
+
+    // Delete called on 'protocol::Router::ISegment' should not be an issue
+    this->table_.push_back({std::string(_segment_name), std::move(_segment)});
+    return this->table_.end()->second.get();
+  }
+
+  ISegment* nnn(std::string_view _segment_name) override
+  {
+    for (const auto& segment : this->table_)
+      if (segment.first == _segment_name) return segment.second.get();
+
+    return nullptr;
+  }
+
+  bool callback(HTTP::Method _) override { return (bool)this->callbacks_[(size_t)_]; }
+
+  Handler<HTTP> callbacks_[N_METHODS];
+  std::vector<std::pair<std::string, std::unique_ptr<ISegment>>> table_;
+};
+
+// struct Router::Segment : Router::ISegment
+// {
+//   HTTP::Response resolve(Iterator& url, HTTP::Request& request) override
+//   {
+//     if (url.next('/') && !url.tail.empty()) // next segment
+//     {
+//       for (const auto& next : this->table_)
+//         if (next.first == url.head) return next.second->resolve(url, request);
+//
+//       return HTTP::standard_response(404); // segment not found in table
+//     }
+//     else // this is the targeted segment
+//     {
+//       const auto& callback = this->callbacks_[(size_t)request.method];
+//       if (callback) return callback(request);
+//       return HTTP::standard_response(405);
+//     }
+//   }
+//
+//   std::vector<std::pair<std::string, std::shared_ptr<ISegment>>> table_;
+//   Handler<HTTP> callbacks_[N_METHODS];
+// };
+
+void Router::add(HTTP::Method _method, std::string_view _path, Handler<HTTP> _callback)
+{
+  auto log = Logger::New();
+
+  if (_path.empty() || _path[0] != '/')
+  {
+    log.crit("invalid path \"{}\"", _path);
+    throw "";
+  }
+
+  ISegment* segment = this->root_.get();
+  ISegment* new_segment = nullptr;
+
+  // special case when adding to root since root has no parent
+  Iterator url(_path);
+  if (_path.size() != 1)
+  {
+    while (url.next('/') && !url.tail.empty())
+    {
+      new_segment = segment->nnn(url.head);
+      if (new_segment == nullptr) new_segment = segment->ddd(url.head, std::make_unique<Segment>());
+      segment = new_segment;
+    }
+  }
+
+  new_segment = segment->nnn(url.tail);
+  if (new_segment == nullptr)
+  {
+    new_segment = segment->ddd(url.tail, std::make_unique<Segment>());
+  }
+  else if (new_segment->ccc(_method))
+  {
+  }
+
+  std::unique_ptr<Segment> new_segment = std::make_unique<Segment>();
+
+  new_segment->callbacks_[(size_t)_method] = _callback;
+
+  segment->ddd(url.tail, std::move(new_segment));
+
+  // auto& callback = segment->callbacks_[(size_t)_method];
+  // if (callback) log.warn("~ {} {}", HTTP::method_to_string(_method), _path);
+  // else log.info("+ {} {}", HTTP::method_to_string(_method), _path);
+  // callback = _callback;
+}
+
+HTTP::Response Router::resolve(HTTP::Request& _request) {}
+
+} // namespace protocol

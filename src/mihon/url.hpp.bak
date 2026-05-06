@@ -1,0 +1,22 @@
+#pragma once
+
+#include "http.hpp"
+#include <memory>
+
+namespace protocol
+{
+
+class Router
+{
+public:
+  void add(HTTP::Method, std::string_view, Handler<HTTP>);
+  HTTP::Response resolve(HTTP::Request&);
+
+  struct ISegment;
+  struct Segment;
+
+private:
+  std::unique_ptr<Segment> root_;
+};
+
+} // namespace protocol
