@@ -4,6 +4,7 @@ project(server)                       # name
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 26)
+# set(CMAKE_CXX_FLAGS "-freflection") maybe some day
 
 include_directories(/usr/local/include)
 link_directories(/usr/local/lib)
@@ -22,6 +23,12 @@ set(SOURCE_FILES                              # src
   # REVERSE_PROXY
   ${CMAKE_SOURCE_DIR}/src/reverse_proxy/tcp_server.cpp
   ${CMAKE_SOURCE_DIR}/src/reverse_proxy/tls_server.cpp
+
+  # Routing
+  ${CMAKE_SOURCE_DIR}/src/routing/router.cpp
+  ${CMAKE_SOURCE_DIR}/src/routing/segment.cpp
+  ${CMAKE_SOURCE_DIR}/src/routing/state_validation.cpp
+
 
   # NETWORK
   # ${CMAKE_SOURCE_DIR}/src/networking/auth.cpp

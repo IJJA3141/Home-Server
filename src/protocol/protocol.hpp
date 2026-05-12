@@ -33,6 +33,7 @@ concept Protocol = requires(typename T::Request request, typename T::Response re
   { std::string(response) } -> std::same_as<std::string>;
 };
 
-template <Protocol P> using Handler = std::function<typename P::Response(const typename P::Request)>;
+template <Protocol P> using Handler = std::function<typename P::Response(typename P::Request&)>;
+template <Protocol P> using Middleware = std::function<typename P::Response(typename P::Request&, Handler<P>)>;
 
 }; // namespace protocol

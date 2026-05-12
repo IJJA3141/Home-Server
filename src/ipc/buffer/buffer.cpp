@@ -1,7 +1,0 @@
-
-namespace ipc
-{
-
-
-//
-} // namespace ipc

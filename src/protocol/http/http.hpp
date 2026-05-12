@@ -14,11 +14,11 @@ struct HTTP
   using header = std::pair<std::string, std::string>;
   using status = int;
 
-  enum struct Method { GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE };
+  enum Method { GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE };
   static std::optional<Method> parse_method(std::string_view);
   static std::string method_to_string(Method);
   #define N_METHODS 8
-  static_assert(N_METHODS - 1 == (int)Method::TRACE);
+  static_assert(N_METHODS - 1 == (size_t)Method::TRACE);
 
   enum struct Version { HTTP_09, HTTP_10, HTTP_11, HTTP_20, HTTP_30 };
   static std::optional<Version> parse_version(std::string_view);
