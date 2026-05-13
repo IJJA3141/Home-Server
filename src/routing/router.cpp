@@ -1,21 +1,13 @@
 #include "../logger/logger.hpp"
-#include "../protocol/http/iterator.hpp"
+#include "../utils/exception.hpp"
+#include "../utils/iterator.hpp"
 #include "routing.hpp"
-#include <memory>
 #include <string_view>
-
-constexpr Segment::ParentingType parent_type(std::string_view child_route)
-{
-  if (child_route.starts_with('[')) return Segment::ParentingType::PARAMETRIC;
-  return Segment::ParentingType::STATIC;
-}
 
 Segment* Router::get(std::string_view _path)
 {
-  assert_valid(_path);
-
   Logger log = Logger::New();
-  Iterator path(regularise_path(_path));
+  Iterator path(_path);
   Segment* target_parent = this->root.get();
 
   while (path.next('/'))
@@ -23,16 +15,21 @@ Segment* Router::get(std::string_view _path)
     switch (target_parent->type)
     {
     case Segment::ParentingType::WILDCARD:
-      throw;
+      throw configuration_error("segment under wildcard {}", _path);
 
     case Segment::ParentingType::PARAMETRIC:
-      if (!path.head.starts_with('[')) throw;
-      if (path.head.subview(1, path.head.size() - 2) != target_parent->meta) throw;
+      if (!path.head.starts_with('['))
+        throw configuration_error("missing [{}] parameter {}", target_parent->meta, _path);
+
+      if (path.head.subview(1, path.head.size() - 2) != target_parent->meta)
+        throw configuration_error("wrong parameter expected {} got {} {}", target_parent->meta,
+                                  path.head.subview(1, path.head.size() - 2), _path);
+
       if (!path.next('/')) goto BREAK;
       break;
 
     case Segment::ParentingType::STATIC:
-      if (path.head.starts_with('[')) throw;
+      if (path.head.starts_with('[')) throw configuration_error("unexpected parameter {}", _path);
       break;
 
     case Segment::ParentingType::CHILDLESS:
@@ -52,19 +49,21 @@ Segment* Router::get(std::string_view _path)
   }
 BREAK:
 
-  if (path.tail.starts_with('[')) throw;
+  if (path.tail.starts_with('[')) throw configuration_error("unexpected parameter {}", _path);
 
   switch (target_parent->type)
   {
   case Segment::ParentingType::STATIC:
-    if (path.tail.ends_with('*')) throw;
+    if (path.tail.ends_with('*')) throw configuration_error("wildcard not allowed on static {}", _path);
     break;
 
   case Segment::ParentingType::PARAMETRIC:
+    if (path.tail.ends_with('*')) throw configuration_error("wildcard not allowed on parametric {}", _path);
     break;
 
   case Segment::ParentingType::WILDCARD:
-    if (!path.tail.ends_with('*')) throw;
+    if (!path.tail.ends_with('*')) throw configuration_error("non-wildcard under wildcard {}", _path);
+    ;
     break;
 
   case Segment::ParentingType::CHILDLESS:
@@ -76,17 +75,23 @@ BREAK:
   return target_parent->get_or_create(path.tail);
 }
 
-void Router::add(Method _method, std::string_view _path, Handler _handler)
+void Router::add(Method _method, Route _path, Handler _handler)
 {
   auto& [_, handler] = this->get(_path)->handlers[_method];
-  if (handler) throw;
+  if (handler)
+    throw configuration_error("duplicate handler for {} {}", protocol::HTTP::method_to_string(_method),
+                              (std::string)_path);
+
   handler = _handler;
 }
 
-void Router::add(Method _method, std::string_view _path, Middleware _middleware, Handler _handler)
+void Router::add(Method _method, Route _path, Middleware _middleware, Handler _handler)
 {
   auto& [middleware, handler] = this->get(_path)->handlers[_method];
-  if (handler) throw;
+  if (handler || middleware)
+    throw configuration_error("duplicate handler/middleware for {} {}", protocol::HTTP::method_to_string(_method),
+                              (std::string)_path);
+
   middleware = _middleware;
   handler = _handler;
 }

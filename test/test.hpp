@@ -9,12 +9,18 @@ namespace test
 struct ComparisonException : std::exception
 {
   template <typename T>
-  ComparisonException(T got, T expected) : reason(std::format("got {}, expected {}", got, expected))
+  constexpr inline explicit ComparisonException(T&& got, T&& expected)
+      : reason(std::format("got {}, expected {}", got, expected))
   {
   }
   const std::string reason;
   const char* what() const noexcept override { return this->reason.c_str(); }
 };
+
+template <typename T> constexpr void assert_equal(const T&& l, const T&& r)
+{
+  if (l != r) throw ComparisonException(l, r);
+}
 
 } // namespace test
 
@@ -37,8 +43,9 @@ struct ComparisonException : std::exception
     test_function                                                                                                 \
   }                                                                                                               \
   CATCH(test_name, test::ComparisonException)                                                                     \
-  CATCH(test_name, std::out_of_range)                                                                             \
-  CATCH(test_name, std::exception&)                                                                               \
+  CATCH(test_name, std::runtime_error)                                                                            \
+  CATCH(test_name, std::logic_error)                                                                              \
+  CATCH(test_name, std::exception)                                                                                \
   if (!_exception_caught)                                                                                         \
   {                                                                                                               \
     std::println("\x1b[32m  + {}\x1b[0m", test_name);                                                             \
@@ -52,12 +59,13 @@ struct ComparisonException : std::exception
   {                                                                                                               \
     test_function                                                                                                 \
   }                                                                                                               \
-  catch (exception_type e)                                                                                        \
+  catch (exception_type & e)                                                                                      \
   {                                                                                                               \
     std::println("\x1b[32m  + {} threw an instance of '{}'.\x1b[0m", test_name, #exception_type);                 \
     ++_j;                                                                                                         \
     _exception_caught = true;                                                                                     \
   }                                                                                                               \
+  CATCH(test_name, ComparisonException)                                                                           \
   CATCH(test_name, std::exception)                                                                                \
   if (!_exception_caught)                                                                                         \
   {                                                                                                               \
@@ -68,7 +76,7 @@ struct ComparisonException : std::exception
   if (_i != _j)                                                                                                   \
   {                                                                                                               \
     std::println("[\x1b[31mfailure\x1b[0m] Total: {}, Passed: {}, Failed {}\n", _i, _j, _i - _j);                 \
-    _flag = _i - _j;                                                                                               \
+    _flag = _i - _j;                                                                                              \
   }                                                                                                               \
   else std::println("[\x1b[32msuccess\x1b[0m]\n");
 

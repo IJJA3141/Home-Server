@@ -27,7 +27,7 @@ set(SOURCE_FILES                              # src
   # Routing
   ${CMAKE_SOURCE_DIR}/src/routing/router.cpp
   ${CMAKE_SOURCE_DIR}/src/routing/segment.cpp
-  ${CMAKE_SOURCE_DIR}/src/routing/state_validation.cpp
+  ${CMAKE_SOURCE_DIR}/src/routing/route.cpp
 
 
   # NETWORK

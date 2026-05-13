@@ -7,6 +7,17 @@
 #include <string_view>
 #include <vector>
 
+struct Route
+{
+public:
+  constexpr Route(const char* route) : Route(std::string(route)) {};
+  Route(const std::string& route);
+  constexpr operator std::string_view() const { return route; };
+
+private:
+  std::string route;
+};
+
 struct Segment
 {
   using Middleware = protocol::Middleware<protocol::HTTP>;
@@ -47,8 +58,12 @@ public:
   Router() : root{std::make_unique<Segment>()} {}
 
   // void add(std::string_view prefix, Router&& subtree);
-  void add(Method method, std::string_view path, Handler handler);
-  void add(Method method, std::string_view path, Middleware middleware, Handler handler);
+
+  // to add a WILDCARD segment terminate the route with /*
+  // for a PARAMETRIC segment use [`var name`] int the route
+  // else it will be STATIC
+  void add(Method method, Route route, Handler handler);
+  void add(Method method, Route route, Middleware middleware, Handler handler);
 
   inline operator std::string() const
   {
@@ -62,6 +77,3 @@ private:
 
   Segment* get(std::string_view path);
 };
-
-void assert_valid(const std::string_view path);
-std::string_view regularise_path(std::string_view path);
