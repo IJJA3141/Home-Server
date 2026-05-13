@@ -1,4 +1,4 @@
-#include "../../src/ipc/buffer/buffer.hpp"
+#include "../../src/utils/buffer.hpp"
 #include "../test.hpp"
 #include <cstddef>
 

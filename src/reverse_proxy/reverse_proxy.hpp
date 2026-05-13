@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../config.hpp"
-#include "../ipc/buffer/buffer.hpp"
+#include "../utils/buffer.hpp"
 #include "../protocol/http/http.hpp"
 #include <arpa/inet.h>
 #include <atomic>

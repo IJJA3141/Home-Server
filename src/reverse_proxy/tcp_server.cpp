@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <cstring>
 #include <exception>
+#include <stdexcept>
 #include <sys/socket.h>
 #include <utility>
 
@@ -16,7 +17,7 @@ TcpServer::TcpServer(const std::string& _ip, uint16_t _port, const Handler _requ
   else if (inet_pton(AF_INET, _ip.c_str(), &addr.sin_addr) != 1)
   {
     log.crit("resolving IP failed: {}", strerror(errno));
-    throw "";
+    throw std::runtime_error(std::format("resolving IP failed: {}", strerror(errno)));
   }
 
   int opts[] = {TCP_NODELAY, TCP_COOKIE_TRANSACTIONS};

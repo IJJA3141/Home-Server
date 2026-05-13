@@ -1,5 +1,5 @@
+#include "../../utils/iterator.hpp"
 #include "http.hpp"
-#include "iterator.hpp"
 #include <cstdio>
 #include <sstream>
 #include <string>
@@ -16,7 +16,7 @@ ParserContext::ParserContext() : state_(METHOD), result(ParserResult::NeedMoreDa
 
 Request ParserContext::construct()
 {
-  if (this->result != ParserResult::Complete) throw "construct an uncompleted request";
+  if (this->result != ParserResult::Complete) throw std::runtime_error("construct an uncompleted request");
   Request request = {method_, path_, version_, headers_, body_};
   // resset ??
   return request;
@@ -57,7 +57,7 @@ ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
       return _stream.size() - iterator.tail.size();
     }
 
-    method = HTTP::parse_method(iterator.tail);
+    method = HTTP::parse_method(iterator.head);
     if (!method)
     {
       _ctx.result = ParserResult::Invalid;
@@ -74,7 +74,7 @@ ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
       return _stream.size() - iterator.tail.size();
     }
 
-    _ctx.path_ = iterator.tail;
+    _ctx.path_ = iterator.head;
 
   case ParserContext::VERSION:
     if (!iterator.next("\r\n"))
@@ -84,7 +84,7 @@ ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
       return _stream.size() - iterator.tail.size();
     }
 
-    version = HTTP::parse_version(iterator.tail);
+    version = HTTP::parse_version(iterator.head);
     if (!version)
     {
       _ctx.result = ParserResult::Invalid;
@@ -101,9 +101,9 @@ ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
       return _stream.size() - iterator.tail.size();
     }
 
-    while (!iterator.tail.empty())
+    while (!iterator.head.empty())
     {
-      header = HTTP::parse_header(iterator.tail);
+      header = HTTP::parse_header(iterator.head);
       if (!header)
       {
         _ctx.result = ParserResult::Invalid;
@@ -123,9 +123,8 @@ ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
   case ParserContext::BODY:
     if (_ctx.headers_.contains("content-length"))
     {
-      const char* str = _ctx.headers_["content-length"].c_str();
       unsigned long content_length;
-      if (std::sscanf(str, "%lu", &content_length) == EOF)
+      if (std::sscanf(_ctx.headers_["content-length"].data(), "%lu", &content_length) == EOF)
       {
         _ctx.result = ParserResult::Invalid;
         _ctx.state_ = ParserContext::BODY;

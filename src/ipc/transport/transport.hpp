@@ -3,7 +3,7 @@
 #include "../../config.hpp"
 #include "../../protocol/http/http.hpp"
 #include "../../protocol/protocol.hpp"
-#include "../buffer/buffer.hpp"
+#include "../../utils/buffer.hpp"
 #include <netinet/in.h>
 #include <string>
 #include <sys/types.h>
