@@ -28,18 +28,6 @@ set(SOURCE_FILES                              # src
   ${CMAKE_SOURCE_DIR}/src/routing/router.cpp
   ${CMAKE_SOURCE_DIR}/src/routing/segment.cpp
   ${CMAKE_SOURCE_DIR}/src/routing/route.cpp
-
-
-  # NETWORK
-  # ${CMAKE_SOURCE_DIR}/src/networking/auth.cpp
-  # ${CMAKE_SOURCE_DIR}/src/networking/client.cpp
-  # ${CMAKE_SOURCE_DIR}/src/networking/parse.cpp
-  # ${CMAKE_SOURCE_DIR}/src/networking/route.cpp
-  # ${CMAKE_SOURCE_DIR}/src/networking/router.cpp
-  # ${CMAKE_SOURCE_DIR}/src/networking/tcp.cpp
-  # ${CMAKE_SOURCE_DIR}/src/networking/tls.cpp
-  # ${CMAKE_SOURCE_DIR}/src/networking/unparse.cpp
-
 )
 
 enable_testing()
