@@ -9,9 +9,10 @@
 
 struct Route
 {
-public:
-  constexpr Route(const char* route) : Route(std::string(route)) {};
+  static bool invalid(std::string_view route);
+
   Route(const std::string& route);
+  constexpr Route(const char* route) : Route(std::string(route)) {};
   constexpr operator std::string_view() const { return route; };
 
 private:
@@ -42,7 +43,7 @@ struct Segment
   std::vector<Route> table;
   std::string meta;
 
-  Segment* find(std::string_view route);
+  Segment* find(std::string_view route) const;
   Segment* get_or_create(std::string_view route);
 
   void sprint(std::string parent, std::string& out) const;
@@ -51,6 +52,8 @@ struct Segment
 class Router
 {
   using Method = protocol::HTTP::Method;
+  using Request = protocol::HTTP::Request;
+  using Response = protocol::HTTP::Response;
   using Middleware = protocol::Middleware<protocol::HTTP>;
   using Handler = protocol::Handler<protocol::HTTP>;
 
@@ -65,6 +68,8 @@ public:
   void add(Method method, Route route, Handler handler);
   void add(Method method, Route route, Middleware middleware, Handler handler);
 
+  Response handle(Request& request) const;
+
   inline operator std::string() const
   {
     std::string str;
@@ -75,5 +80,8 @@ public:
 private:
   std::unique_ptr<Segment> root;
 
-  Segment* get(std::string_view path);
+  Segment* get(std::string_view route);
+
+  const Segment* get(std::string_view route, Request& request) const;
+  Response err(Response&& response) const;
 };

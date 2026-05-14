@@ -4,8 +4,13 @@
 #include <algorithm>
 #include <string_view>
 
-constexpr std::array invalid_chars{':', '?', '#', '@', '!', '$', '&', '\'', '(', ')', '+', ',', ';',
-                                   '=', '<', '>', '"', '{', '}', '|', '\\', '^', '`', ' ', '%'};
+constexpr std::array invalid_chars{':', '?', '#', '@', '!', '$', '&', '\'', '(',  ')', '+', ',',
+                                   ';', '=', '<', '>', '"', '{', '}', '|',  '\\', '^', '`', ' '};
+
+bool Route::invalid(std::string_view _route)
+{
+  return std::any_of(invalid_chars.begin(), invalid_chars.end(), [=](char _) { return _route.contains(_); });
+}
 
 void assert_braces(std::string_view _segment, const std::string_view _route)
 {
@@ -23,8 +28,7 @@ Route::Route(const std::string& _route)
 {
   std::string_view route = _route;
 
-  if (std::any_of(invalid_chars.begin(), invalid_chars.end(), [=](char _) { return route.contains(_); }))
-    throw malformed_route("one of {} invalid char {}", invalid_chars, _route);
+  if (invalid(route)) throw malformed_route("one of {} invalid char {}", invalid_chars, _route);
 
   if (!route.starts_with('/')) throw malformed_route("route must start with '/' {}", _route);
 

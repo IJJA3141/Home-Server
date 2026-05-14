@@ -17,9 +17,19 @@ struct ComparisonException : std::exception
   const char* what() const noexcept override { return this->reason.c_str(); }
 };
 
-template <typename T> constexpr void assert_equal(const T&& l, const T&& r)
+struct AssertionException : std::exception
+{
+  const char* what() const noexcept override { return "assertion failed"; }
+};
+
+template <typename T> constexpr void assert_equal(const T l, const T r)
 {
   if (l != r) throw ComparisonException(l, r);
+}
+
+constexpr void assert(bool _)
+{
+  if (!_) throw;
 }
 
 } // namespace test
@@ -59,7 +69,7 @@ template <typename T> constexpr void assert_equal(const T&& l, const T&& r)
   {                                                                                                               \
     test_function                                                                                                 \
   }                                                                                                               \
-  catch (exception_type & e)                                                                                      \
+  catch (exception_type e)                                                                                        \
   {                                                                                                               \
     std::println("\x1b[32m  + {} threw an instance of '{}'.\x1b[0m", test_name, #exception_type);                 \
     ++_j;                                                                                                         \

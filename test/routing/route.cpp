@@ -14,7 +14,7 @@ int routing_route(int argc, char* argv[])
 
   SECTION("Invalid characters in route")
   {
-    for (const char& c : std::string(":?#@!$&'()+,;=<>\"{}|\\^` %"))
+    for (const char& c : std::string(":?#@!$&'()+,;=<>\"{}|\\^` "))
     {
       REQUIRE_THROW(std::format("reject invalid char {}", c), malformed_route,
                     { Route rt(std::format("/a/{}b", c)); });
@@ -42,6 +42,7 @@ int routing_route(int argc, char* argv[])
 
   SECTION("Bracket validation")
   {
+    REQUIRE("empty key", { assert_equal<std::string_view>(Route("/users/[]/path"), "users/[]/path"); });
     REQUIRE("valid param route",
             { assert_equal<std::string_view>(Route("/users/[id]/path"), "users/[id]/path"); });
     REQUIRE("unnamed leaf with parameter",
@@ -65,6 +66,8 @@ int routing_route(int argc, char* argv[])
     REQUIRE("mixed static + param",
             { assert_equal<std::string_view>(Route("/api/v1/users/[id]/"), "api/v1/users/[id]/"); });
     REQUIRE("mixed with wildcard", { assert_equal<std::string_view>(Route("/assets/v1/*"), "assets/v1/*"); });
+    REQUIRE("mixed param with wildcard",
+            { assert_equal<std::string_view>(Route("/assets/[v1]/*"), "assets/[v1]/*"); });
   }
 
   ENDSECTION;

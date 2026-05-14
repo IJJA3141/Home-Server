@@ -1,7 +1,7 @@
 #include "routing.hpp"
 #include <utility>
 
-Segment* Segment::find(std::string_view _route)
+Segment* Segment::find(std::string_view _route) const
 {
   for (const auto& [route, segment] : this->table)
     if (route == _route) return segment.get();
