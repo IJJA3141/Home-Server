@@ -90,7 +90,7 @@ template <protocol::Protocol P> P::Response TransportClient<P>::transmit(const P
     switch (this->parser_ctx_.result)
     {
     case protocol::ParserResult::Invalid: {
-      log.crit("received an invalid response");
+      log.crit("received an invalid response {}", this->buffer_.read());
       throw "ResponseParsingException";
     };
 

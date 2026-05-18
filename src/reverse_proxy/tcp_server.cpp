@@ -172,6 +172,8 @@ bool TcpServer::Client::notify()
     log.error("recv failed {}", strerror(errno));
     return true;
   }
+  if (bytes == 0) return true;
+
   this->connection_buffer.acknowledge(bytes);
 
   bytes = protocol::HTTP::Request::parse(this->connection_buffer.read(), this->parser_ctx);
@@ -190,6 +192,8 @@ bool TcpServer::Client::notify()
 
   case protocol::ParserResult::Complete:
     protocol::HTTP::Request request = this->parser_ctx.construct();
+    request.headers["x-connection-type"] = this->connection_type();
+    request.headers["x-client-id"] = this->ip;
 
     response = this->request_handler(request); // TODO
     bytes = this->send(this->socket, response.c_str(), response.size(), 0);

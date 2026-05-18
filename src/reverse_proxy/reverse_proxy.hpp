@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../config.hpp"
-#include "../utils/buffer.hpp"
 #include "../protocol/http/http.hpp"
+#include "../utils/buffer.hpp"
 #include <arpa/inet.h>
 #include <atomic>
 #include <cstdint>
@@ -49,6 +49,7 @@ protected:
     ~Client();
 
     bool notify();
+    virtual inline const std::string connection_type() const { return "http"; }
     virtual ssize_t recv(int __fd, void* __buf, size_t __n, int __flags);
     virtual ssize_t send(int __fd, const void* __buf, size_t __n, int __flags);
   };
@@ -71,10 +72,10 @@ private:
 
   struct Client : TcpServer::Client
   {
-  public:
     Client(const int listening_socket, const int epoll, SSL_CTX* const ctx, const Handler request_handler);
     ~Client();
 
+    inline const std::string connection_type() const override { return "https"; }
     ssize_t recv(int __fd, void* __buf, size_t __n, int __flags) override;
     ssize_t send(int __fd, const void* __buf, size_t __n, int __flags) override;
 

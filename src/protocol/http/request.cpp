@@ -62,6 +62,7 @@ size_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
     if (!method)
     {
       _ctx.result = ParserResult::Invalid;
+      _ctx.error_msg = "failed to parse method";
       return _stream.size() - iterator.tail.size();
     }
 
@@ -89,6 +90,7 @@ size_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
     if (!version)
     {
       _ctx.result = ParserResult::Invalid;
+      _ctx.error_msg = "failed to parse version";
       return _stream.size() - iterator.tail.size();
     }
 
@@ -108,6 +110,7 @@ size_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
       if (!header)
       {
         _ctx.result = ParserResult::Invalid;
+        _ctx.error_msg = "failed to parse headers";
         return _stream.size() - iterator.tail.size();
       }
 
@@ -122,6 +125,12 @@ size_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
     }
 
   case ParserContext::BODY:
+    if (!_ctx.headers_.contains("content-length"))
+    {
+      _ctx.result = ParserResult::Complete;
+      return _stream.size() - iterator.tail.size();
+    }
+
     try
     {
       content_length = std::stoul(_ctx.headers_["content-length"]);
@@ -139,6 +148,7 @@ size_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
     if (content_length < _ctx.body_.size())
     {
       _ctx.result = ParserResult::Invalid;
+      _ctx.error_msg = "failed to parse body";
       return _stream.size() - iterator.tail.size();
     }
 
@@ -161,6 +171,75 @@ size_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
     std::unreachable();
   }
 }
+//   case ParserContext::HEADERS:
+//     if (!iterator.next("\r\n"))
+//     {
+//       _ctx.result = ParserResult::NeedMoreData;
+//       _ctx.state_ = ParserContext::HEADERS;
+//       return _stream.size() - iterator.tail.size();
+//     }
+//
+//     while (!iterator.head.empty())
+//     {
+//       header = HTTP::parse_header(iterator.head);
+//       if (!header)
+//       {
+//         _ctx.result = ParserResult::Invalid;
+//         _ctx.error_msg = "failed to parse headers";
+//         return _stream.size() - iterator.tail.size();
+//       }
+//
+//       _ctx.headers_.insert(header.value());
+//
+//       if (!iterator.next("\r\n"))
+//       {
+//         _ctx.result = ParserResult::NeedMoreData;
+//         _ctx.state_ = ParserContext::HEADERS;
+//         return _stream.size() - iterator.tail.size();
+//       }
+//     }
+//
+//   case ParserContext::BODY:
+//     try
+//     {
+//       content_length = std::stoul(_ctx.headers_["content-length"]);
+//     }
+//     catch (std::invalid_argument&)
+//     {
+//       content_length = 0;
+//     }
+//     if (content_length <= 0)
+//     {
+//       _ctx.result = ParserResult::Complete;
+//       return _stream.size() - iterator.tail.size();
+//     }
+//
+//     if (content_length < _ctx.body_.size())
+//     {
+//       _ctx.result = ParserResult::Invalid;
+//       _ctx.error_msg = "failed to parse body";
+//       return _stream.size() - iterator.tail.size();
+//     }
+//
+//     content_length -= _ctx.body_.size(); // remaining
+//     if (content_length <= iterator.tail.size())
+//     {
+//       _ctx.body_ += iterator.tail.subview(0, content_length);
+//       _ctx.result = ParserResult::Complete;
+//       return _stream.size() - (iterator.tail.size() - content_length);
+//     }
+//     else
+//     {
+//       _ctx.body_ += iterator.tail;
+//       _ctx.result = ParserResult::NeedMoreData;
+//       _ctx.state_ = ParserContext::BODY;
+//       return _stream.size();
+//     }
+//
+//   default:
+//     std::unreachable();
+//   }
+// }
 
 Request::operator std::string() const
 {

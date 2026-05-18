@@ -119,7 +119,8 @@ template <protocol::Protocol P> void TransportServer<P>::listen()
       switch (client.parsing_ctx.result)
       {
       case protocol::ParserResult::Invalid: {
-        log.warn("request invalid: {}", client.parsing_ctx.error_msg);
+        log.warn("request invalid: {}\n{}", client.parsing_ctx.error_msg,
+                 std::string(client.connection_buffer.read().begin(), client.connection_buffer.read().end()));
         if (send(client.socket, this->bad_request_.c_str(), this->bad_request_.size(), 0) <= 0)
           log.error("send failed: {}", strerror(errno));
 

@@ -62,6 +62,7 @@ size_t Response::parse(std::span<const char> _stream, ParserContext& _ctx)
     if (!version)
     {
       _ctx.result = ParserResult::Invalid;
+      _ctx.error_msg = "failed to pares version";
       return _stream.size() - iterator.tail.size();
     }
 
@@ -79,6 +80,7 @@ size_t Response::parse(std::span<const char> _stream, ParserContext& _ctx)
     if (!status)
     {
       _ctx.result = ParserResult::Invalid;
+      _ctx.error_msg = "failed to parse status";
       return _stream.size() - iterator.tail.size();
     }
 
@@ -108,6 +110,7 @@ size_t Response::parse(std::span<const char> _stream, ParserContext& _ctx)
       if (!header)
       {
         _ctx.result = ParserResult::Invalid;
+        _ctx.error_msg = "failed to parse headers";
         return _stream.size() - iterator.tail.size();
       }
 
@@ -122,6 +125,12 @@ size_t Response::parse(std::span<const char> _stream, ParserContext& _ctx)
     }
 
   case ParserContext::BODY:
+    if (!_ctx.headers_.contains("content-length"))
+    {
+      _ctx.result = ParserResult::Complete;
+      return _stream.size() - iterator.tail.size();
+    }
+
     try
     {
       content_length = std::stoul(_ctx.headers_["content-length"]);
@@ -139,6 +148,7 @@ size_t Response::parse(std::span<const char> _stream, ParserContext& _ctx)
     if (content_length < _ctx.body_.size())
     {
       _ctx.result = ParserResult::Invalid;
+      _ctx.error_msg = "failed to parse body";
       return _stream.size() - iterator.tail.size();
     }
 
