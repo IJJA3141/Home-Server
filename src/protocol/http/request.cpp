@@ -29,12 +29,13 @@ void ParserContext::reset()
   this->state_ = METHOD;
 }
 
-ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
+size_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
 {
   Iterator iterator{_stream};
   std::optional<HTTP::Method> method;
   std::optional<HTTP::Version> version;
   std::optional<std::pair<std::string, std::string>> header;
+  unsigned long content_length = 0;
 
   if (_ctx.result == ParserResult::Invalid)
   {
@@ -121,31 +122,40 @@ ssize_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
     }
 
   case ParserContext::BODY:
-    if (_ctx.headers_.contains("content-length"))
+    try
     {
-      unsigned long content_length;
-      if (std::sscanf(_ctx.headers_["content-length"].data(), "%lu", &content_length) == EOF)
-      {
-        _ctx.result = ParserResult::Invalid;
-        _ctx.state_ = ParserContext::BODY;
-        return _stream.size();
-      }
-
-      _ctx.body_ += iterator.tail.substr(0, (content_length - _ctx.body_.length()));
-
-      if (_ctx.body_.length() < content_length)
-      {
-        _ctx.result = ParserResult::NeedMoreData;
-        _ctx.state_ = ParserContext::BODY;
-        return _stream.size();
-      }
-
+      content_length = std::stoul(_ctx.headers_["content-length"]);
+    }
+    catch (std::invalid_argument&)
+    {
+      content_length = 0;
+    }
+    if (content_length <= 0)
+    {
       _ctx.result = ParserResult::Complete;
-      return _stream.size();
+      return _stream.size() - iterator.tail.size();
     }
 
-    _ctx.result = ParserResult::Complete;
-    return _stream.size() - iterator.tail.size();
+    if (content_length < _ctx.body_.size())
+    {
+      _ctx.result = ParserResult::Invalid;
+      return _stream.size() - iterator.tail.size();
+    }
+
+    content_length -= _ctx.body_.size(); // remaining
+    if (content_length <= iterator.tail.size())
+    {
+      _ctx.body_ += iterator.tail.subview(0, content_length);
+      _ctx.result = ParserResult::Complete;
+      return _stream.size() - (iterator.tail.size() - content_length);
+    }
+    else
+    {
+      _ctx.body_ += iterator.tail;
+      _ctx.result = ParserResult::NeedMoreData;
+      _ctx.state_ = ParserContext::BODY;
+      return _stream.size();
+    }
 
   default:
     std::unreachable();

@@ -2,6 +2,7 @@
 #include "http.hpp"
 #include <optional>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -15,8 +16,8 @@ ParserContext::ParserContext() : state_(VERSION), result(ParserResult::NeedMoreD
 
 Response ParserContext::construct()
 {
-  if (this->result != ParserResult::Complete) throw "construct an uncompleted request";
-  Response response = {version_, status_, headers_, body_};
+  if (this->result != ParserResult::Complete) throw std::logic_error("construct an uncompleted request");
+  Response response = {version_, status_, message_, headers_, body_};
   return response;
 }
 
@@ -27,10 +28,11 @@ void ParserContext::reset()
 }
 
 // TODO
-ssize_t Response::parse(std::span<const char> _stream, ParserContext& _ctx)
+size_t Response::parse(std::span<const char> _stream, ParserContext& _ctx)
 {
   Iterator iterator{_stream};
 
+  unsigned long content_length = 0;
   std::optional<std::pair<std::string, std::string>> header;
   std::optional<Version> version;
   std::optional<int> status;
@@ -56,7 +58,7 @@ ssize_t Response::parse(std::span<const char> _stream, ParserContext& _ctx)
       return _stream.size() - iterator.tail.size();
     }
 
-    version = HTTP::parse_version(iterator.tail);
+    version = HTTP::parse_version(iterator.head);
     if (!version)
     {
       _ctx.result = ParserResult::Invalid;
@@ -73,7 +75,7 @@ ssize_t Response::parse(std::span<const char> _stream, ParserContext& _ctx)
       return _stream.size() - iterator.tail.size();
     }
 
-    status = HTTP::parse_status(iterator.tail);
+    status = HTTP::parse_status(iterator.head);
     if (!status)
     {
       _ctx.result = ParserResult::Invalid;
@@ -90,6 +92,8 @@ ssize_t Response::parse(std::span<const char> _stream, ParserContext& _ctx)
       return _stream.size() - iterator.tail.size();
     }
 
+    _ctx.message_ = iterator.head;
+
   case ParserContext::HEADERS:
     if (!iterator.next("\r\n"))
     {
@@ -98,9 +102,9 @@ ssize_t Response::parse(std::span<const char> _stream, ParserContext& _ctx)
       return _stream.size() - iterator.tail.size();
     }
 
-    while (!iterator.tail.empty())
+    while (!iterator.head.empty())
     {
-      header = HTTP::parse_header(iterator.tail);
+      header = HTTP::parse_header(iterator.head);
       if (!header)
       {
         _ctx.result = ParserResult::Invalid;
@@ -118,33 +122,40 @@ ssize_t Response::parse(std::span<const char> _stream, ParserContext& _ctx)
     }
 
   case ParserContext::BODY:
-    if (_ctx.headers_.contains("content-length"))
+    try
     {
-      const char* str = _ctx.headers_["content-length"].c_str();
-      unsigned long content_length;
-      if (std::sscanf(str, "%lu", &content_length) == EOF)
-      {
-        _ctx.result = ParserResult::Invalid;
-        _ctx.state_ = ParserContext::BODY;
-        return _stream.size();
-      }
-
-      _ctx.body_ += iterator.tail.substr(0, (content_length - _ctx.body_.length()));
-
-      if (_ctx.body_.length() < content_length)
-      {
-        _ctx.result = ParserResult::NeedMoreData;
-        _ctx.state_ = ParserContext::BODY;
-        return _stream.size();
-      }
-
+      content_length = std::stoul(_ctx.headers_["content-length"]);
+    }
+    catch (std::invalid_argument&)
+    {
+      content_length = 0;
+    }
+    if (content_length <= 0)
+    {
       _ctx.result = ParserResult::Complete;
-      return _stream.size();
+      return _stream.size() - iterator.tail.size();
     }
 
-    _ctx.body_ = iterator.tail;
-    _ctx.result = ParserResult::Complete;
-    return _stream.size();
+    if (content_length < _ctx.body_.size())
+    {
+      _ctx.result = ParserResult::Invalid;
+      return _stream.size() - iterator.tail.size();
+    }
+
+    content_length -= _ctx.body_.size(); // remaining
+    if (content_length <= iterator.tail.size())
+    {
+      _ctx.body_ += iterator.tail.subview(0, content_length);
+      _ctx.result = ParserResult::Complete;
+      return _stream.size() - (iterator.tail.size() - content_length);
+    }
+    else
+    {
+      _ctx.body_ += iterator.tail;
+      _ctx.result = ParserResult::NeedMoreData;
+      _ctx.state_ = ParserContext::BODY;
+      return _stream.size();
+    }
 
   default:
     std::unreachable();

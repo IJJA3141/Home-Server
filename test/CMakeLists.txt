@@ -1,5 +1,6 @@
 set(TEST_FILES
-  protocol/http.cpp
+  protocol/http_request.cpp
+  protocol/http_response.cpp
   ipc/ring_buffer.cpp
   routing/route.cpp
   routing/router.cpp

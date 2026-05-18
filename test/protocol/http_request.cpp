@@ -1,34 +1,12 @@
 #include "../../src/protocol/http/http.hpp"
 #include "../../src/protocol/protocol.hpp"
 #include "../test.hpp"
+#include "util.hpp"
 
 using namespace protocol;
 using namespace test;
 
-std::string parser_result_to_string(const ParserResult& l)
-{
-  switch (l)
-  {
-  case ParserResult::NeedMoreData:
-    return "NeedMoreData";
-  case ParserResult::Invalid:
-    return "Invalid";
-  case ParserResult::Complete:
-    return "Complete";
-  }
-}
-
-void assert_equal(const ParserResult& l, const ParserResult& r)
-{
-  if (l != r) throw ComparisonException(parser_result_to_string(l), parser_result_to_string(r));
-}
-
-void assert_equal(HTTP::Method& l, HTTP::Method r)
-{
-  if (l != r) throw ComparisonException(HTTP::method_to_string(l), HTTP::method_to_string(r));
-}
-
-int protocol_http(int argc, char* argv[])
+int protocol_http_request(int argc, char* argv[])
 {
   int _flag = 0, _i = 0, _j = 0;
   bool _exception_caught = false;

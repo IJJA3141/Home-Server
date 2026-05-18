@@ -19,7 +19,7 @@ enum class ParserResult
 
 template <typename T>
 concept Parsable = requires(std::span<const char> data, typename T::ParserContext ctx) {
-  { T::parse(data, ctx) } -> std::same_as<ssize_t>;
+  { T::parse(data, ctx) } -> std::same_as<size_t>;
   { ctx.construct() } -> std::same_as<T>;
   { ctx.result } -> std::same_as<ParserResult&>;
   { ctx.error_msg } -> std::same_as<std::string&>;

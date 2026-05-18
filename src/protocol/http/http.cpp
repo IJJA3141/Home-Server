@@ -1,11 +1,12 @@
 #include "http.hpp"
 #include <optional>
 #include <regex>
+#include <stdexcept>
 
 namespace protocol
 {
 
-HTTP::Response HTTP::standard_response(int status) { return {HTTP::Version::HTTP_11, status, {}, ""}; }
+HTTP::Response HTTP::standard_response(int status) { return {HTTP::Version::HTTP_11, status, "", {}, ""}; }
 
 std::optional<HTTP::Version> HTTP::parse_version(std::string_view _)
 {
@@ -19,7 +20,15 @@ std::optional<HTTP::Version> HTTP::parse_version(std::string_view _)
 
 std::optional<int> HTTP::parse_status(std::string_view _)
 {
-  int status = std::stoi(_.data());
+  int status;
+  try
+  {
+    status = std::stoi(_.data());
+  }
+  catch (std::invalid_argument&)
+  {
+    return std::nullopt;
+  }
   if (100 <= status || status < 600) return status;
   return std::nullopt;
 }
@@ -42,7 +51,7 @@ bool remove_ows(std::string& _)
   std::size_t start = _.find_first_not_of(' ');
   std::size_t end = _.find_last_not_of(' ');
 
-  if (start == std::string_view::npos || end == std::string_view::npos) return false;
+  if (start == std::string::npos || end == std::string::npos) return false;
 
   _.erase(0, start);
   _.erase(end);
@@ -59,15 +68,15 @@ std::optional<std::pair<std::string, std::string>> HTTP::parse_header(std::strin
   const std::regex reg("[^A-Za-z0-9!#$%&'*+-.^_`|~]");
 
   const std::size_t colon = _.find(':');
-  if (colon == std::string_view::npos) return {};
+  if (colon == std::string_view::npos) return std::nullopt;
 
   std::string field(_.substr(0, colon));
-  if (std::regex_search(field, reg)) return {};
+  if (std::regex_search(field, reg)) return std::nullopt;
   to_lower(field);
 
   std::string value(_.substr(colon + 1));
 
-  if (remove_ows(value)) return {{field, value}};
+  if (remove_ows(value)) return std::pair(field, value);
   return std::nullopt;
 }
 

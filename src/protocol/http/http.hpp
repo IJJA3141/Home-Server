@@ -38,7 +38,7 @@ struct HTTP
     std::string body;
 
     class ParserContext;
-    static ssize_t parse(std::span<const char>, ParserContext&);
+    static size_t parse(std::span<const char>, ParserContext&);
     operator std::string() const;
   };
 
@@ -46,11 +46,12 @@ struct HTTP
   {
     Version version;
     int status;
+    std::string message;
     std::map<std::string, std::string> headers;
     std::string body;
 
     class ParserContext;
-    static ssize_t parse(std::span<const char>, ParserContext&);
+    static size_t parse(std::span<const char>, ParserContext&);
     operator std::string() const;
   };
 
@@ -108,6 +109,7 @@ private:
 
   Version version_;
   int status_;
+  std::string message_;
   std::map<std::string, std::string> headers_;
   std::string body_;
 
