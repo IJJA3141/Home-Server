@@ -19,6 +19,11 @@ set(SOURCE_FILES                              # src
   ${CMAKE_SOURCE_DIR}/src/protocol/http/http.cpp
   ${CMAKE_SOURCE_DIR}/src/protocol/http/request.cpp
   ${CMAKE_SOURCE_DIR}/src/protocol/http/response.cpp
+  ${CMAKE_SOURCE_DIR}/src/protocol/atp/any.cpp
+  ${CMAKE_SOURCE_DIR}/src/protocol/atp/val.cpp
+  ${CMAKE_SOURCE_DIR}/src/protocol/atp/log.cpp
+  ${CMAKE_SOURCE_DIR}/src/protocol/atp/gen.cpp
+  ${CMAKE_SOURCE_DIR}/src/protocol/atp/to_string.cpp
 
   # REVERSE_PROXY
   ${CMAKE_SOURCE_DIR}/src/reverse_proxy/tcp_server.cpp

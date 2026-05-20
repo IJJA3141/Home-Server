@@ -12,7 +12,7 @@ namespace protocol
 using Request = HTTP::Request;
 using ParserContext = Request::ParserContext;
 
-ParserContext::ParserContext() : state_(METHOD), result(ParserResult::NeedMoreData) {}
+ParserContext::ParserContext() : result(ParserResult::NeedMoreData), state_(METHOD) {}
 
 Request ParserContext::construct()
 {

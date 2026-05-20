@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../config.hpp"
+#include "../../protocol/atp/atp.hpp"
 #include "../../protocol/http/http.hpp"
 #include "../../protocol/protocol.hpp"
 #include "../../utils/buffer.hpp"
@@ -129,5 +130,8 @@ private:
 // Template instantiation for hyper text transfer protocol.
 template class TransportServer<protocol::HTTP>;
 template class TransportClient<protocol::HTTP>;
+
+template class TransportServer<protocol::ATP>;
+template class TransportClient<protocol::ATP>;
 
 } // namespace ipc
