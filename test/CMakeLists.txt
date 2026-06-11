@@ -4,12 +4,13 @@ set(TEST_FILES
   ipc/ring_buffer.cpp
   routing/route.cpp
   routing/router.cpp
+  utils/base64.cpp
 )
 
 add_executable(unit_tests)
 
 target_link_libraries(unit_tests PRIVATE ${LIBS})
-target_compile_definitions(unit_tests PRIVATE "$<$<CONFIG:Debug>:DEBUG>")
+target_compile_definitions(unit_tests PRIVATE "$<$<CONFIG:Debug>:__DEBUG>")
 
 create_test_sourcelist(unit_tests unit_tests.cpp ${TEST_FILES})
 target_sources(unit_tests PRIVATE ${SOURCE_FILES} ${TEST_FILES} unit_tests)

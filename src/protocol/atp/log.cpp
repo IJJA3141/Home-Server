@@ -1,6 +1,5 @@
 #include "../../utils/iterator.hpp"
 #include "atp.hpp"
-#include <optional>
 #include <utility>
 
 namespace protocol
@@ -12,7 +11,6 @@ using Response = ATP::LOG::Response;
 Request Request::ParserContext::construct()
 {
   if (this->result != ParserResult::Complete) throw std::runtime_error("construct an uncompleted request");
-
   return this->request_;
 }
 
@@ -22,21 +20,6 @@ size_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
 
   switch (_ctx.state_)
   {
-  case ParserContext::TYPE:
-    if (!iterator.next('\n'))
-    {
-      _ctx.result = ParserResult::NeedMoreData;
-      _ctx.state_ = ParserContext::TYPE;
-      return _stream.size() - iterator.tail.size();
-    }
-
-    if (iterator.head != "LOG")
-    {
-      _ctx.result = ParserResult::Invalid;
-      _ctx.error_msg = "LOG != " + std::string(iterator.head);
-      return _stream.size() - iterator.tail.size();
-    }
-
   case ParserContext::USER:
     if (!iterator.next('\n'))
     {
@@ -86,7 +69,6 @@ size_t Request::parse(std::span<const char> _stream, ParserContext& _ctx)
 Response Response::ParserContext::construct()
 {
   if (this->result != ParserResult::Complete) throw std::runtime_error("construct an uncompleted request");
-
   return {id_};
 }
 
@@ -94,25 +76,8 @@ size_t Response::parse(std::span<const char> _stream, ParserContext& _ctx)
 {
   Iterator iterator(_stream);
 
-  if (!_ctx.typed_)
-  {
-    if (!iterator.next("\n"))
-    {
-      _ctx.result = ParserResult::NeedMoreData;
-      return _stream.size() - iterator.tail.size();
-    }
-
-    if (iterator.head != "GEN")
-    {
-      _ctx.result = ParserResult::Invalid;
-      _ctx.error_msg = "GEN != " + std::string(iterator.head);
-      return _stream.size() - iterator.tail.size();
-    }
-  }
-
   if (!iterator.next("\n"))
   {
-    _ctx.typed_ = true;
     _ctx.result = ParserResult::NeedMoreData;
     return _stream.size() - iterator.tail.size();
   }

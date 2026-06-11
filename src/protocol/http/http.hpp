@@ -4,6 +4,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <string_view>
 
 namespace protocol
 {
@@ -25,6 +26,7 @@ struct HTTP
   static std::string version_to_string(Version);
 
   static std::optional<header> parse_header(std::string_view);
+  static std::map<std::string, std::string> parse_cookies(std::string_view);
   static std::optional<status> parse_status(std::string_view);
   static std::string status_to_string(status);
   // clang-format on

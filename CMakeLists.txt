@@ -29,10 +29,16 @@ set(SOURCE_FILES                              # src
   ${CMAKE_SOURCE_DIR}/src/reverse_proxy/tcp_server.cpp
   ${CMAKE_SOURCE_DIR}/src/reverse_proxy/tls_server.cpp
 
-  # Routing
+  # ROUTING
   ${CMAKE_SOURCE_DIR}/src/routing/router.cpp
   ${CMAKE_SOURCE_DIR}/src/routing/segment.cpp
   ${CMAKE_SOURCE_DIR}/src/routing/route.cpp
+
+  # AUTH
+  ${CMAKE_SOURCE_DIR}/src/auth/auth.cpp
+
+
+  ${CMAKE_SOURCE_DIR}/src/logger/logger.cpp
 )
 
 enable_testing()

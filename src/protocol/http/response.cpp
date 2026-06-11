@@ -18,13 +18,15 @@ Response ParserContext::construct()
 {
   if (this->result != ParserResult::Complete) throw std::logic_error("construct an uncompleted request");
   Response response = {version_, status_, message_, headers_, body_};
+  this->reset();
   return response;
 }
 
 void ParserContext::reset()
 {
-  this->headers_.clear();
   this->result = ParserResult::NeedMoreData;
+  this->headers_.clear();
+  this->state_ = VERSION;
 }
 
 // TODO
@@ -37,16 +39,8 @@ size_t Response::parse(std::span<const char> _stream, ParserContext& _ctx)
   std::optional<Version> version;
   std::optional<int> status;
 
-  if (_ctx.result == ParserResult::Invalid)
-  {
-    // throw; ?
-  }
-
-  if (_ctx.result == ParserResult::Complete)
-  {
-    // throw ??
-    // reset ??
-  }
+  if (_ctx.result == ParserResult::Invalid) throw std::logic_error("parsed an olready invalid message");
+  if (_ctx.result == ParserResult::Complete) throw std::logic_error("parse a completed message");
 
   switch (_ctx.state_)
   {

@@ -4,13 +4,10 @@
 #include <cerrno>
 #include <cstring>
 #include <netinet/in.h>
+#include <stdexcept>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-// TODO
-// - add (TransportServer) scope to logger
-// - better exceptions
 
 namespace ipc
 {
@@ -20,21 +17,22 @@ TransportServer<P>::TransportServer(const std::string& _ip, const int _port, con
                                     const std::string _bad_request)
     : ip_(_ip), port_(_port), handler_(_handler), bad_request_(_bad_request)
 {
-  auto log = Logger::New();
+  auto log = Logger::get("IPC Server", [] { return strerror(errno); });
 
   this->socket_ = socket(AF_INET, SOCK_STREAM, 0);
   if (this->socket_ <= 0)
   {
-    log.crit("socket creation failed: {}", strerror(errno));
-    throw "SocketCreationException";
+    log.crit("socket creation failed");
+    throw std::runtime_error("SocketCreationException");
   }
-  log.info("socket created (fd={})", this->socket_);
+
+  log.debug("socket created (fd={})", this->socket_);
 
   int opts = 1;
   if (setsockopt(this->socket_, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opts, sizeof opts))
   {
-    log.crit("socket option configuration failed: {}", std::strerror(errno));
-    throw "SocketOptionsException";
+    log.crit("socket option configuration failed");
+    throw std::runtime_error("socket option configuration failed");
   }
 
   this->addr_.sin_family = AF_INET;
@@ -43,17 +41,18 @@ TransportServer<P>::TransportServer(const std::string& _ip, const int _port, con
 
   if (inet_pton(AF_INET, _ip.c_str(), &this->addr_.sin_addr) != 1)
   {
-    log.crit("resolving IP failed: {}", strerror(errno));
-    throw "IpResolvationException";
+    log.crit("IP {} resolution failed", this->ip_);
+    throw std::runtime_error("ip resolution failed");
   }
 
   if (bind(this->socket_, reinterpret_cast<sockaddr*>(&this->addr_), sizeof this->addr_))
   {
-    log.crit("socket bind failed: {}", strerror(errno));
-    throw "BindingException";
+    log.crit("socket bind failed");
+    throw std::runtime_error("socket binding failed");
   }
 
-  log.info("socket bind ({}:{})", _ip, _port);
+  log.debug("socket bind ({}:{})", _ip, _port);
+  log.info("successfully created ready to listen");
   return;
 }
 
@@ -64,15 +63,15 @@ template <protocol::Protocol P> TransportServer<P>::~TransportServer()
 
 template <protocol::Protocol P> void TransportServer<P>::listen()
 {
-  auto log = Logger::New();
-  int code;
+  auto log = Logger::get(std::format("IPC Server ip={}:{}", this->ip_, this->port_));
 
-  code = ::listen(this->socket_, SOMAXCONN);
+  int code = ::listen(this->socket_, SOMAXCONN);
   if (code < 0)
   {
-    log.crit("socket listen failed (addr={}:{}): {}", this->ip_, this->port_, strerror(errno));
-    throw "ListeningException";
+    log.crit("socket listen failed");
+    throw std::runtime_error("socket listen failed");
   }
+
   log.info("socket listen (addr={}:{})", this->ip_, this->port_);
 
   this->listening_ = true;
@@ -88,7 +87,7 @@ template <protocol::Protocol P> void TransportServer<P>::listen()
 
     if (client.socket < 0)
     {
-      log.error("connection accept failed: {}", strerror(errno));
+      log.error("connection accept failed");
       continue;
     }
     log.info("connection accepted (client={}:{})", client.ip, client.port);

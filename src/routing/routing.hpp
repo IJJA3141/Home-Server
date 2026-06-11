@@ -2,7 +2,6 @@
 
 #include "../protocol/http/http.hpp"
 #include <memory>
-#include <meta>
 #include <string>
 #include <string_view>
 #include <vector>

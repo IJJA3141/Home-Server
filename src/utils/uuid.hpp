@@ -29,7 +29,8 @@ public:
   [[nodiscard]] static Uuid parse(std::span<const char> s)
   {
     uuid_t uuid;
-    if (uuid_parse_range(s.begin().base(), s.end().base(), uuid))
+    if(uuid_parse(s.data(), uuid))
+    // if (uuid_parse_range(s.begin().base(), s.end().base(), uuid))
       throw std::invalid_argument(std::format("invalid uuid {}", s));
 
     return uuid;

@@ -1,3 +1,5 @@
+#include "../config.hpp"
+#include "../logger/logger.hpp"
 #include "../utils/exception.hpp"
 #include "../utils/iterator.hpp"
 #include "routing.hpp"
@@ -115,11 +117,11 @@ const Segment* Router::get(std::string_view _route, Request& _request) const
     switch (target_parent->type)
     {
     case Segment::ParentingType::WILDCARD:
-      _request.headers["x-wildcard"] = std::string(route.head) + "/";
+      _request.headers[HTTP_WILDCARD] = std::string(route.head) + "/";
       goto BREAK;
 
     case Segment::ParentingType::PARAMETRIC:
-      _request.headers["x-" + target_parent->meta] = route.head;
+      _request.headers[HTTP_PREFIX + target_parent->meta] = route.head;
       if (!route.next('/')) return target_parent->find(route.tail);
       break;
 
@@ -144,11 +146,11 @@ BREAK:
     return target_parent->find(route.tail);
 
   case Segment::ParentingType::PARAMETRIC:
-    _request.headers["x-" + target_parent->meta] = route.tail;
+    _request.headers[HTTP_PREFIX + target_parent->meta] = route.tail;
     return target_parent->find("");
 
   case Segment::ParentingType::WILDCARD:
-    _request.headers["x-wildcard"] += route.tail;
+    _request.headers[HTTP_WILDCARD] += route.tail;
     return target_parent->find("*");
   }
 
@@ -160,6 +162,8 @@ Router::Response Router::handle(Request& _request) const
   std::string_view route = _request.path;
   if (route.contains('?')) route.remove_suffix(route.size() - route.find('?'));
 
+  Logger::debug("(Router) resolving {}", route);
+
   if (Route::invalid(route) || route.contains('[') || route.contains(']') || !route.starts_with('/'))
     return this->err(protocol::HTTP::standard_response(400));
 
@@ -167,12 +171,31 @@ Router::Response Router::handle(Request& _request) const
   if (route.ends_with('/')) route.remove_suffix(1);
 
   const Segment* seg = this->get(route, _request);
-  if (seg == nullptr) return this->err(protocol::HTTP::standard_response(404));
+  if (seg == nullptr)
+  {
+    Logger::warn("route {} not found", route);
+    return this->err(protocol::HTTP::standard_response(404));
+  }
 
+  Logger::debug("route {} found", route);
   const auto& [middleware, handler] = seg->handlers[_request.method];
-  if (!handler) return this->err(protocol::HTTP::standard_response(405));
+  // if (!handler) return this->err(protocol::HTTP::standard_response(405));
+  if (!handler)
+  {
+    Logger::debug("request resolved to unsuported method");
+    return protocol::HTTP::standard_response(500);
+  }
 
-  return this->err(middleware ? middleware(_request, handler) : handler(_request));
+  if (middleware)
+  {
+    Logger::debug("middleware -> handler");
+    return err(middleware(_request, handler));
+  }
+  else
+  {
+    Logger::debug("handler");
+    return err(handler(_request));
+  }
 }
 
 Router::Response Router::err(Response&& res) const { return res; }

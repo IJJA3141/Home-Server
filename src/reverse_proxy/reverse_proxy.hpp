@@ -22,6 +22,8 @@ class TcpServer
 {
 public:
   TcpServer(const std::string& ip, uint16_t port, const Handler request_handler);
+  ~TcpServer();
+
   void listen();
 
 protected:
@@ -49,7 +51,7 @@ protected:
     ~Client();
 
     bool notify();
-    virtual inline const std::string connection_type() const { return "http"; }
+    virtual inline const std::string connection_type() const { return CONNECTION_TYPE_HTTP; }
     virtual ssize_t recv(int __fd, void* __buf, size_t __n, int __flags);
     virtual ssize_t send(int __fd, const void* __buf, size_t __n, int __flags);
   };
@@ -58,8 +60,7 @@ protected:
 class TlsServer : public TcpServer
 {
 public:
-  static std::atomic<size_t> SSL_LIB_HANDLE;
-  static std::atomic<bool> SSL_LIB_INIT;
+  static std::atomic<int> SSL_LIB_INIT;
 
   TlsServer(const std::string& ip, uint16_t port, const std::filesystem::path& certificat,
             const std::filesystem::path& key, const Handler request_handler);
@@ -75,7 +76,7 @@ private:
     Client(const int listening_socket, const int epoll, SSL_CTX* const ctx, const Handler request_handler);
     ~Client();
 
-    inline const std::string connection_type() const override { return "https"; }
+    inline const std::string connection_type() const override { return CONNECTION_TYPE_HTTPS; }
     ssize_t recv(int __fd, void* __buf, size_t __n, int __flags) override;
     ssize_t send(int __fd, const void* __buf, size_t __n, int __flags) override;
 

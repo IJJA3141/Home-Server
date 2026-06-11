@@ -1,4 +1,5 @@
 #include "http.hpp"
+#include "../../utils/iterator.hpp"
 #include <optional>
 #include <regex>
 #include <stdexcept>
@@ -170,6 +171,29 @@ std::string HTTP::method_to_string(HTTP::Method _)
   case HTTP::Method::TRACE:   return "TRACE";
   default: std::unreachable();
   } // clang-format on
+}
+
+std::map<std::string, std::string> HTTP::parse_cookies(std::string_view _)
+{
+  Iterator iterator(_);
+  std::string name, value;
+  std::map<std::string, std::string> map;
+
+  while (iterator.next('='))
+  {
+    name = iterator.head;
+    if (!iterator.next("; "))
+    {
+      value = iterator.tail;
+      map[name] = value;
+      break;
+    }
+
+    value = iterator.head;
+    map[name] = value;
+  }
+
+  return map;
 }
 
 } // namespace protocol

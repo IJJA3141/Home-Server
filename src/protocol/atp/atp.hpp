@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 #include <optional>
 #include <string>
+#include <utility>
 #include <uuid/uuid.h>
 #include <variant>
 
@@ -118,27 +119,49 @@ struct ATP
 
   struct Request
   {
+    Type type;
     std::variant<VAL::Request, LOG::Request, GEN::Request> request;
 
     class ParserContext;
     static size_t parse(std::span<const char>, ParserContext&);
     operator std::string() const
     {
-      return request.visit([](auto&& _) -> std::string { return _; });
+      return unparse_type(type) + "\n" + request.visit([](auto&& _) -> std::string { return _; });
     };
   };
 
   struct Response
   {
+    Type type;
     std::variant<VAL::Response, LOG::Response, GEN::Response> response;
 
     class ParserContext;
     static size_t parse(std::span<const char>, ParserContext&);
     operator std::string() const
     {
-      return response.visit([](auto&& _) -> std::string { return _; });
+      return unparse_type(type) + "\n" + response.visit([](auto&& _) -> std::string { return _; });
     };
   };
+
+  static constexpr std::string unparse_type(Type type)
+  {
+    switch (type)
+    { // clang-format off
+    case ATP::Type::VAL: return "VAL";
+    case ATP::Type::LOG: return "LOG";
+    case ATP::Type::GEN: return "GEN";
+    } // clang-format on
+
+    std::unreachable();
+  }
+
+  static constexpr std::optional<ATP::Type> parse_type(std::string_view _type)
+  {
+    if (_type == "VAL") return ATP::Type::VAL;
+    else if (_type == "LOG") return ATP::Type::LOG;
+    else if (_type == "GEN") return ATP::Type::GEN;
+    else return std::nullopt;
+  }
 };
 
 class ATP::VAL::Request::ParserContext
@@ -151,7 +174,6 @@ public:
 private:
   enum
   {
-    TYPE,
     SOURCE,
     ID,
     IP,
@@ -172,7 +194,6 @@ public:
   Response construct();
 
 private:
-  bool typed_;
   std::expected<Uuid, std::string> id_;
   friend struct ATP::VAL::Response;
 };
@@ -187,7 +208,6 @@ public:
 private:
   enum
   {
-    TYPE,
     USER,
     PWD,
     IP,
@@ -205,7 +225,6 @@ public:
   Response construct();
 
 private:
-  bool typed_;
   std::expected<Uuid, std::string> id_;
   friend struct ATP::LOG::Response;
 };
@@ -220,7 +239,6 @@ public:
 private:
   enum
   {
-    TYPE,
     SOURCE,
     ID,
     IP,
@@ -241,7 +259,6 @@ public:
   Response construct();
 
 private:
-  bool typed_;
   std::expected<Uuid, std::string> id_;
   friend struct ATP::GEN::Response;
 };
@@ -277,13 +294,5 @@ private:
 
   friend struct ATP::Response;
 };
-
-constexpr std::optional<ATP::Type> parse_type(std::string_view _type)
-{
-  if (_type == "VAL") return ATP::Type::VAL;
-  else if (_type == "LOG") return ATP::Type::LOG;
-  else if (_type == "GEN") return ATP::Type::GEN;
-  else return std::nullopt;
-}
 
 } // namespace protocol
