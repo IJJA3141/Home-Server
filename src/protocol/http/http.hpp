@@ -29,6 +29,8 @@ struct HTTP
   static std::map<std::string, std::string> parse_cookies(std::string_view);
   static std::optional<status> parse_status(std::string_view);
   static std::string status_to_string(status);
+
+  static std::map<std::string, std::string> parse_query(std::string_view path);
   // clang-format on
 
   struct Request

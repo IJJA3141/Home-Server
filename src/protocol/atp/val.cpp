@@ -1,6 +1,7 @@
 #include "../../utils/iterator.hpp"
 #include "atp.hpp"
 #include <optional>
+#include <string>
 #include <utility>
 
 namespace protocol
@@ -89,13 +90,9 @@ size_t Response::parse(std::span<const char> _stream, ParserContext& _ctx)
     return _stream.size() - iterator.tail.size();
   }
 
-  _ctx.id_ = Uuid::parse(iterator.head);
-  if (!_ctx.id_)
-  {
-    _ctx.result = ParserResult::Invalid;
-    _ctx.error_msg = "invalid uuid " + std::string(iterator.head);
-    return _stream.size() - iterator.tail.size();
-  }
+  auto id = Uuid::parse_safe(iterator.head);
+  if (id) _ctx.id_ = id.value();
+  else _ctx.id_ = std::unexpected<std::string>{iterator.head};
 
   _ctx.result = ParserResult::Complete;
   return _stream.size() - iterator.tail.size();

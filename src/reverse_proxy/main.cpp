@@ -15,8 +15,11 @@ int main(void)
     // if (_request.headers["host"] == "mihon") return mihon_sync.transmit(_request);
     // return {protocol::HTTP::Version::HTTP_11, 200, {{"Content-length", "1"}, {"content-type", "text/html"}},
     // "?"};
+    
     auto res = mihon_sync.transmit(_request);
     Logger::debug("sending\n{}", std::string(res));
+
+
     return res;
   });
 

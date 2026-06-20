@@ -1,7 +1,5 @@
 #pragma once
 
-#include <filesystem>
-
 // const auto CERT_PATH = std::filesystem::path("/home/alexe/tmp/cert.pem");
 // const auto KEY_PATH = std::filesystem::path("/home/alexe/tmp/key.pem");
 constexpr auto CERT_PATH = "/home/alexe/tmp/cert.pem";
@@ -23,7 +21,9 @@ constexpr auto KEY_PATH = "/home/alexe/tmp/key.pem";
 #define REVERSE_PROXY_CLIENT_BUFFER_SIZE BUFFER_SIZE
 
 // http cookies
-#define HTTP_SESSION_ID       "__Host-Http-session-id"
+// #define HTTP_SESSION_ID       "__Host-Http-session-id"
+#define HTTP_SESSION_ID "session-id" // http test  only
+static_assert(__DEBUG, "/!\\");
 #define HTTP_PREFIX           "x-"
 #define HTTP_WILDCARD         HTTP_PREFIX "wildcard"
 #define HTTP_CONNECTION_TYPE  HTTP_PREFIX "connection-type"

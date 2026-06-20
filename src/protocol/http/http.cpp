@@ -7,7 +7,10 @@
 namespace protocol
 {
 
-HTTP::Response HTTP::standard_response(int status) { return {HTTP::Version::HTTP_11, status, "", {}, ""}; }
+HTTP::Response HTTP::standard_response(int status)
+{
+  return {HTTP::Version::HTTP_11, status, "", {{"content-length", "0"}}, ""};
+}
 
 std::optional<HTTP::Version> HTTP::parse_version(std::string_view _)
 {
@@ -157,6 +160,7 @@ std::string HTTP::status_to_string(int _)
   default: std::unreachable();
   } // clang-format on
 }
+
 std::string HTTP::method_to_string(HTTP::Method _)
 {
   switch (_)
@@ -183,6 +187,30 @@ std::map<std::string, std::string> HTTP::parse_cookies(std::string_view _)
   {
     name = iterator.head;
     if (!iterator.next("; "))
+    {
+      value = iterator.tail;
+      map[name] = value;
+      break;
+    }
+
+    value = iterator.head;
+    map[name] = value;
+  }
+
+  return map;
+}
+
+std::map<std::string, std::string> HTTP::parse_query(std::string_view _)
+{
+  Iterator iterator(_);
+  std::string name, value;
+  std::map<std::string, std::string> map;
+
+  iterator.next('?');
+  while (iterator.next('='))
+  {
+    name = iterator.head;
+    if (!iterator.next("&"))
     {
       value = iterator.tail;
       map[name] = value;

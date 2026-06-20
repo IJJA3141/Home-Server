@@ -97,62 +97,66 @@ TlsServer::Client::Client(const int listening_socket, const int epoll, SSL_CTX* 
     : TcpServer::Client(listening_socket, epoll, request_handler)
 {
   // auto log = Logger::New();
-  auto log = Logger::get(std::format("TLS Client IP={}", this->ip),
-                         [] { return ERR_error_string(ERR_get_error(), nullptr); });
+  // auto log = Logger::get(std::format("TLS Client IP={}", this->ip),
+  //                        [] { return ERR_error_string(ERR_get_error(), nullptr); });
+  //
+  // log.debug("creating ssl context...");
+  // this->ssl_ = SSL_new(_ctx);
+  // if (!this->ssl_)
+  // {
+  //   log.error("SSL session creation failed");
+  //   throw std::runtime_error("SSL session creation failed");
+  // }
+  //
+  // log.debug("assigning socket to ssl context...");
+  // if (!SSL_set_fd(this->ssl_, this->socket))
+  // {
+  //   SSL_free(this->ssl_);
+  //   log.error("SSL session association with socket (fd={}) failed", this->socket);
+  //   throw std::runtime_error("SSL session association with socket failed");
+  // }
+  //
+  // int flag = fcntl(this->socket, F_GETFL);
+  // if (flag == -1)
+  // {
+  //   SSL_free(this->ssl_);
+  //   log.error("get socket flags failed");
+  //   throw std::runtime_error("get socket flags failed");
+  // }
+  //
+  // // set to blocking for ssl handshake
+  // if (fcntl(this->socket, F_SETFL, flag & ~O_NONBLOCK) == -1)
+  // {
+  //   SSL_free(this->ssl_);
+  //   log.error("Failed to set socket to blocking mode");
+  //   throw std::runtime_error("Failed to set socket to blocking mode");
+  // }
+  //
+  // log.debug("accepting ssl connection...");
+  // int err = SSL_accept(this->ssl_);
+  // if (err <= 0)
+  // {
+  //   err = SSL_get_error(this->ssl_, err);
+  //   if (err != SSL_ERROR_NONE)
+  //   {
+  //     SSL_free(this->ssl_);
+  //     log.error("ssl accept failed");
+  //     throw std::runtime_error("ssl accept failed");
+  //   }
+  // }
+  //
+  // if (fcntl(this->socket, F_SETFL, flag))
+  // {
+  //   SSL_free(this->ssl_);
+  //   log.error("Failed to restore socket flags after TLS handshake");
+  //   throw std::runtime_error("Failed to restore socket flags after TLS handshake");
+  // }
+  //
+  // log.info("ssl handshake succeded");
 
-  log.debug("creating ssl context...");
-  this->ssl_ = SSL_new(_ctx);
-  if (!this->ssl_)
-  {
-    log.error("SSL session creation failed");
-    throw std::runtime_error("SSL session creation failed");
-  }
+  // TODO should remove the blocking bs.
+  // relay on epoll for multy step handshake
 
-  log.debug("assigning socket to ssl context...");
-  if (!SSL_set_fd(this->ssl_, this->socket))
-  {
-    SSL_free(this->ssl_);
-    log.error("SSL session association with socket (fd={}) failed", this->socket);
-    throw std::runtime_error("SSL session association with socket failed");
-  }
-
-  int flag = fcntl(this->socket, F_GETFL);
-  if (flag == -1)
-  {
-    SSL_free(this->ssl_);
-    log.error("get socket flags failed");
-    throw std::runtime_error("get socket flags failed");
-  }
-
-  // set to blocking for ssl handshake
-  if (fcntl(this->socket, F_SETFL, flag & ~O_NONBLOCK) == -1)
-  {
-    SSL_free(this->ssl_);
-    log.error("Failed to set socket to blocking mode");
-    throw std::runtime_error("Failed to set socket to blocking mode");
-  }
-
-  log.debug("accepting ssl connection...");
-  int err = SSL_accept(this->ssl_);
-  if (err <= 0)
-  {
-    err = SSL_get_error(this->ssl_, err);
-    if (err != SSL_ERROR_NONE)
-    {
-      SSL_free(this->ssl_);
-      log.error("ssl accept failed");
-      throw std::runtime_error("ssl accept failed");
-    }
-  }
-
-  if (fcntl(this->socket, F_SETFL, flag))
-  {
-    SSL_free(this->ssl_);
-    log.error("Failed to restore socket flags after TLS handshake");
-    throw std::runtime_error("Failed to restore socket flags after TLS handshake");
-  }
-
-  log.info("ssl handshake succeded");
 }
 
 TlsServer::Client::~Client()

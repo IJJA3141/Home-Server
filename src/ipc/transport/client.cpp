@@ -104,7 +104,7 @@ template <protocol::Protocol P> P::Response TransportClient<P>::transmit(const P
     {
     case protocol::ParserResult::Invalid:
       log.crit("received an invalid response {}", this->buffer_.read());
-      throw std::runtime_error("parsing failed");
+      throw std::runtime_error("parsing failed" + ctx.error_msg);
 
     case protocol::ParserResult::NeedMoreData:
       log.debug("need more data");

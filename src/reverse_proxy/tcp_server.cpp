@@ -100,6 +100,7 @@ void TcpServer::listen()
   epoll_event events[REVERSE_PROXY_EPOLL_SIZE];
   this->running_ = true;
 
+  // main loop
   while (this->running_)
   {
     int n = epoll_wait(this->epoll_fd_, events, REVERSE_PROXY_EPOLL_SIZE, -1);
@@ -188,20 +189,22 @@ bool TcpServer::Client::notify()
 
   auto log = Logger::get(std::format("TCP Client (IP={})", this->ip), [] { return strerror(errno); });
 
-  // TODO update for ssl needmoredata
-  bytes = this->recv(this->socket, this->connection_buffer.write(), this->connection_buffer.capacity(), 0);
-  if (bytes < 0)
-  {
-    log.error("recv failed");
-    return false;
+  { // one func
+    // should recv into buffer, hanlde ssl error and disconnection
+    bytes = this->recv(this->socket, this->connection_buffer.write(), this->connection_buffer.capacity(), 0);
+    if (bytes < 0)
+    {
+      log.error("recv failed");
+      return false;
+    }
+    else if (bytes == 0) return true;
+    else this->connection_buffer.acknowledge(bytes);
+
+    log.debug("received {} bytes", bytes);
+
+    bytes = protocol::HTTP::Request::parse(this->connection_buffer.read(), this->parser_ctx);
+    this->connection_buffer.discard(bytes);
   }
-  else if (bytes == 0) return true;
-  else this->connection_buffer.acknowledge(bytes);
-
-  log.debug("received {} bytes", bytes);
-
-  bytes = protocol::HTTP::Request::parse(this->connection_buffer.read(), this->parser_ctx);
-  this->connection_buffer.discard(bytes);
 
   std::string response;
   switch (this->parser_ctx.result)

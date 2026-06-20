@@ -1,6 +1,5 @@
 #include "../config.hpp"
 #include "../ipc/transport/transport.hpp"
-#include "../utils/base64.hpp"
 #include "../utils/utils.hpp"
 #include "auth.hpp"
 #include <expected>
@@ -70,14 +69,14 @@ ATP::LOG::Response handle_log(std::vector<auth::User> _users, ATP::LOG::Request 
 
     if (memcmp(user->pwd.begin(), hash, sizeof hash))
     {
-      return {std::unexpected("bad password")};
+      return {std::unexpected("bad password " + _request.pwd)};
     }
 
     return {user->uuid};
   }
   else
   {
-    return {std::unexpected("user not found")};
+    return {std::unexpected("user {" + _request.user + "} not found")};
   }
 }
 
