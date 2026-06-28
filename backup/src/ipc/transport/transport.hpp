@@ -19,7 +19,7 @@ namespace ipc
  *
  *  This class is used to receive request from other processes.
  */
-template <protocol::Protocol P> class TransportServer
+template <protocol::ProtocolManager P> class TransportServer
 {
   using ParserContext = typename P::Request::ParserContext;
 
@@ -79,7 +79,7 @@ private:
  *
  *  This class is used to send request to other processes.
  */
-template <protocol::Protocol P> class TransportClient
+template <protocol::ProtocolManager P> class TransportClient
 {
 public:
   /**

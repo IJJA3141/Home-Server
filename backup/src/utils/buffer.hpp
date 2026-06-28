@@ -19,7 +19,7 @@ public:
   size_t capacity() const;
   void acknowledge(size_t written);
 
-  std::span<const T> read() const;
+  std::span<const T> read_buffer() const;
   size_t size() const;
   void discard(size_t read);
 
@@ -51,7 +51,7 @@ template <typename _T, size_t _S> void RingBuffer<_T, _S>::acknowledge(size_t _w
   this->exhausted = false;
 }
 
-template <typename _T, size_t _S> std::span<const _T> RingBuffer<_T, _S>::read() const
+template <typename _T, size_t _S> std::span<const _T> RingBuffer<_T, _S>::read_buffer() const
 {
   return std::span(this->memory_ + this->tail_, this->memory_ + this->tail_ + this->size());
 }

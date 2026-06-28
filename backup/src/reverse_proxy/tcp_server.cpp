@@ -202,7 +202,7 @@ bool TcpServer::Client::notify()
 
     log.debug("received {} bytes", bytes);
 
-    bytes = protocol::HTTP::Request::parse(this->connection_buffer.read(), this->parser_ctx);
+    bytes = protocol::HTTP::Request::parse(this->connection_buffer.read_buffer(), this->parser_ctx);
     this->connection_buffer.discard(bytes);
   }
 

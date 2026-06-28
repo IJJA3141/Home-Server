@@ -1,0 +1,10 @@
+#pragma once
+
+#define BUFFER_SIZE 4056
+
+#define CONNECTION_TYPE_INSECURE "http"
+#define CONNECTION_TYPE_SECURE   "https"
+
+#define REVERSE_PROXY_MAX_QUEUE          100
+#define REVERSE_PROXY_EPOLL_SIZE         10
+#define REVERSE_PROXY_CLIENT_BUFFER_SIZE BUFFER_SIZE

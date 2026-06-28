@@ -26,14 +26,14 @@ concept Parsable = requires(std::span<const char> data, typename T::ParserContex
 };
 
 template <typename T>
-concept Protocol = requires(typename T::Request request, typename T::Response response) {
+concept policy = requires(typename T::Request request, typename T::Response response) {
   requires Parsable<typename T::Request>;
   requires Parsable<typename T::Response>;
   { std::string(request) } -> std::same_as<std::string>;
   { std::string(response) } -> std::same_as<std::string>;
 };
 
-template <Protocol P> using Handler = std::function<typename P::Response(typename P::Request&)>;
-template <Protocol P> using Middleware = std::function<typename P::Response(typename P::Request&, Handler<P>)>;
+template <policy P> using Handler = std::function<typename P::Response(typename P::Request&)>;
+template <policy P> using Middleware = std::function<typename P::Response(typename P::Request&, Handler<P>)>;
 
 }; // namespace protocol

@@ -1,49 +1,22 @@
-cmake_minimum_required(VERSION 4.0.2) # cmake version
-project(server)                       # name
+cmake_minimum_required(VERSION 4.0.2)
+project(server LANGUAGES CXX)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 26)
-# set(CMAKE_CXX_FLAGS "-freflection") maybe some day
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-include_directories(/usr/local/include)
-link_directories(/usr/local/lib)
+find_package(OpenSSL REQUIRED)
+find_package(Threads REQUIRED)
+find_library(UUID_LIB uuid REQUIRED)
 
-set(LIBS -lpthread -lssl -lcrypto -luuid)     # libs
-set(SOURCE_FILES                              # src
-  # IPC
-  ${CMAKE_SOURCE_DIR}/src/ipc/transport/client.cpp
-  ${CMAKE_SOURCE_DIR}/src/ipc/transport/server.cpp
+add_subdirectory(src/cpp)
 
-  # PROTOCOL
-  ${CMAKE_SOURCE_DIR}/src/protocol/http/http.cpp
-  ${CMAKE_SOURCE_DIR}/src/protocol/http/request.cpp
-  ${CMAKE_SOURCE_DIR}/src/protocol/http/response.cpp
-  ${CMAKE_SOURCE_DIR}/src/protocol/atp/any.cpp
-  ${CMAKE_SOURCE_DIR}/src/protocol/atp/val.cpp
-  ${CMAKE_SOURCE_DIR}/src/protocol/atp/log.cpp
-  ${CMAKE_SOURCE_DIR}/src/protocol/atp/gen.cpp
-  ${CMAKE_SOURCE_DIR}/src/protocol/atp/to_string.cpp
-
-  # REVERSE_PROXY
-  ${CMAKE_SOURCE_DIR}/src/reverse_proxy/tcp_server.cpp
-  ${CMAKE_SOURCE_DIR}/src/reverse_proxy/tls_server.cpp
-
-  # ROUTING
-  ${CMAKE_SOURCE_DIR}/src/routing/router.cpp
-  ${CMAKE_SOURCE_DIR}/src/routing/segment.cpp
-  ${CMAKE_SOURCE_DIR}/src/routing/route.cpp
-
-  # AUTH
-  ${CMAKE_SOURCE_DIR}/src/auth/auth.cpp
-
-
-  ${CMAKE_SOURCE_DIR}/src/logger/logger.cpp
-)
-
-enable_testing()
-add_subdirectory(src)
-add_subdirectory(test)
+option(BUILD_TESTS "Build tests" ON)
+if(BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(test)
+endif()
 
 execute_process(
   COMMAND ${CMAKE_COMMAND} -E create_symlink
