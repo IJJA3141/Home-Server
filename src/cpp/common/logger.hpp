@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdio>
+#include <cstring>
 #include <filesystem>
 #include <format>
 #include <functional>
@@ -195,6 +196,7 @@ public:
   static const Instance get(const std::string& prefix, ctx_f suffix);
   static const Instance get(ctx_f prefix);
   static const Instance get(ctx_f prefix, ctx_f suffix);
+  static const std::string stderr() { return strerror(errno); }
 
 private:
   static std::unique_ptr<Logger> logger_;
