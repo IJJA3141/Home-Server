@@ -156,7 +156,6 @@ TlsServer::Client::Client(const int listening_socket, const int epoll, SSL_CTX* 
 
   // TODO should remove the blocking bs.
   // relay on epoll for multy step handshake
-
 }
 
 TlsServer::Client::~Client()

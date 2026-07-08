@@ -1,7 +1,8 @@
-#include "../common/logger.hpp"
-#include "reverse_proxy.hpp"
+#include "server.hpp"
+#include <fcntl.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include <sys/types.h>
 
 std::atomic<int> TlsServer::SSL_LIB_INIT = 0;
 
@@ -20,74 +21,68 @@ void unload_lib_ssl()
   if (--TlsServer::SSL_LIB_INIT == 0) OPENSSL_cleanup();
 }
 
-TlsServer::TlsServer(const std::string& ip, uint16_t port, const std::filesystem::path& cert,
-                     const std::filesystem::path& key, protocol::Handler<ForwardPolicy> handler)
-    : TcpServer(ip, port, handler)
+TlsServer::TlsServer(const std::string& _ip, uint16_t _port, Epoll _epoll, ForwardingTable _fw_tbl,
+                     const std::filesystem::path& _cert, const std::filesystem::path& _key)
+    : TcpServer{_ip, _port, _epoll, _fw_tbl}
 {
-  auto log = Logger::get("TSL Server", [] { return ERR_error_string(ERR_get_error(), nullptr); });
-
   load_lib_ssl();
 
-  if ((this->ctx_ = SSL_CTX_new(TLS_method())) == nullptr)
+  auto log = Logger::get("TSL Server", [] { return ERR_error_string(ERR_get_error(), nullptr); });
+
+  this->ctx_ = SSL_CTX_new(TLS_method());
+  if (!this->ctx_)
   {
     unload_lib_ssl();
     log.crit("SSL context creation failed");
     throw std::runtime_error("SSL context creation failed");
   }
-  log.debug("new ssl ctx created");
 
-  if (SSL_CTX_use_certificate_file(this->ctx_, cert.c_str(), SSL_FILETYPE_PEM) != 1)
+  int c = SSL_CTX_use_certificate_file(this->ctx_, _cert.c_str(), SSL_FILETYPE_PEM);
+  if (c != 1)
   {
     unload_lib_ssl();
     SSL_CTX_free(this->ctx_);
-    log.crit("ssl certificate loading {} failed", cert);
+    log.crit("ssl certificate loading {} failed", _cert);
     throw std::runtime_error("ssl certificate loading failed");
   }
-  log.debug("certificate loaded");
 
-  if (SSL_CTX_use_PrivateKey_file(this->ctx_, key.c_str(), SSL_FILETYPE_PEM) != 1)
+  c = SSL_CTX_use_PrivateKey_file(this->ctx_, _key.c_str(), SSL_FILETYPE_PEM);
+  if (c != 1)
   {
     unload_lib_ssl();
     SSL_CTX_free(this->ctx_);
-    log.crit("ssl key {} loading failed", key);
+    log.crit("ssl key {} loading failed", _key);
     throw std::runtime_error("ssl key loading failed");
   }
-  log.debug("key loaded");
 
-  if (SSL_CTX_check_private_key(this->ctx_) != 1)
+  c = SSL_CTX_check_private_key(this->ctx_);
+  if (c != 1)
   {
     unload_lib_ssl();
     SSL_CTX_free(this->ctx_);
-    log.crit("certificate {} doesn't match key {}", cert, key);
+    log.crit("certificate {} doesn't match key {}", _cert, _key);
     throw std::runtime_error("certificate and key don't match");
   }
-  log.debug("certificate and key match");
-  log.info("created...");
+
+  log.info("creation successful, ready to listen");
 }
 
-TlsServer::TlsServer::~TlsServer()
+TlsServer::~TlsServer()
 {
-  auto log = Logger::get("TLS Server");
   SSL_CTX_free(this->ctx_);
   unload_lib_ssl();
-  log.debug("deleted...");
+  Logger::debug("(TLS Server) closed...");
 }
 
-void TlsServer::accept()
+void TlsServer::notify_read()
 {
-  auto log = Logger::get("TLS Server");
-
-  log.info("accepting new client connection");
   try
   {
-    new TlsServer::Client(this->listening_socket_, this->epoll_fd_, this->ctx_, this->handler_);
+    new TlsServer::Client(this->listening_socket_, *this);
   }
-  catch (const std::system_error& e)
-  { // client connection failed
-    log.warn("client connection failed (error={})", e.what());
-  }
-  catch (const std::runtime_error& e)
-  { // client handshake failed
-    log.warn("client handshake failed (error={})", e.what());
+  catch (const std::exception& e)
+  {
+    const auto& log = Logger::get(std::format("TLS Server"), [] { return strerror(errno); });
+    log.error("client threw an error while registering error: {}", e.what());
   }
 }
