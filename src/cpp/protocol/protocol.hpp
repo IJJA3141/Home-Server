@@ -10,6 +10,13 @@
 namespace protocol
 {
 
+enum class ParserResult
+{
+  NeedMoreData,
+  Invalid,
+  Complete
+};
+
 template <class P>
 concept policy = requires(P policy) {
   typename P::Request;

@@ -3,8 +3,8 @@
 #include "../common/ring_buffer.hpp"
 #include "../common/uuid.hpp"
 #include "../config.hpp"
-#include "forward_table.hpp"
-
+#include "../ipc/ipc.hpp"
+#include "../protocol/forwarding/forwarding.hpp"
 #include "epoll.hpp"
 #include <atomic>
 #include <cstddef>
@@ -12,16 +12,20 @@
 #include <filesystem>
 #include <netinet/in.h>
 #include <openssl/crypto.h>
+#include <string>
 #include <sys/epoll.h>
 #include <unordered_map>
+#include <unordered_set>
 
 class TcpServer
 {
 protected:
   struct Client;
+  using Table = std::unordered_map<std::string, ipc::IClient*>;
+  using Pool = std::unordered_map<Uuid, Client*>;
 
 public:
-  TcpServer(const std::string& ip, uint16_t port, Epoll epoll, ForwardingTable forwarding_table);
+  TcpServer(const std::string& ip, uint16_t port, Epoll epoll, const Table& forwarding);
   ~TcpServer();
 
   void listen(); // === start
@@ -36,24 +40,24 @@ public:
 
 protected:
   int listening_socket_;
-
+  const Table& forwarding_;
   Epoll epoll_;
-  ForwardingTable forwarding_table_;
-  std::unordered_map<Uuid, Client*> client_pool;
+  Pool clients_;
 
-  void remove_child(Uuid child_uuid);
+  void drop_child(Uuid child_uuid);
 };
 
 struct TcpServer::Client
 {
   using RingBuffer = RingBuffer<std::byte, REVERSE_PROXY_CLIENT_RING_BUFFER_SIZE>;
   using Buffer = std::array<std::byte, REVERSE_PROXY_CLIENT_BUFFER_SIZE>;
+  using ParserContext = protocol::forwarding::Request::ParserContext;
 
-  Client(int listening_socket_, const ForwardingTable& forwarding_table);
+  Client(int listening_socket, TcpServer& parent);
   virtual ~Client();
 
-  virtual void recv();
-  virtual void send(std::span<std::byte>);
+  virtual bool recv();
+  virtual void send(std::span<const std::byte>);
 
   void notify_read();
   void notify_write();
@@ -61,17 +65,28 @@ struct TcpServer::Client
   void notify_close();
   void notify_error();
 
-  inline int fd() { return socket; }
+  inline int fd() { return socket_; }
   inline Uuid uuid() { return uuid_; }
 
 protected:
-  RingBuffer out_buffer_; // buffers responses that could not be send in one go
-  Buffer in_buffer_;      // used to read incoming request
-  int socket;
+  RingBuffer out_; // buffers responses that could not be send in one go
+  RingBuffer in_;  // used to read incoming request
+  int socket_;
+
   Uuid uuid_;
   sockaddr_in addr_; // stores client infos
-  std::string ip_;
-  ForwardingTable forwarding_table_;
+  std::string ip_;   // same but readable
+
+  TcpServer& parent;
+  std::unordered_set<ipc::IClient*> in_use_;
+
+  ParserContext ctx_;
+  ipc::IClient* host_;
+
+  size_t max_header_size;
+  size_t remaining;
+
+  bool get_host(std::span<const char> chars);
 };
 
 class TlsServer : public TcpServer
@@ -79,7 +94,7 @@ class TlsServer : public TcpServer
 public:
   static std::atomic<int> SSL_LIB_INIT;
 
-  TlsServer(const std::string& ip, uint16_t port, Epoll epoll, ForwardingTable forwarding_table,
+  TlsServer(const std::string& ip, uint16_t port, Epoll epoll, const Table& forwarding,
             const std::filesystem::path& certificat, const std::filesystem::path& key);
   ~TlsServer();
 
@@ -96,8 +111,8 @@ struct TlsServer::Client final : TcpServer::Client
   Client(int listening_socket, TlsServer& parent);
   ~Client() override final;
 
-  void recv() override final;
-  void send(std::span<std::byte>) override final;
+  bool recv() override final;
+  void send(std::span<const std::byte>) override final;
 
 private:
   ::SSL* ssl_;

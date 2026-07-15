@@ -4,8 +4,8 @@
 #include <sys/epoll.h>
 #include <system_error>
 
-TcpServer::TcpServer(const std::string& _ip, uint16_t _port, Epoll _epoll, ForwardingTable _forwarding_table)
-    : epoll_{_epoll}, forwarding_table_{_forwarding_table}
+TcpServer::TcpServer(const std::string& _ip, uint16_t _port, Epoll _epoll, const Table& _forwarding)
+    : epoll_{_epoll}, forwarding_{_forwarding}
 {
   const auto& log = Logger::get("TCP Server", [] { return strerror(errno); });
 
@@ -65,7 +65,7 @@ TcpServer::~TcpServer()
     log.error("epoll threw an error while deregistering error: {}", e.what());
   }
 
-  for (auto [_, client] : this->client_pool)
+  for (auto [_, client] : this->clients_)
     try
     {
       delete client;
@@ -93,11 +93,26 @@ void TcpServer::listen()
   log.info("socket listening");
 }
 
+void TcpServer::drop_child(Uuid _child_uuid)
+{
+  auto node = this->clients_.extract(_child_uuid);
+  if (!node.empty()) try
+    {
+      delete node.mapped();
+    }
+    catch (const std::system_error& e)
+    {
+      const auto& log = Logger::get(std::format("TCP Server"), [] { return strerror(errno); });
+      log.error("client threw an error while deregistering error: {}", e.what());
+    }
+}
+
 void TcpServer::notify_read()
 {
   try
   {
-    new TcpServer::Client(this->listening_socket_, *this);
+    auto client = new TcpServer::Client(this->listening_socket_, *this);
+    this->clients_.emplace(client->uuid(), client);
   }
   catch (const std::runtime_error& e)
   {

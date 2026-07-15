@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <span>
+
 namespace concepts
 {
 
@@ -26,6 +27,11 @@ concept ErrorNotifiable = requires(T t) { t.notify_error(); };
 template <typename T>
 concept Writable = requires(T t, std::span<std::byte> bytes) {
   { t.write(bytes) } -> std::same_as<void>;
+};
+
+template <typename T>
+concept Readable = requires(T t, std::span<std::byte> bytes) {
+  { t.read() } -> std::same_as<std::span<std::byte>>;
 };
 
 } // namespace concepts

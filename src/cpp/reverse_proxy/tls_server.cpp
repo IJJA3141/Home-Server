@@ -21,9 +21,9 @@ void unload_lib_ssl()
   if (--TlsServer::SSL_LIB_INIT == 0) OPENSSL_cleanup();
 }
 
-TlsServer::TlsServer(const std::string& _ip, uint16_t _port, Epoll _epoll, ForwardingTable _fw_tbl,
+TlsServer::TlsServer(const std::string& _ip, uint16_t _port, Epoll _epoll, const Table& _forwarding,
                      const std::filesystem::path& _cert, const std::filesystem::path& _key)
-    : TcpServer{_ip, _port, _epoll, _fw_tbl}
+    : TcpServer{_ip, _port, _epoll, _forwarding}
 {
   load_lib_ssl();
 
@@ -78,7 +78,8 @@ void TlsServer::notify_read()
 {
   try
   {
-    new TlsServer::Client(this->listening_socket_, *this);
+    auto client = new TlsServer::Client(this->listening_socket_, *this);
+    this->clients_.emplace(client->uuid(), client);
   }
   catch (const std::exception& e)
   {

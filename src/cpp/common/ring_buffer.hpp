@@ -21,6 +21,7 @@ public:
   void discard(size_t read);
 
   void clear();
+  inline bool empty() const { return this->size() == 0; }
 
 private:
   size_t head_;    // offset to written end
