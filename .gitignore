@@ -1,4 +1,5 @@
-# Ignore output
-Release/
-Debug/
-challenge/
+Testing/
+.cache/
+bin/
+
+compile_commands.json

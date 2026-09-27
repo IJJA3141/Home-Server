@@ -1,21 +1,25 @@
-cmake_minimum_required(VERSION 3.25.1)
-project(Home-Server)
+cmake_minimum_required(VERSION 4.0.2)
+project(home-server LANGUAGES CXX)
 
-set(SOURCE_FILES
-    ./src/main.cpp
-    ./src/tcp-server/tcp-server.cpp
-    ./src/tls-server/tls-server.cpp
-    ./src/client/client.cpp
-    ./src/client/ssl-client.cpp
-    ./src/parser/parser.cpp
-    ./src/params/params.cpp
-    )
+set(CMAKE_CXX_STANDARD 26)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(INC_DIR /usr/local/include)
-set(LINK_DIR /usr/local/lib)
+find_package(OpenSSL REQUIRED)
+find_package(Threads REQUIRED)
+find_library(UUID_LIB uuid REQUIRED)
 
-include_directories(${INC_DIR})
-link_directories(${LINK_DIR})
-add_compile_definitions("DEBUG=$<CONFIG:Debug>")
-ADD_EXECUTABLE(server.out ${SOURCE_FILES})
-TARGET_LINK_LIBRARIES(server.out -lpthread -lssl -lcrypto)
+add_subdirectory(src/cpp)
+
+option(BUILD_TESTS "Build tests" ON)
+if(BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(test)
+endif()
+
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ${CMAKE_BINARY_DIR}/compile_commands.json
+  ${CMAKE_SOURCE_DIR}/compile_commands.json
+)
