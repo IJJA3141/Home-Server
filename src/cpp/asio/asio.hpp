@@ -3,6 +3,9 @@
 #include "executor.hpp"
 #include "reactor.hpp"
 
+#include <cstring>
+#include <unistd.h>
+
 namespace asio
 {
 
@@ -35,48 +38,41 @@ template <typename R> struct Awaitable
   R&& await_resume() noexcept { return std::move(value); };
 };
 
+// base class for aio socket stream
 class SocketBase
 {
 public:
-  Awaitable<std::pair<std::size_t, Error>> async_read(std::span<std::byte> buffer);
-  Awaitable<std::pair<std::size_t, Error>> async_read_once(std::span<std::byte> buffer);
-  Awaitable<std::pair<std::size_t, Error>> async_read(std::span<std::byte> buffer,
-                                                      std::span<const std::byte> delimiter);
+  SocketBase(Executor* executor, Reactor* reactor, int fd);
+  ~SocketBase() noexcept;
 
-  Awaitable<std::pair<std::size_t, Error>> async_write(std::span<const std::byte> buffer);
-  Awaitable<std::pair<std::size_t, Error>> async_write_once(std::span<const std::byte> buffer);
+  // noncopyable
+  SocketBase(const SocketBase&) = delete;
+  SocketBase& operator=(const SocketBase&) = delete;
+
+  // movable
+  SocketBase(SocketBase&&) noexcept;
+  SocketBase& operator=(SocketBase&&) noexcept;
+
+  // standard return type of async io operation (size of bytes received in buffer, and state of action)
+  using io_rt = Awaitable<std::pair<std::size_t, Error>>;
+
+  io_rt async_read(std::span<std::byte> buffer);
+  io_rt async_read_once(std::span<std::byte> buffer);
+  io_rt async_read(std::span<std::byte> buffer, std::span<const std::byte> delimiter);
+
+  io_rt async_write(std::span<const std::byte> buffer);
+  io_rt async_write_once(std::span<const std::byte> buffer);
 
 protected:
-  SocketBase(const SocketBase&& other) : executor_{other.executor_}, reactor_{other.reactor_}, fd_{other.fd_}
-  {
-    if (other.executor_ == nullptr) throw std::invalid_argument("nullptr executor");
-    if (other.reactor_ == nullptr) throw std::invalid_argument("nullptr reactor");
-    if (other.fd_ < 0) throw std::invalid_argument("fd < 0");
-
-    if(!this->executor_->has(this->fd_)) throw std::invalid_argument("unregistered executor");
-    if(!this->reactor_->has(this->fd_)) throw std::invalid_argument("unregistered reactor");
-
-    return;
-  };
-
-  SocketBase(Executor* executor, Reactor* reactor, int fd) : executor_{executor}, reactor_{reactor}, fd_{fd}
-  {
-    if (executor == nullptr) throw std::invalid_argument("nullptr executor");
-    if (reactor == nullptr) throw std::invalid_argument("nullptr reactor");
-    if (fd < 0) throw std::invalid_argument("fd < 0");
-
-    this->executor_->add(this->fd_);
-    this->reactor_->add(this->fd_);
-
-    return;
-  }
-
   Executor* executor_;
   Reactor* reactor_;
   int fd_;
 
   virtual Executor::Operation read(std::span<std::byte> buffer, std::pair<std::size_t, Error>& value) = 0;
   virtual Executor::Operation write(std::span<const std::byte> buffer, std::pair<std::size_t, Error>& value) = 0;
+
+private:
+  void close() noexcept;
 };
 
 } // namespace asio

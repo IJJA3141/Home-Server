@@ -12,6 +12,7 @@
 #include <filesystem>
 #include <netinet/in.h>
 #include <openssl/crypto.h>
+#include <set>
 #include <string>
 #include <sys/epoll.h>
 #include <unordered_map>
@@ -58,6 +59,7 @@ struct TcpServer::Client
 
   virtual bool recv();
   virtual void send(std::span<const std::byte>);
+  void send_error();
 
   void notify_read();
   void notify_write();
@@ -65,8 +67,10 @@ struct TcpServer::Client
   void notify_close();
   void notify_error();
 
-  inline int fd() { return socket_; }
-  inline Uuid uuid() { return uuid_; }
+  inline int fd() const { return socket_; }
+  inline Uuid uuid() const { return uuid_; }
+
+  static constexpr protocol::ConnectionType connection_type = protocol::ConnectionType::TCP;
 
 protected:
   RingBuffer out_; // buffers responses that could not be send in one go
@@ -82,11 +86,18 @@ protected:
 
   ParserContext ctx_;
   ipc::IClient* host_;
+  std::set<ipc::IClient*> opened_hosts_;
 
-  size_t max_header_size;
-  size_t remaining;
+  size_t max_header_size_;
+  size_t remaining_;
 
-  bool get_host(std::span<const char> chars);
+  enum State
+  {
+    PARSING,
+    FORWARIND,
+    ERROR,
+  };
+  State find_host();
 };
 
 class TlsServer : public TcpServer

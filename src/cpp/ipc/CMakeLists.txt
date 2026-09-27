@@ -1,6 +1,6 @@
 add_library(ipc STATIC
-  client.cpp
-  server.cpp
+  tcp/client.cpp
+  tcp/server.cpp
 )
 
 target_compile_definitions(ipc PRIVATE "$<$<CONFIG:Debug>:__DEBUG>")

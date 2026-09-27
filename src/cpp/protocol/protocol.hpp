@@ -17,6 +17,12 @@ enum class ParserResult
   Complete
 };
 
+enum class ConnectionType : unsigned char
+{
+  TCP,
+  TLS
+};
+
 template <class P>
 concept policy = requires(P policy) {
   typename P::Request;

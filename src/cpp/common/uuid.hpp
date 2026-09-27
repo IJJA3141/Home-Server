@@ -22,7 +22,7 @@ class Uuid
 public:
   // remove \0 from length
   static constexpr size_t UNPARSED_SIZE = UUID_STR_LEN - 1;
-  static constexpr size_t PARSED_SIZE = 16;
+  static constexpr size_t PARSED_SIZE = sizeof(uuid_t);
 
   /**
    *  @brief Parse a UUID from its string representation.
@@ -92,6 +92,9 @@ public:
     if (r > 0) return std::strong_ordering::greater;
     return std::strong_ordering::equal;
   }
+
+  inline const unsigned char* begin() const { return this->uuid_; };
+  inline const unsigned char* end() const { return this->uuid_ + PARSED_SIZE; };
 
 protected:
   uuid_t uuid_;

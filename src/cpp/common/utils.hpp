@@ -16,3 +16,15 @@ template <size_t S> consteval std::array<std::byte, S> as_bytes(const char str[S
 
   return arr;
 }
+
+template <class... Ts> struct overloads : Ts...
+{
+  using Ts::operator()...;
+};
+
+enum class Control
+{
+  RETURN,
+  CONTINUE,
+  BREAK,
+};
