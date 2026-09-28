@@ -1,5 +1,7 @@
 add_library(asio STATIC
-  
+  socket_base.cpp
+  executor.cpp
+  reactor.cpp
 )
 
 # target_include_directories(common PUBLIC include)

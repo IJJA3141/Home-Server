@@ -106,7 +106,7 @@ public:
    * @brief Check whether fd is currently registered with this reactor.
    * @return true if fd has an entry in the internal table.
    */
-  bool has(int fd) const;
+  [[nodiscard]] inline bool has(int fd) const { return this->table_.contains(fd); };
 
   /**
    * @brief Deregister a socket from the epoll instance and drop its Context.
@@ -176,5 +176,8 @@ private:
 
   void close() noexcept;
 };
+
+static_assert(std::movable<Reactor>, "Reactor should be movable");
+static_assert(!std::copyable<Reactor>, "Reactor shouldn't be copyable");
 
 } // namespace asio
