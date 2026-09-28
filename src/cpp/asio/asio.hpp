@@ -58,11 +58,16 @@ public:
   // standard return type of async io operation (size of bytes received in buffer, and state of action)
   using io_rt = Awaitable<std::pair<std::size_t, Error>>;
 
+  // async(coroutine) read terminates when buffer full
   io_rt async_read(std::span<std::byte> buffer);
+  // async(coroutine) read terminates when one successful underling read op
   io_rt async_read_once(std::span<std::byte> buffer);
+  // async(coroutine) read terminates when delimiter is contained in buffer (might read more than delimiter)
   io_rt async_read(std::span<std::byte> buffer, std::span<const std::byte> delimiter);
 
+  // async(coroutine) write terminates when buffer fully written
   io_rt async_write(std::span<const std::byte> buffer);
+  // async(coroutine) write terminates when one successful underling write op
   io_rt async_write_once(std::span<const std::byte> buffer);
 
 protected:
@@ -76,7 +81,6 @@ protected:
 private:
   void close() noexcept;
 };
-
 static_assert(!std::copyable<SocketBase>, "SocketBase cannot be copyable");
 
 } // namespace asio
