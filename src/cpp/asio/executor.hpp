@@ -3,6 +3,7 @@
 #include <concepts>
 #include <coroutine>
 #include <functional>
+#include <map>
 #include <queue>
 #include <unordered_map>
 
@@ -55,8 +56,9 @@ public:
     write = 3,
   };
 
-  // @brief Trivially constructable.
+  // @brief Trivially constructable/destructible.
   Executor() = default;
+  ~Executor() = default;
 
   // non copyable
   Executor(const Executor&) = delete;
