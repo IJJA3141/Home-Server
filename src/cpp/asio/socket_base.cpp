@@ -1,5 +1,4 @@
 #include "../common/assert.hpp"
-#include "../common/logger.hpp"
 #include "asio.hpp"
 
 #include <algorithm>
@@ -27,7 +26,6 @@ SocketBase::SocketBase(Executor* executor, Reactor* reactor, int fd)
 SocketBase::~SocketBase() noexcept
 {
   if (this->executor_ == nullptr && this->reactor_ == nullptr && this->fd_ < 0) return;
-
   this->close();
   return;
 }
